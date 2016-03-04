@@ -59,7 +59,7 @@ Deploying and Configuring EmailOTP artifacts:
     (xii)  Define the Authorization token type.
                E.g: SendgridAuthTokenType=Bearer
 
-3.  Build the <EMAILOTP_AUTHENTICATOR_HOME>/component/authenticator & copy the org.wso2.carbon.identity.authenticator.emailotp-1.0.0.jar
+3.  Build the <EMAILOTP_AUTHENTICATOR_HOME>/component/authenticator & copy the org.wso2.carbon.extension.identity.authenticator.emailotp.connector-1.0.0.jar
     to <IS-HOME>/repository/components/dropins
 
 4.  Follow the steps in https://docs.wso2.com/display/ISCONNECTORS/Configuring+EmailOTP+Authenticator    
