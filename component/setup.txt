@@ -1,4 +1,4 @@
-Product: WSO2 IS authenticator for Tiqr
+Product: WSO2 IS authenticator for EmailOTP
 Pre-requisites:
 
 - Maven 3.x
@@ -12,7 +12,7 @@ Tested Platform:
 
 Do the following:
 
-Deploying and Configuring Tiqr artifacts:
+Deploying and Configuring EmailOTP artifacts:
 1.  Build the <EMAILOTP_AUTHENTICATOR_HOME>/component/authentication-endpoint and copy the emailotpauthenticationendpoint.war to <IS-HOME>/repository/deployment/server/webapps/
 
 2.  Update or Introduce the properties in emailprovider properties file at location <EMAILOTP_AUTHENTICATOR_HOME>/component/authenticator/src/main/resources.
