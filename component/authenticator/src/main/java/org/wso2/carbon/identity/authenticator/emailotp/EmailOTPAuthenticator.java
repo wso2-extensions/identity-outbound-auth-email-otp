@@ -327,8 +327,12 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         } finally {
             connection.disconnect();
             try {
-                writer.close();
-                br.close();
+                if (writer != null) {
+                    writer.close();
+                }
+                if (br != null) {
+                    br.close();
+                }
             } catch (IOException e) {
             }
         }
