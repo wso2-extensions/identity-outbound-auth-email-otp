@@ -59,7 +59,6 @@
 
         <script src="js/scripts.js"></script>
         <script src="assets/js/jquery-1.7.1.min.js"></script>
-	    <script src="https://mepin.com/javascripts/mepinlogin.js"></script>
         <!--[if lt IE 9]>
         <script src="js/html5shiv.min.js"></script>
         <script src="js/respond.min.js"></script>
