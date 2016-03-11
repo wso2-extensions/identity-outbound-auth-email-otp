@@ -16,7 +16,8 @@
  ~ specific language governing permissions and limitations
  ~ under the License.
 	 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.wso2</groupId>
@@ -53,7 +54,7 @@
             <artifactId>org.wso2.carbon.logging</artifactId>
             <version>${commons-logging.version}</version>
         </dependency>
-        <dependency>   
+        <dependency>
             <groupId>org.wso2.carbon.identity</groupId>
             <artifactId>org.wso2.carbon.identity.application.common</artifactId>
             <version>${carbon.identity.version}</version>
@@ -148,7 +149,9 @@
     <scm>
         <connection>scm:git:https://github.com/wso2-extensions/identity-outbound-auth-email-otp.git</connection>
         <url>https://github.com/wso2-extensions/identity-outbound-auth-email-otp.git</url>
-        <developerConnection>scm:git:https://github.com/wso2-extensions/identity-outbound-auth-email-otp</developerConnection>
+        <developerConnection>
+            scm:git:https://github.com/wso2-extensions/identity-outbound-auth-email-otp
+        </developerConnection>
         <tag>HEAD</tag>
     </scm>
     <build>
