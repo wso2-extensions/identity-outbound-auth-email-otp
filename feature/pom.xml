@@ -19,10 +19,11 @@
     <parent>
         <groupId>org.wso2.carbon.extension.identity.authenticator</groupId>
         <artifactId>org.wso2.carbon.extension.identity.authenticator.emailotp</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.1-SNAPSHOT</version>
     </parent>
     <groupId>org.wso2.carbon.extension.identity.authenticator</groupId>
     <artifactId>org.wso2.carbon.extension.identity.authenticator.emailotp.feature</artifactId>
+  <version>1.0.0</version>
     <packaging>pom</packaging>
     <name>WSO2 Carbon - Identity Email OTP Feature</name>
     <url>http://wso2.org</url>
@@ -67,8 +68,4 @@
             </plugin>
         </plugins>
     </build>
-
-  <scm>
-    <tag>org.wso2.carbon.extension.identity.authenticator.emailotp-1.0.0</tag>
-  </scm>
 </project>
