@@ -271,8 +271,6 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             , String payload, String httpMethod) {
         String line;
         StringBuilder responseString = new StringBuilder();
-        OutputStreamWriter writer = null;
-        BufferedReader br = null;
         HttpURLConnection connection = null;
         try {
             URL emailOTPEP = new URL(url + urlParameters);
@@ -294,18 +292,20 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                 connection.setRequestProperty(EmailOTPAuthenticatorConstants.HTTP_AUTH, accessToken);
             }
             if (httpMethod.toUpperCase().equals(EmailOTPAuthenticatorConstants.HTTP_POST)) {
-                writer = new OutputStreamWriter(connection.getOutputStream(), EmailOTPAuthenticatorConstants.CHARSET);
+                OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream(), EmailOTPAuthenticatorConstants.CHARSET);
                 if (StringUtils.isNotEmpty(payload)) {
                     writer.write(payload);
                 } else if (StringUtils.isNotEmpty(formParameters)) {
                     writer.write(formParameters);
                 }
+                writer.close();
             }
             if (connection.getResponseCode() == 200) {
-                br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                 while ((line = br.readLine()) != null) {
                     responseString.append(line);
                 }
+                br.close();
             } else {
                 return EmailOTPAuthenticatorConstants.FAILED + EmailOTPAuthenticatorConstants.REQUEST_FAILED;
             }
@@ -326,15 +326,6 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             return EmailOTPAuthenticatorConstants.FAILED + e.getMessage();
         } finally {
             connection.disconnect();
-            try {
-                if (writer != null) {
-                    writer.close();
-                }
-                if (br != null) {
-                    br.close();
-                }
-            } catch (IOException e) {
-            }
         }
         return responseString.toString();
     }
