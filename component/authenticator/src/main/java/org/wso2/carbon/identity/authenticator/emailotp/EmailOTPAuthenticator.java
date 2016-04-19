@@ -38,6 +38,7 @@ import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.user.core.UserRealm;
 import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.utils.CarbonUtils;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 import org.wso2.carbon.identity.mgt.IdentityMgtConfigException;
 import org.wso2.carbon.identity.mgt.IdentityMgtServiceException;
@@ -64,6 +65,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.InputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.lang.String;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -105,16 +109,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             throws AuthenticationFailedException {
         try {
             Map<String, String> authenticatorProperties = context.getAuthenticatorProperties();
-            Properties emailOTPProperties = new Properties();
-            String resourceName = EmailOTPAuthenticatorConstants.PROPERTIES_FILE;
-            ClassLoader loader = Thread.currentThread().getContextClassLoader();
-            InputStream resourceStream = loader.getResourceAsStream(resourceName);
-            try {
-                emailOTPProperties.load(resourceStream);
-            } catch (IOException e) {
-                log.error("Unable to load the properties file", e);
-                throw new AuthenticationFailedException("Unable to load the properties file", e);
-            }
+            Properties emailOTPProperties = loadProperties();
             if (!context.isRetrying() || (context.isRetrying()
                     && StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.RESEND)))
                     || (context.isRetrying()
@@ -261,6 +256,33 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         } else {
             log.error("Code mismatch");
             throw new AuthenticationFailedException("Code mismatch");
+        }
+    }
+
+    /**
+     * loading the emailprovider.properties file.
+     */
+    public static Properties loadProperties() {
+        FileInputStream fileInputStream = null;
+        String configPath = CarbonUtils.getCarbonConfigDirPath() + File.separator;
+        try {
+            configPath = configPath + EmailOTPAuthenticatorConstants.PROPERTIES_FILE;
+            fileInputStream = new FileInputStream(new File(configPath));
+            Properties properties = new Properties();
+            properties.load(fileInputStream);
+            return properties;
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(EmailOTPAuthenticatorConstants.PROPERTIES_FILE + " file not found in " + configPath, e);
+        } catch (IOException e) {
+            throw new RuntimeException(EmailOTPAuthenticatorConstants.PROPERTIES_FILE + " file reading error from " + configPath, e);
+        } finally {
+            if (fileInputStream != null) {
+                try {
+                    fileInputStream.close();
+                } catch (Exception e) {
+                    log.error("Error occurred while closing stream :" + e);
+                }
+            }
         }
     }
 
