@@ -21,7 +21,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.wso2.carbon.extension.identity.authenticatior</groupId>
     <artifactId>org.wso2.carbon.extension.identity.application.authentication.endpoint.emailotp</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>war</packaging>
     <name>WSO2 Carbon - Identity Application Authentication EmailOTP Endpoint</name>
     <description>Identity Application Authentication EmailOTP Endpoint</description>
