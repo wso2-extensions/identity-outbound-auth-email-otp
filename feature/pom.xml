@@ -19,7 +19,7 @@
     <parent>
         <groupId>org.wso2.carbon.extension.identity.authenticator</groupId>
         <artifactId>org.wso2.carbon.extension.identity.authenticator.emailotp</artifactId>
-        <version>1.0.1-SNAPSHOT</version>
+        <version>1.0.1</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <groupId>org.wso2.carbon.extension.identity.authenticator</groupId>
