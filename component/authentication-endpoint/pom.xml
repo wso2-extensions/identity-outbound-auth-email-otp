@@ -26,97 +26,12 @@
     </parent>
     <groupId>org.wso2.carbon.extension.identity.authenticatior</groupId>
     <artifactId>org.wso2.carbon.extension.identity.application.authentication.endpoint.emailotp</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
     <packaging>war</packaging>
     <name>WSO2 Carbon - Identity Application Authentication EmailOTP Endpoint</name>
     <description>Identity Application Authentication EmailOTP Endpoint</description>
     <url>http://wso2.org</url>
-    <dependencies>
-        <dependency>
-            <groupId>commons-lang.wso2</groupId>
-            <artifactId>commons-lang</artifactId>
-            <version>${commons-lang.wso2.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-            <version>${javax.servlet-api.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>jstl</artifactId>
-            <version>${javax.servelet.jstl.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-codec.wso2</groupId>
-            <artifactId>commons-codec</artifactId>
-            <version>${commons-codec.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.ws.commons.axiom</groupId>
-            <artifactId>axiom-api</artifactId>
-            <version>${axiom.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.securevault</groupId>
-            <artifactId>org.wso2.securevault</artifactId>
-            <version>${org.wso2.securevault.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-lang</groupId>
-                    <artifactId>commons-lang</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.orbit.org.owasp.encoder</groupId>
-            <artifactId>encoder</artifactId>
-            <version>${encoder.wso2.version}</version>
-        </dependency>
-    </dependencies>
     <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.felix</groupId>
-                    <artifactId>maven-scr-plugin</artifactId>
-                    <version>1.7.2</version>
-                    <executions>
-                        <execution>
-                            <id>generate-scr-scrdescriptor</id>
-                            <goals>
-                                <goal>scr</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.felix</groupId>
-                    <artifactId>maven-bundle-plugin</artifactId>
-                    <version>2.4.0</version>
-                    <extensions>true</extensions>
-                    <configuration>
-                        <obrRepository>NONE</obrRepository>
-                    </configuration>
-                </plugin>
-            </plugins>
-        </pluginManagement>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <configuration>
-                    <preparationGoals>clean install</preparationGoals>
-                    <autoVersionSubmodules>true</autoVersionSubmodules>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-            </plugin>
-
-
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
@@ -141,81 +56,4 @@
             </plugin>
         </plugins>
     </build>
-    <repositories>
-        <repository>
-            <id>wso2-nexus</id>
-            <name>WSO2 internal Repository</name>
-            <url>http://maven.wso2.org/nexus/content/groups/wso2-public/</url>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>daily</updatePolicy>
-                <checksumPolicy>ignore</checksumPolicy>
-            </releases>
-        </repository>
-        <repository>
-            <id>wso2.releases</id>
-            <name>WSO2 internal Repository</name>
-            <url>http://maven.wso2.org/nexus/content/repositories/releases/</url>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>daily</updatePolicy>
-                <checksumPolicy>ignore</checksumPolicy>
-            </releases>
-        </repository>
-        <repository>
-            <id>wso2.snapshots</id>
-            <name>Apache Snapshot Repository</name>
-            <url>http://maven.wso2.org/nexus/content/repositories/snapshots/</url>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>daily</updatePolicy>
-            </snapshots>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-        </repository>
-    </repositories>
-    <pluginRepositories>
-        <pluginRepository>
-            <id>wso2.releases</id>
-            <name>WSO2 internal Repository</name>
-            <url>http://maven.wso2.org/nexus/content/repositories/releases/</url>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>daily</updatePolicy>
-                <checksumPolicy>ignore</checksumPolicy>
-            </releases>
-        </pluginRepository>
-        <pluginRepository>
-            <id>wso2.snapshots</id>
-            <name>WSO2 Snapshot Repository</name>
-            <url>http://maven.wso2.org/nexus/content/repositories/snapshots/</url>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>daily</updatePolicy>
-            </snapshots>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-        </pluginRepository>
-        <pluginRepository>
-            <id>wso2-nexus</id>
-            <name>WSO2 internal Repository</name>
-            <url>http://maven.wso2.org/nexus/content/groups/wso2-public/</url>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>daily</updatePolicy>
-                <checksumPolicy>ignore</checksumPolicy>
-            </releases>
-        </pluginRepository>
-    </pluginRepositories>
-    <properties>
-        <javax.servlet-api.version>3.0-alpha-1</javax.servlet-api.version>
-        <javax.servelet.jstl.version>1.2</javax.servelet.jstl.version>
-        <commons-codec.version>1.4.0.wso2v1</commons-codec.version>
-        <axiom.version>1.2.11-wso2v6</axiom.version>
-        <org.wso2.securevault.version>1.0.0-wso2v2</org.wso2.securevault.version>
-        <commons-lang.wso2.version>2.6.0.wso2v1</commons-lang.wso2.version>
-        <encoder.wso2.version>1.2.0.wso2v1</encoder.wso2.version>
-    </properties>
 </project>
