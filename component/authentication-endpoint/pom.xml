@@ -24,7 +24,7 @@
         <version>1.0.2-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
-    <groupId>org.wso2.carbon.extension.identity.authenticatior</groupId>
+    <groupId>org.wso2.carbon.extension.identity.authenticator</groupId>
     <artifactId>org.wso2.carbon.extension.identity.application.authentication.endpoint.emailotp</artifactId>
     <packaging>war</packaging>
     <name>WSO2 Carbon - Identity Application Authentication EmailOTP Endpoint</name>
