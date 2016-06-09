@@ -63,7 +63,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
@@ -71,7 +70,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 /**
  * Authenticator of EmailOTP
@@ -472,7 +470,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                     + EmailOTPAuthenticatorConstants.EMAILOTP_GRANT_TYPE_REFRESH_TOKEN + "&"
                     + EmailOTPAuthenticatorConstants.EMAILOTP_GRANT_TYPE_REFRESH_TOKEN + "=" + refreshToken
                     + "&" + EmailOTPAuthenticatorConstants.EMAILOTP_CLIENT_ID + "=" + clientId;
-            response = sendRESTCall(getTokenEndpoint(authenticatorProperties), "", "", formParams, ""
+            response = sendRESTCall(getTokenEndpoint(authenticatorProperties, emailOTPParameters), "", "", formParams, ""
                     , EmailOTPAuthenticatorConstants.HTTP_POST);
         } else {
             log.error("Required params cannot be null");
@@ -484,22 +482,12 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
     /**
      * Get EmailOTP token endpoint.
      */
-    @Override
-    protected String getTokenEndpoint(Map<String, String> authenticatorProperties) {
-        Properties emailOTPProperties = new Properties();
-        String resourceName = EmailOTPAuthenticatorConstants.PROPERTIES_FILE;
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        InputStream resourceStream = loader.getResourceAsStream(resourceName);
-        try {
-            emailOTPProperties.load(resourceStream);
-        } catch (IOException e) {
-            log.error("Can not find the file", e);
-        }
+    protected String getTokenEndpoint(Map<String, String> authenticatorProperties, Map<String, String> emailOTPParameters) {
         String tokenEndpoint = null;
         String api = getAPI(authenticatorProperties);
-        if (emailOTPProperties.containsKey(api + EmailOTPAuthenticatorConstants.EMAILOTP_TOKEN_ENDPOINT)) {
-            tokenEndpoint = emailOTPProperties.get(api
-                    + EmailOTPAuthenticatorConstants.EMAILOTP_TOKEN_ENDPOINT).toString();
+        if (emailOTPParameters.containsKey(api + EmailOTPAuthenticatorConstants.EMAILOTP_TOKEN_ENDPOINT)) {
+            tokenEndpoint = emailOTPParameters.get(api
+                    + EmailOTPAuthenticatorConstants.EMAILOTP_TOKEN_ENDPOINT);
         }
         return StringUtils.isNotEmpty(tokenEndpoint) ? tokenEndpoint : null;
     }
