@@ -28,10 +28,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 public class OneTimePassword {
-    private static Log log = LogFactory.getLog(OneTimePassword.class);
     // These are used to calculate the check-sum digits.
     // 0 1 2 3 4 5 6 7 8 9
     private static final int[] doubleDigits = {0, 2, 4, 6, 8, 1, 3, 5, 7, 9};
+    private static Log log = LogFactory.getLog(OneTimePassword.class);
 
     public static String getRandomNumber(int size) {
 
@@ -47,22 +47,6 @@ public class OneTimePassword {
         }
 
         return generatedToken.toString();
-    }
-
-    public String generateToken(String key, String base, int digits) {
-        boolean checksum = false;
-        int truncOffset = 0;
-
-        checksum = false;
-        truncOffset = 0;
-        try {
-            return generateOTP(key.getBytes(), Long.parseLong(base), digits, checksum, truncOffset);
-        } catch (NoSuchAlgorithmException e) {
-            log.error("Unable to find the Algorithm", e);
-        } catch (InvalidKeyException e) {
-            log.error("Unable to find the secret key", e);
-        }
-        return null;
     }
 
     /**
@@ -162,5 +146,21 @@ public class OneTimePassword {
             result = "0" + result;
         }
         return result;
+    }
+
+    public String generateToken(String key, String base, int digits) {
+        boolean checksum = false;
+        int truncOffset = 0;
+
+        checksum = false;
+        truncOffset = 0;
+        try {
+            return generateOTP(key.getBytes(), Long.parseLong(base), digits, checksum, truncOffset);
+        } catch (NoSuchAlgorithmException e) {
+            log.error("Unable to find the Algorithm", e);
+        } catch (InvalidKeyException e) {
+            log.error("Unable to find the secret key", e);
+        }
+        return null;
     }
 }
