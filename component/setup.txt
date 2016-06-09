@@ -15,7 +15,23 @@ Do the following:
 Deploying and Configuring EmailOTP artifacts:
 1.  Build the <EMAILOTP_AUTHENTICATOR_HOME>/component/authentication-endpoint and copy the emailotpauthenticationendpoint.war to <IS-HOME>/repository/deployment/server/webapps/
 
-2.  Update or Introduce the properties in emailprovider properties file at location <EMAILOTP_AUTHENTICATOR_HOME>/component/authenticator/src/main/resources.
+2.  Update or Introduce the parameters in application-authentication.xml file at location <IS_HOME>/repository/conf/identity
+
+    <AuthenticatorConfig name="EmailOTP" enabled="true">
+            <Parameter name="GmailClientId">1017607968397-5iictdsdsah816rlcfairbgo01h7fm63a82d.apps.googleusercontent.com</Parameter>
+            <Parameter name="GmailClientSecret">F0urkk5NnAI3PdsN5pYDdDnZ0y</Parameter>
+            <Parameter name="SendgridAPIKey">SG.C13LRmceQnypb-jD1jAhTQ.4kOddsdQuk2vgSjP859zqR161lhfpXlfAaLbfg_jcEUzE</Parameter>
+            <Parameter name="GmailRefreshToken">1/cuMjFjo_sTN5mDKWCAddueOtP_CvLTKTmJBbwheP7GbV90RDknAdJa_sgfheVM0XT</Parameter>
+            <Parameter name="GmailEmailEndpoint">https://www.googleapis.com/gmail/v1/users/[userId]/messages/send</Parameter>
+            <Parameter name="SendgridEmailEndpoint">https://api.sendgrid.com/api/mail.send.json</Parameter>
+            <Parameter name="accessTokenRequiredAPIs">Gmail</Parameter>
+            <Parameter name="apiKeyHeaderRequiredAPIs">Sendgrid</Parameter>
+            <Parameter name="SendgridFormData">test</Parameter>
+            <Parameter name="SendgridURLParams"></Parameter>
+            <Parameter name="GmailAuthTokenType">Bearer</Parameter>
+            <Parameter name="GmailTokenEndpoint">https://www.googleapis.com/oauth2/v3/token</Parameter>
+            <Parameter name="SendgridAuthTokenType">Bearer</Parameter>
+        </AuthenticatorConfig>
 
     Following (i), (ii), (iii), (iv), (v), (viii), (ix), (x), (xi) & (xii) property names should have the API name as prefix.
 
@@ -59,7 +75,7 @@ Deploying and Configuring EmailOTP artifacts:
     (xii)  Define the Authorization token type.
                E.g: SendgridAuthTokenType=Bearer
 
-3.  Build the <EMAILOTP_AUTHENTICATOR_HOME>/component/authenticator & copy the org.wso2.carbon.extension.identity.authenticator.emailotp.connector-1.0.0.jar
+3.  Build the <EMAILOTP_AUTHENTICATOR_HOME>/component/authenticator & copy the org.wso2.carbon.extension.identity.authenticator.emailotp.connector-2.0.0.jar
     to <IS-HOME>/repository/components/dropins
 
 4.  Follow the steps in https://docs.wso2.com/display/ISCONNECTORS/Configuring+EmailOTP+Authenticator    
