@@ -20,8 +20,8 @@
 package org.wso2.carbon.identity.authenticator.emailotp;
 
 public class EmailOTPAuthenticatorConstants {
-    public static final String AUTHENTICATOR_NAME = "EmailOTP";
-    public static final String AUTHENTICATOR_FRIENDLY_NAME = "EmailOTPAuthenticator";
+    public static final String AUTHENTICATOR_NAME = "EmailOTPAuthenticator";
+    public static final String AUTHENTICATOR_FRIENDLY_NAME = "EmailOTP";
 
     public static final String ALGORITHM_NAME = "SHA1PRNG";
     public static final String ALGORITHM_HMAC = "HmacSHA1";
