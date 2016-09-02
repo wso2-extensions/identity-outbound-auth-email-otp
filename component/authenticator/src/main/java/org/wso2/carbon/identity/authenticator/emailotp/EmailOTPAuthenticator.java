@@ -192,9 +192,9 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             }
             if (context.isRetrying()
                     || StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))) {
-                String login= emailOTPParameters.get(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ENDPOINT_URL);
-                String loginPage="";
-                if(StringUtils.isNotEmpty(login)) {
+                String login = emailOTPParameters.get(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ENDPOINT_URL);
+                String loginPage = "";
+                if (StringUtils.isNotEmpty(login)) {
                     loginPage = ConfigurationFacade.getInstance().getAuthenticationEndpointURL()
                             .replace(EmailOTPAuthenticatorConstants.LOGIN_PAGE, login);
                 } else {
