@@ -20,8 +20,8 @@
 package org.wso2.carbon.identity.authenticator.emailotp;
 
 public class EmailOTPAuthenticatorConstants {
-    public static final String AUTHENTICATOR_NAME = "EmailOTPAuthenticator";
-    public static final String AUTHENTICATOR_FRIENDLY_NAME = "EmailOTP";
+    public static final String AUTHENTICATOR_NAME = "EmailOTP";
+    public static final String AUTHENTICATOR_FRIENDLY_NAME = "EmailOTPAuthenticator";
 
     public static final String ALGORITHM_NAME = "SHA1PRNG";
     public static final String ALGORITHM_HMAC = "HmacSHA1";
@@ -58,7 +58,8 @@ public class EmailOTPAuthenticatorConstants {
     public static final String MAIL_API_KEY = "<API_KEY>";
 
     public static final String LOGIN_PAGE = "authenticationendpoint/login.do";
-    public static final String EMILOTP_PAGE = "emailotpauthenticationendpoint/emailotp.jsp";
+    public static final String EMAILOTP_PAGE = "emailotpauthenticationendpoint/emailotp.jsp";
+    public static final String EMAILOTP_AUTHENTICATION_ENDPOINT_URL = "emailotpauthenticationendpoint/emailotp.jsp";
     public static final String RETRY_PARAMS = "&authFailure=true&authFailureMsg=authentication.fail.message";
     public static final String EMAIL_CLAIM = "http://wso2.org/claims/emailaddress";
     public static final String MAILING_ENDPOINT = "EmailEndpoint";

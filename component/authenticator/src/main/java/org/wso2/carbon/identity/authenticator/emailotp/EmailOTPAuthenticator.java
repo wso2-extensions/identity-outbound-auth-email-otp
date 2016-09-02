@@ -192,8 +192,15 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             }
             if (context.isRetrying()
                     || StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))) {
-                String emailOTPPage = ConfigurationFacade.getInstance().getAuthenticationEndpointURL()
-                        .replace(EmailOTPAuthenticatorConstants.LOGIN_PAGE, EmailOTPAuthenticatorConstants.EMILOTP_PAGE);
+                String login= emailOTPParameters.get(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ENDPOINT_URL);
+                String loginPage="";
+                if(StringUtils.isNotEmpty(login)) {
+                    loginPage = ConfigurationFacade.getInstance().getAuthenticationEndpointURL()
+                            .replace(EmailOTPAuthenticatorConstants.LOGIN_PAGE, login);
+                } else {
+                    loginPage = ConfigurationFacade.getInstance().getAuthenticationEndpointURL()
+                            .replace(EmailOTPAuthenticatorConstants.LOGIN_PAGE, EmailOTPAuthenticatorConstants.EMAILOTP_PAGE);
+                }
                 String queryParams = FrameworkUtils.getQueryStringWithFrameworkContextId(
                         context.getQueryParams(), context.getCallerSessionKey(),
                         context.getContextIdentifier());
@@ -202,7 +209,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                     retryParam = EmailOTPAuthenticatorConstants.RETRY_PARAMS;
                 }
                 try {
-                    response.sendRedirect(response.encodeRedirectURL(emailOTPPage + ("?" + queryParams))
+                    response.sendRedirect(response.encodeRedirectURL(loginPage + ("?" + queryParams))
                             + EmailOTPAuthenticatorConstants.AUTHENTICATORS + getName() + ":"
                             + EmailOTPAuthenticatorConstants.LOCAL
                             + retryParam);
