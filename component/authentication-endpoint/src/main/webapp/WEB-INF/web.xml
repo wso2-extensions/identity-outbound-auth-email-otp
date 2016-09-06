@@ -19,36 +19,4 @@
 <!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
         "http://java.sun.com/dtd/web-app_2_3.dtd" >
 <web-app>
-    <filter>
-        <filter-name>AuthenticationEndpointFilter</filter-name>
-        <filter-class>
-            org.wso2.carbon.identity.application.authentication.endpoint.util.filter.AuthenticationEndpointFilter
-        </filter-class>
-    </filter>
-    <filter-mapping>
-        <filter-name>AuthenticationEndpointFilter</filter-name>
-        <url-pattern>/*</url-pattern>
-    </filter-mapping>
-    <filter>
-        <filter-name>CRLFPreventionFilter</filter-name>
-        <filter-class>org.wso2.carbon.ui.filters.CRLFPreventionFilter</filter-class>
-    </filter>
-    <filter-mapping>
-        <filter-name>CRLFPreventionFilter</filter-name>
-        <url-pattern>/*</url-pattern>
-    </filter-mapping>
-    <listener>
-        <listener-class>
-            org.wso2.carbon.identity.application.authentication.endpoint.util.listener.AuthenticationEndpointContextListener
-        </listener-class>
-    </listener>
-    <error-page>
-        <exception-type>java.lang.Throwable</exception-type>
-        <location>/generic-exception-response.jsp</location>
-    </error-page>
-    <session-config>
-        <cookie-config>
-            <secure>true</secure>
-        </cookie-config>
-    </session-config>
 </web-app>
