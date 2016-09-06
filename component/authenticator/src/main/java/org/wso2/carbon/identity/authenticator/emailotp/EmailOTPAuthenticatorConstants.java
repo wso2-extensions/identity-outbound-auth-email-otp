@@ -59,7 +59,7 @@ public class EmailOTPAuthenticatorConstants {
 
     public static final String LOGIN_PAGE = "authenticationendpoint/login.do";
     public static final String EMAILOTP_PAGE = "emailotpauthenticationendpoint/emailotp.jsp";
-    public static final String EMAILOTP_AUTHENTICATION_ENDPOINT_URL = "emailotpauthenticationendpoint/emailotp.jsp";
+    public static final String EMAILOTP_AUTHENTICATION_ENDPOINT_URL = "EMAILOTPAuthenticationEndpointURL";
     public static final String RETRY_PARAMS = "&authFailure=true&authFailureMsg=authentication.fail.message";
     public static final String EMAIL_CLAIM = "http://wso2.org/claims/emailaddress";
     public static final String MAILING_ENDPOINT = "EmailEndpoint";
