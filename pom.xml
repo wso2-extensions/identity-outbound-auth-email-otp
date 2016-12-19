@@ -23,8 +23,8 @@
         <artifactId>wso2</artifactId>
         <version>1</version>
     </parent>
-    <groupId>org.wso2.carbon.extension.identity.authenticator</groupId>
-    <artifactId>org.wso2.carbon.extension.identity.authenticator.emailotp</artifactId>
+    <groupId>org.wso2.carbon.extension.identity.authenticator.outbound.emailotp</groupId>
+    <artifactId>identity-outbound-auth-email-otp</artifactId>
     <version>2.0.3-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>WSO2 Carbon Extension - EmailOTP Pom</name>
