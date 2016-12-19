@@ -58,7 +58,7 @@
                             </adviceFile>
                             <bundles>
                                 <bundleDef>
-                                    >org.wso2.carbon.extension.identity.authenticator.outbound.emailotp:org.wso2.carbon.extension.identity.authenticator.emailotp.connector
+                                    org.wso2.carbon.extension.identity.authenticator.outbound.emailotp:org.wso2.carbon.extension.identity.authenticator.emailotp.connector
                                 </bundleDef>
                             </bundles>
                         </configuration>
