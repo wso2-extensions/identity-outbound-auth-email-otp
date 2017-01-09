@@ -27,8 +27,9 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
+import org.wso2.carbon.extension.identity.helper.FederatedAuthenticator;
+import org.wso2.carbon.extension.identity.helper.util.IdentityHelperUtil;
 import org.wso2.carbon.identity.application.authentication.framework.FederatedApplicationAuthenticator;
-import org.wso2.carbon.identity.application.authentication.framework.LocalApplicationAuthenticator;
 import org.wso2.carbon.identity.application.authentication.framework.config.ConfigurationFacade;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
@@ -98,33 +99,34 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                                                  HttpServletResponse response, AuthenticationContext context)
             throws AuthenticationFailedException {
         try {
+            String username = null;
+            AuthenticatedUser authenticatedUser;
             Map<String, String> authenticatorProperties = context.getAuthenticatorProperties();
             Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
             if (!context.isRetrying() || (context.isRetrying()
                     && StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.RESEND)))
                     || (context.isRetrying()
                     && Boolean.parseBoolean(request.getParameter(EmailOTPAuthenticatorConstants.RESEND)))) {
-                String username = null;
-                String email = null;
-                for (Integer stepMap : context.getSequenceConfig().getStepMap().keySet()) {
-                    if (context.getSequenceConfig().getStepMap().get(stepMap).getAuthenticatedUser() != null &&
-                            context.getSequenceConfig().getStepMap().get(stepMap).getAuthenticatedAutenticator()
-                                    .getApplicationAuthenticator() instanceof LocalApplicationAuthenticator) {
-                        username =
-                                String.valueOf(context.getSequenceConfig().getStepMap().get(stepMap).getAuthenticatedUser());
-                        break;
-                    }
+
+                String tenantDomain = context.getTenantDomain();
+                context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATION, EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME);
+                if (!tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
+                    IdentityHelperUtil.loadApplicationAuthenticationXMLFromRegistry(context, getName(), tenantDomain);
                 }
+
+                FederatedAuthenticator federatedAuthenticator = new FederatedAuthenticator();
+                federatedAuthenticator.getUsernameFromFirstStep(context);
+                username = String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.USER_NAME));
+                authenticatedUser = (AuthenticatedUser) context.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER);
+                // find the authenticated user.
+                if (authenticatedUser == null) {
+                    throw new AuthenticationFailedException
+                            ("Authentication failed!. Cannot proceed further without identifying the user");
+                }
+
+                String email = null;
                 if (StringUtils.isNotEmpty(username)) {
-                    UserRealm userRealm = null;
-                    String tenantDomain = MultitenantUtils.getTenantDomain(username);
-                    int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
-                    RealmService realmService = IdentityTenantUtil.getRealmService();
-                    try {
-                        userRealm = (UserRealm) realmService.getTenantUserRealm(tenantId);
-                    } catch (org.wso2.carbon.user.api.UserStoreException e) {
-                        throw new AuthenticationFailedException("Cannot find the user realm", e);
-                    }
+                    UserRealm userRealm = getUserRealm(username);
                     username = MultitenantUtils.getTenantAwareUsername(String.valueOf(username));
                     if (userRealm != null) {
                         email = userRealm.getUserStoreManager()
@@ -254,6 +256,22 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             log.error("Code mismatch");
             throw new AuthenticationFailedException("Code mismatch");
         }
+    }
+
+    /**
+     * Get the user realm of the logged in user
+     */
+    private UserRealm getUserRealm(String username) throws AuthenticationFailedException {
+        UserRealm userRealm;
+        try {
+            String tenantDomain = MultitenantUtils.getTenantDomain(username);
+            int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+            RealmService realmService = IdentityTenantUtil.getRealmService();
+            userRealm = (UserRealm) realmService.getTenantUserRealm(tenantId);
+        } catch (Exception e) {
+            throw new AuthenticationFailedException("Cannot find the user realm", e);
+        }
+        return userRealm;
     }
 
     /**
