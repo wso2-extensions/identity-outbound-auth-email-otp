@@ -66,7 +66,6 @@ public class EmailOTPAuthenticatorConstants {
     public static final String ADMIN_EMAIL = "[userId]";
     public static final String OTP_TOKEN = "otpToken";
 
-    public static final String PROPERTIES_FILE = "emailprovider.properties";
     public static final String AXIS2 = "axis2.xml";
     public static final String AXIS2_FILE = "repository/conf/axis2/axis2.xml";
     public static final String TRANSPORT_MAILTO = "mailto";
@@ -86,4 +85,8 @@ public class EmailOTPAuthenticatorConstants {
     public static final String AUTHENTICATORS = "&authenticators=";
     public static final String LOCAL = "LOCAL";
     public static final String RESEND = "resendCode";
+    public static final String AUTHENTICATION = "authentication";
+    public static final String SUPER_TENANT = "carbon.super";
+    public static final String USER_NAME = "username";
+    public static final String AUTHENTICATED_USER = "authenticatedUser";
 }
