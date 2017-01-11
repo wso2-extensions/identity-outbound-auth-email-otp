@@ -210,12 +210,11 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                 if (context.isRetrying()) {
                     retryParam = EmailOTPAuthenticatorConstants.RETRY_PARAMS;
                 }
-                String encodedUrl = response.encodeRedirectURL(loginPage + ("?" + queryParams)
-                        + EmailOTPAuthenticatorConstants.AUTHENTICATORS + getName() + ":"
-                        + EmailOTPAuthenticatorConstants.LOCAL
-                        + retryParam);
                 try {
-                    response.sendRedirect(encodedUrl);
+                    response.sendRedirect(response.encodeRedirectURL(loginPage + ("?" + queryParams)
+                            + EmailOTPAuthenticatorConstants.AUTHENTICATORS + getName() + ":"
+                            + EmailOTPAuthenticatorConstants.LOCAL
+                            + retryParam));
                 } catch (IOException e) {
                     log.error("Authentication failed: " + e.getMessage(), e);
                     throw new AuthenticationFailedException(e.getMessage(), e);
@@ -598,6 +597,11 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                 || (isAccessTokenRequired(emailOTPParameters, authenticatorProperties)
                 && (StringUtils.isEmpty(refreshToken) || StringUtils.isEmpty(clientId)
                 || StringUtils.isEmpty(clientSecret)));
+    }
+
+    @Override
+    public String getContextIdentifier(HttpServletRequest request) {
+        return request.getParameter("sessionDataKey");
     }
 
     /**
