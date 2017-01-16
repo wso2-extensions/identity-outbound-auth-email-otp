@@ -211,10 +211,10 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                     retryParam = EmailOTPAuthenticatorConstants.RETRY_PARAMS;
                 }
                 try {
-                    response.sendRedirect(response.encodeRedirectURL(loginPage + ("?" + queryParams)
+                    response.sendRedirect(loginPage + ("?" + queryParams)
                             + EmailOTPAuthenticatorConstants.AUTHENTICATORS + getName() + ":"
                             + EmailOTPAuthenticatorConstants.LOCAL
-                            + retryParam));
+                            + retryParam);
                 } catch (IOException e) {
                     log.error("Authentication failed: " + e.getMessage(), e);
                     throw new AuthenticationFailedException(e.getMessage(), e);
