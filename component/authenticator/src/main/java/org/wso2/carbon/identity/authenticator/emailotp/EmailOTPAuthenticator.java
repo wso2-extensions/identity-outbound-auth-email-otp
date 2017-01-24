@@ -99,6 +99,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                                                  HttpServletResponse response, AuthenticationContext context)
             throws AuthenticationFailedException {
         try {
+            String tenantAwareUsername = null;
             String username = null;
             AuthenticatedUser authenticatedUser;
             Map<String, String> authenticatorProperties = context.getAuthenticatorProperties();
@@ -127,10 +128,10 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                 String email = null;
                 if (StringUtils.isNotEmpty(username)) {
                     UserRealm userRealm = getUserRealm(username);
-                    username = MultitenantUtils.getTenantAwareUsername(String.valueOf(username));
+                    tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(String.valueOf(username));
                     if (userRealm != null) {
                         email = userRealm.getUserStoreManager()
-                                .getUserClaimValue(username, EmailOTPAuthenticatorConstants.EMAIL_CLAIM, null);
+                                .getUserClaimValue(tenantAwareUsername, EmailOTPAuthenticatorConstants.EMAIL_CLAIM, null);
                         if (StringUtils.isEmpty(email)) {
                             log.error("Receiver's email ID can not be null.");
                             throw new AuthenticationFailedException("Receiver's email ID can not be null.");
