@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *  Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  *  WSO2 Inc. licenses this file to you under the Apache License,
  *  Version 2.0 (the "License"); you may not use this file except
@@ -89,4 +89,11 @@ public class EmailOTPAuthenticatorConstants {
     public static final String SUPER_TENANT = "carbon.super";
     public static final String USER_NAME = "username";
     public static final String AUTHENTICATED_USER = "authenticatedUser";
+
+    public static final String IS_EMAILOTP_MANDATORY = "EMAILOTPMandatory";
+    public static final String EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL = "EmailOTPAuthenticationEndpointErrorPage";
+    public static final String ERROR_EMAILOTP_DISABLE = "&authFailure=true&authFailureMsg=emailotp.disable";
+    public static final String ERROR_PAGE = "emailotpauthenticationendpoint/emailotpError.jsp";
+    public static final String BASIC = "basic";
+    public static final String FEDERETOR = "federator";
 }
