@@ -42,35 +42,43 @@ public class EmailOTPUtils {
      * @return true or false
      * @throws EmailOTPException
      */
-    public static boolean isEmailOTPEnableForLocalUser(String username, AuthenticationContext context) throws EmailOTPException {
-        String email = getEmailValueForUsername(username, context);
+    public static boolean isEmailOTPEnableForLocalUser(String username, AuthenticationContext context, boolean isUserExistence)
+            throws EmailOTPException {
+        String email = getEmailValueForUsername(username, context, isUserExistence);
         return !StringUtils.isEmpty(email);
     }
 
     /**
      * Get email value for username
+     *
      * @param username the user name
-     * @param context the authentication context
+     * @param context  the authentication context
      * @return email
      * @throws EmailOTPException
      */
-    public static String getEmailValueForUsername(String username, AuthenticationContext context) throws EmailOTPException {
+    public static String getEmailValueForUsername(String username, AuthenticationContext context, boolean isUserExistence)
+            throws EmailOTPException {
         UserRealm userRealm;
         String tenantAwareUsername = null;
         String email = null;
         try {
-            String tenantDomain = MultitenantUtils.getTenantDomain(username);
-            int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
-            RealmService realmService = IdentityTenantUtil.getRealmService();
-            userRealm = realmService.getTenantUserRealm(tenantId);
-            tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(String.valueOf(username));
-            if (userRealm != null) {
-                email = userRealm.getUserStoreManager()
-                        .getUserClaimValue(tenantAwareUsername, EmailOTPAuthenticatorConstants.EMAIL_CLAIM, null);
-                context.setProperty(EmailOTPAuthenticatorConstants.RECEIVER_EMAIL, email);
+            if (isUserExistence) {
+                String tenantDomain = MultitenantUtils.getTenantDomain(username);
+                int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+                RealmService realmService = IdentityTenantUtil.getRealmService();
+                userRealm = realmService.getTenantUserRealm(tenantId);
+                tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(String.valueOf(username));
+                if (userRealm != null) {
+
+                    email = userRealm.getUserStoreManager()
+                            .getUserClaimValue(tenantAwareUsername, EmailOTPAuthenticatorConstants.EMAIL_CLAIM, null);
+                    context.setProperty(EmailOTPAuthenticatorConstants.RECEIVER_EMAIL, email);
+                } else {
+                    throw new EmailOTPException("Cannot find the user realm for the given tenant domain : " + CarbonContext
+                            .getThreadLocalCarbonContext().getTenantDomain());
+                }
             } else {
-                throw new EmailOTPException("Cannot find the user realm for the given tenant domain : " + CarbonContext
-                        .getThreadLocalCarbonContext().getTenantDomain());
+                return null;
             }
         } catch (UserStoreException e) {
             throw new EmailOTPException("Cannot find the user claim for email " + e.getMessage(), e);

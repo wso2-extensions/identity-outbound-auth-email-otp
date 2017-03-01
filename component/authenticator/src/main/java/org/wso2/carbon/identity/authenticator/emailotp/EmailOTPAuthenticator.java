@@ -28,6 +28,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
 import org.wso2.carbon.extension.identity.helper.FederatedAuthenticator;
+import org.wso2.carbon.extension.identity.helper.IdentityHelperConstants;
 import org.wso2.carbon.extension.identity.helper.util.IdentityHelperUtil;
 import org.wso2.carbon.identity.application.authentication.framework.AuthenticatorFlowStatus;
 import org.wso2.carbon.identity.application.authentication.framework.FederatedApplicationAuthenticator;
@@ -42,6 +43,7 @@ import org.wso2.carbon.identity.application.authentication.framework.model.Authe
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants;
 import org.wso2.carbon.identity.application.authenticator.oidc.OpenIDConnectAuthenticator;
+import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.authenticator.emailotp.exception.EmailOTPException;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
@@ -58,6 +60,7 @@ import org.wso2.carbon.identity.mgt.mail.DefaultEmailSendingModule;
 import org.wso2.carbon.identity.mgt.mail.Notification;
 import org.wso2.carbon.identity.mgt.mail.NotificationBuilder;
 import org.wso2.carbon.identity.mgt.mail.NotificationData;
+import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import javax.servlet.http.HttpServletRequest;
@@ -126,15 +129,26 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             throws AuthenticationFailedException {
         try {
             String username = null;
+            String email = null;
+            boolean isEmailOTPMandatory;
             AuthenticatedUser authenticatedUser;
-            Map<String, String> authenticatorProperties = context.getAuthenticatorProperties();
             Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
             String tenantDomain = context.getTenantDomain();
             context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATION, EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME);
             if (!tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
                 IdentityHelperUtil.loadApplicationAuthenticationXMLFromRegistry(context, getName(), tenantDomain);
+                Object getPropertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
+                if (getPropertiesFromLocal == null) {
+                    isEmailOTPMandatory = Boolean.parseBoolean(String.valueOf(context.getProperty
+                            (EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY)));
+                } else {
+                    isEmailOTPMandatory = Boolean.parseBoolean(emailOTPParameters
+                            .get(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY));
+                }
+            } else {
+                isEmailOTPMandatory = Boolean.parseBoolean(emailOTPParameters
+                        .get(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY));
             }
-
             FederatedAuthenticator federatedAuthenticator = new FederatedAuthenticator();
             federatedAuthenticator.getUsernameFromFirstStep(context);
             username = String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.USER_NAME));
@@ -144,120 +158,65 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                 throw new AuthenticationFailedException
                         ("Authentication failed!. Cannot proceed further without identifying the user");
             }
+            boolean isUserExistence = federatedAuthenticator.isExistUserInUserStore(username);
+            boolean isEmailOTPEnabledByUser = EmailOTPUtils.isEmailOTPEnableForLocalUser(username, context, isUserExistence);
             String queryParams = FrameworkUtils.getQueryStringWithFrameworkContextId(
                     context.getQueryParams(), context.getCallerSessionKey(),
                     context.getContextIdentifier());
             String retryParam = "";
             String errorPage = emailOTPParameters.get(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL);
-            boolean isEmailOTPMandatory = Boolean.parseBoolean(emailOTPParameters
-                    .get(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY));
-            boolean isEmailOTPEnabledByUser = EmailOTPUtils.isEmailOTPEnableForLocalUser(username, context);
-            // Email OTP authentication is mandatory and user doesn't have Email value in user's profile.
-            if (isEmailOTPMandatory && !isEmailOTPEnabledByUser) {
-                // that Enable the EMAIL OTP in user's Profile. Cannot proceed further without EmailOTP authentication.
-                retryParam = EmailOTPAuthenticatorConstants.ERROR_EMAILOTP_DISABLE;
-                if (StringUtils.isEmpty(errorPage)) {
-                    errorPage = ConfigurationFacade.getInstance().getAuthenticationEndpointURL()
-                            .replace(EmailOTPAuthenticatorConstants.LOGIN_PAGE, EmailOTPAuthenticatorConstants.ERROR_PAGE);
-                    if (log.isDebugEnabled()) {
-                        log.debug("Default authentication endpoint context is used");
-                    }
-                }
-                response.sendRedirect(errorPage + ("?" + queryParams)
-                        + EmailOTPAuthenticatorConstants.AUTHENTICATORS + getName() + retryParam);
-
-            } else if (!isEmailOTPEnabledByUser) {
-                //the authentication flow happens with basic authentication.
-                StepConfig stepConfig = context.getSequenceConfig().getStepMap().get(context.getCurrentStep() - 1);
-                if (stepConfig.getAuthenticatedAutenticator().getApplicationAuthenticator() instanceof
-                        LocalApplicationAuthenticator) {
-                    federatedAuthenticator.updateLocalAuthenticatedUserInStepConfig(context, authenticatedUser);
-                    context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATION, EmailOTPAuthenticatorConstants.BASIC);
-                } else {
-                    federatedAuthenticator.updateAuthenticatedUserInStepConfig(context, authenticatedUser);
-                    context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATION, EmailOTPAuthenticatorConstants.FEDERETOR);
-                }
-            } else {
-                if (!context.isRetrying() || (context.isRetrying()
-                        && StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.RESEND)))
-                        || (context.isRetrying()
-                        && Boolean.parseBoolean(request.getParameter(EmailOTPAuthenticatorConstants.RESEND)))) {
-
-                    OneTimePassword token = new OneTimePassword();
-                    String secret = OneTimePassword.getRandomNumber(EmailOTPAuthenticatorConstants.SECRET_KEY_LENGTH);
-                    String myToken = token.generateToken(secret, "" + EmailOTPAuthenticatorConstants.NUMBER_BASE
-                            , EmailOTPAuthenticatorConstants.NUMBER_DIGIT);
-                    context.setProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN, myToken);
-                    String email = EmailOTPUtils.getEmailValueForUsername(username, context);
-                    if (authenticatorProperties != null) {
-                        if (StringUtils.isNotEmpty(myToken)) {
-                            if (isSMTP(emailOTPParameters, authenticatorProperties)) {
-                                sendOTP(username, myToken, email);
-                            } else if (StringUtils.isNotEmpty(email)) {
-                                String failureString = null;
-                                if (isAccessTokenRequired(emailOTPParameters, authenticatorProperties)) {
-                                    String tokenResponse = sendTokenRequest(authenticatorProperties, emailOTPParameters);
-                                    if (StringUtils.isEmpty(tokenResponse)
-                                            || tokenResponse.startsWith(EmailOTPAuthenticatorConstants.FAILED)) {
-                                        log.error("Unable to get the access token");
-                                        throw new AuthenticationFailedException("Unable to get the access token");
-                                    } else {
-                                        JSONObject tokenObj = new JSONObject(tokenResponse);
-                                        String accessToken =
-                                                tokenObj.getString(EmailOTPAuthenticatorConstants.EMAILOTP_ACCESS_TOKEN);
-                                        context.getAuthenticatorProperties().put(EmailOTPAuthenticatorConstants.EMAILOTP_ACCESS_TOKEN
-                                                , accessToken);
-                                        authenticatorProperties = context.getAuthenticatorProperties();
-                                    }
-                                }
-                                String payload = preparePayload(authenticatorProperties, emailOTPParameters, email, myToken);
-                                String formData = prepareFormData(authenticatorProperties, emailOTPParameters, email, myToken);
-                                String urlParams = prepareURLParams(authenticatorProperties, emailOTPParameters, email, myToken);
-                                String sendCodeResponse = sendMailUsingAPIs(authenticatorProperties, emailOTPParameters,
-                                        urlParams, payload, formData);
-                                String api = getAPI(authenticatorProperties);
-                                if (emailOTPParameters.containsKey(api + EmailOTPAuthenticatorConstants.FAILURE)) {
-                                    failureString = emailOTPParameters.get(api
-                                            + EmailOTPAuthenticatorConstants.FAILURE);
-                                }
-                                if (StringUtils.isEmpty(sendCodeResponse)
-                                        || sendCodeResponse.startsWith(EmailOTPAuthenticatorConstants.FAILED)
-                                        || (StringUtils.isNotEmpty(failureString)
-                                        && sendCodeResponse.contains(failureString))) {
-                                    log.error("Unable to send the code");
-                                    throw new AuthenticationFailedException("Unable to send the code");
-                                }
+            if (isEmailOTPMandatory) {
+                if (isUserExistence) {
+                    if (isEmailOTPEnabledByUser) {
+                        // Email OTP authentication is mandatory and user have Email value in user's profile.
+                        email = EmailOTPUtils.getEmailValueForUsername(username, context, true);
+                        processEmailOTPFlow(request, response, email, username, queryParams, retryParam, context);
+                    } else {
+                        // Email OTP authentication is mandatory and user doesn't have Email value in user's profile.
+                        // Cannot proceed further without EmailOTP authentication.
+                        retryParam = EmailOTPAuthenticatorConstants.ERROR_EMAILOTP_DISABLE;
+                        if (StringUtils.isEmpty(errorPage)) {
+                            errorPage = ConfigurationFacade.getInstance().getAuthenticationEndpointURL()
+                                    .replace(EmailOTPAuthenticatorConstants.LOGIN_PAGE, EmailOTPAuthenticatorConstants.ERROR_PAGE);
+                            if (log.isDebugEnabled()) {
+                                log.debug("Default authentication endpoint context is used");
                             }
                         }
-                    } else {
-                        log.error("Error while retrieving properties. Authenticator Properties cannot be null");
-                        throw new AuthenticationFailedException(
-                                "Error while retrieving properties. Authenticator Properties cannot be null");
+                        response.sendRedirect(errorPage + ("?" + queryParams)
+                                + EmailOTPAuthenticatorConstants.AUTHENTICATORS + getName() + retryParam);
                     }
-
-                    if (context.isRetrying()
-                            || StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))) {
-                        String login = emailOTPParameters.get(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ENDPOINT_URL);
-                        String loginPage = "";
-                        if (StringUtils.isNotEmpty(login)) {
-                            loginPage = ConfigurationFacade.getInstance().getAuthenticationEndpointURL()
-                                    .replace(EmailOTPAuthenticatorConstants.LOGIN_PAGE, login);
-                        } else {
-                            loginPage = ConfigurationFacade.getInstance().getAuthenticationEndpointURL()
-                                    .replace(EmailOTPAuthenticatorConstants.LOGIN_PAGE, EmailOTPAuthenticatorConstants.EMAILOTP_PAGE);
+                } else {
+                    // Email OTP authentication is mandatory and user doesn't exist in user store,then send the OTP to
+                    // the email which is got from the claim set.
+                    Map<ClaimMapping, String> userAttributes = context.getCurrentAuthenticatedIdPs().values().
+                            iterator().next().getUser().getUserAttributes();
+                    for (Map.Entry<ClaimMapping, String> entry : userAttributes.entrySet()) {
+                        String key = String.valueOf(entry.getKey().getLocalClaim().getClaimUri());
+                        String value = entry.getValue();
+                        if (key.equals(EmailOTPAuthenticatorConstants.EMAIL)) {
+                            email = String.valueOf(value);
+                            context.setProperty(EmailOTPAuthenticatorConstants.RECEIVER_EMAIL, email);
+                            processEmailOTPFlow(request, response, email, username, queryParams, retryParam, context);
+                            break;
                         }
-                        if (context.isRetrying()) {
-                            retryParam = EmailOTPAuthenticatorConstants.RETRY_PARAMS;
-                        }
-                        try {
-                            response.sendRedirect(loginPage + ("?" + queryParams)
-                                    + EmailOTPAuthenticatorConstants.AUTHENTICATORS + getName() + ":"
-                                    + EmailOTPAuthenticatorConstants.LOCAL
-                                    + retryParam);
-                        } catch (IOException e) {
-                            log.error("Authentication failed: " + e.getMessage(), e);
-                            throw new AuthenticationFailedException(e.getMessage(), e);
-                        }
+                    }
+                }
+            } else {
+                // Email OTP authentication is optional and user exist in user store with the Email value in user's
+                // profile.
+                if (isUserExistence && isEmailOTPEnabledByUser) {
+                    email = EmailOTPUtils.getEmailValueForUsername(username, context, true);
+                    processEmailOTPFlow(request, response, email, username, queryParams, retryParam, context);
+                } else {
+                    //the authentication flow happens with basic authentication (First step only).
+                    StepConfig stepConfig = context.getSequenceConfig().getStepMap().get(context.getCurrentStep() - 1);
+                    if (stepConfig.getAuthenticatedAutenticator().getApplicationAuthenticator() instanceof
+                            LocalApplicationAuthenticator) {
+                        federatedAuthenticator.updateLocalAuthenticatedUserInStepConfig(context, authenticatedUser);
+                        context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATION, EmailOTPAuthenticatorConstants.BASIC);
+                    } else {
+                        federatedAuthenticator.updateAuthenticatedUserInStepConfig(context, authenticatedUser);
+                        context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATION, EmailOTPAuthenticatorConstants.FEDERETOR);
                     }
                 }
             }
@@ -268,6 +227,8 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             throw new AuthenticationFailedException("Authentication failed!", e);
         } catch (EmailOTPException e) {
             throw new AuthenticationFailedException("Failed to get the parameters from authentication xml fie", e);
+        } catch (UserStoreException e) {
+            throw new AuthenticationFailedException("Failed to get the user from user store " + e.getMessage(), e);
         }
     }
 
@@ -297,6 +258,110 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         } else {
             log.error("Code mismatch");
             throw new AuthenticationFailedException("Code mismatch");
+        }
+    }
+
+    /**
+     * Process the EmailOTP Flow
+     * @param request the request
+     * @param response response
+     * @param email value of the email to send otp
+     * @param username the username
+     * @param queryParams the queryParams
+     * @param retryParam the retryParams
+     * @param context the authentication context
+     * @throws AuthenticationFailedException
+     */
+    private void processEmailOTPFlow(HttpServletRequest request,
+                                     HttpServletResponse response, String email, String username, String queryParams,
+                                     String retryParam, AuthenticationContext context)
+            throws AuthenticationFailedException {
+        Map<String, String> authenticatorProperties = context.getAuthenticatorProperties();
+        Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
+        try {
+            if (!context.isRetrying() || (context.isRetrying()
+                    && StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.RESEND)))
+                    || (context.isRetrying()
+                    && Boolean.parseBoolean(request.getParameter(EmailOTPAuthenticatorConstants.RESEND)))) {
+
+                OneTimePassword token = new OneTimePassword();
+                String secret = OneTimePassword.getRandomNumber(EmailOTPAuthenticatorConstants.SECRET_KEY_LENGTH);
+                String myToken = token.generateToken(secret, "" + EmailOTPAuthenticatorConstants.NUMBER_BASE
+                        , EmailOTPAuthenticatorConstants.NUMBER_DIGIT);
+                context.setProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN, myToken);
+                if (authenticatorProperties != null) {
+                    if (StringUtils.isNotEmpty(myToken)) {
+                        if (isSMTP(emailOTPParameters, authenticatorProperties)) {
+                            sendOTP(username, myToken, email);
+                        } else if (StringUtils.isNotEmpty(email)) {
+                            String failureString = null;
+                            if (isAccessTokenRequired(emailOTPParameters, authenticatorProperties)) {
+                                String tokenResponse = sendTokenRequest(authenticatorProperties, emailOTPParameters);
+                                if (StringUtils.isEmpty(tokenResponse)
+                                        || tokenResponse.startsWith(EmailOTPAuthenticatorConstants.FAILED)) {
+                                    log.error("Unable to get the access token");
+                                    throw new AuthenticationFailedException("Unable to get the access token");
+                                } else {
+                                    JSONObject tokenObj = new JSONObject(tokenResponse);
+                                    String accessToken =
+                                            tokenObj.getString(EmailOTPAuthenticatorConstants.EMAILOTP_ACCESS_TOKEN);
+                                    context.getAuthenticatorProperties().put(EmailOTPAuthenticatorConstants.EMAILOTP_ACCESS_TOKEN
+                                            , accessToken);
+                                    authenticatorProperties = context.getAuthenticatorProperties();
+                                }
+                            }
+                            String payload = preparePayload(authenticatorProperties, emailOTPParameters, email, myToken);
+                            String formData = prepareFormData(authenticatorProperties, emailOTPParameters, email, myToken);
+                            String urlParams = prepareURLParams(authenticatorProperties, emailOTPParameters, email, myToken);
+                            String sendCodeResponse = sendMailUsingAPIs(authenticatorProperties, emailOTPParameters,
+                                    urlParams, payload, formData);
+                            String api = getAPI(authenticatorProperties);
+                            if (emailOTPParameters.containsKey(api + EmailOTPAuthenticatorConstants.FAILURE)) {
+                                failureString = emailOTPParameters.get(api
+                                        + EmailOTPAuthenticatorConstants.FAILURE);
+                            }
+                            if (StringUtils.isEmpty(sendCodeResponse)
+                                    || sendCodeResponse.startsWith(EmailOTPAuthenticatorConstants.FAILED)
+                                    || (StringUtils.isNotEmpty(failureString)
+                                    && sendCodeResponse.contains(failureString))) {
+                                log.error("Unable to send the code");
+                                throw new AuthenticationFailedException("Unable to send the code");
+                            }
+                        }
+                    }
+                } else {
+                    log.error("Error while retrieving properties. Authenticator Properties cannot be null");
+                    throw new AuthenticationFailedException(
+                            "Error while retrieving properties. Authenticator Properties cannot be null");
+                }
+            }
+            if (context.isRetrying()
+                    || StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))) {
+                String login = emailOTPParameters.get(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ENDPOINT_URL);
+                String loginPage = "";
+                if (StringUtils.isNotEmpty(login)) {
+                    loginPage = ConfigurationFacade.getInstance().getAuthenticationEndpointURL()
+                            .replace(EmailOTPAuthenticatorConstants.LOGIN_PAGE, login);
+                } else {
+                    loginPage = ConfigurationFacade.getInstance().getAuthenticationEndpointURL()
+                            .replace(EmailOTPAuthenticatorConstants.LOGIN_PAGE, EmailOTPAuthenticatorConstants.EMAILOTP_PAGE);
+                }
+                if (context.isRetrying()) {
+                    retryParam = EmailOTPAuthenticatorConstants.RETRY_PARAMS;
+                }
+                try {
+                    response.sendRedirect(loginPage + ("?" + queryParams)
+                            + EmailOTPAuthenticatorConstants.AUTHENTICATORS + getName() + ":"
+                            + EmailOTPAuthenticatorConstants.LOCAL
+                            + retryParam);
+                } catch (IOException e) {
+                    log.error("Authentication failed: " + e.getMessage(), e);
+                    throw new AuthenticationFailedException(e.getMessage(), e);
+                }
+            }
+        } catch (AuthenticationFailedException e) {
+            log.error(e.getMessage(), e);
+            throw new AuthenticationFailedException(e.getMessage(), e);
         }
     }
 

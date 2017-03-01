@@ -96,4 +96,5 @@ public class EmailOTPAuthenticatorConstants {
     public static final String ERROR_PAGE = "emailotpauthenticationendpoint/emailotpError.jsp";
     public static final String BASIC = "basic";
     public static final String FEDERETOR = "federator";
+    public static final String EMAIL = "email";
 }
