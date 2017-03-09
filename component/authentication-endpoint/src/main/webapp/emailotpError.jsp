@@ -49,6 +49,8 @@
                     errorMessage = "The code entered is incorrect. Authentication Failed!";
                 } else if (errorMessage.equalsIgnoreCase("emailotp.disable")) {
                     errorMessage = "Enable the Email OTP in your Profile. Cannot proceed further without Email OTP authentication.";
+                } else if (errorMessage.equalsIgnoreCase("directly.send.otp.disable")) {
+                    errorMessage = "User not found in the directory. Cannot proceed further without Email OTP authentication.";
                 }
             }
         }
