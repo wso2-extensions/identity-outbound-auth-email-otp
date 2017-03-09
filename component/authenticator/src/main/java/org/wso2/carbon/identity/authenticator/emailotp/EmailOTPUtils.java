@@ -72,7 +72,7 @@ public class EmailOTPUtils {
             int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
             RealmService realmService = IdentityTenantUtil.getRealmService();
             userRealm = realmService.getTenantUserRealm(tenantId);
-            tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(String.valueOf(username));
+            tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(username);
             if (userRealm != null) {
                 email = userRealm.getUserStoreManager()
                         .getUserClaimValue(tenantAwareUsername, EmailOTPAuthenticatorConstants.EMAIL_CLAIM, null);
@@ -99,14 +99,11 @@ public class EmailOTPUtils {
             IdentityHelperUtil.loadApplicationAuthenticationXMLFromRegistry(context, authenticatorName, tenantDomain);
             propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         }
-        if (propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
-            if (parametersMap.containsKey(api + OIDCAuthenticatorConstants.CLIENT_ID)) {
+        if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
+                parametersMap.containsKey(api + OIDCAuthenticatorConstants.CLIENT_ID)) {
                 clientId = parametersMap.get(api + OIDCAuthenticatorConstants.CLIENT_ID);
-            }
-        } else {
-            if ((context.getProperty(api + OIDCAuthenticatorConstants.CLIENT_ID)) != null) {
+        } else if ((context.getProperty(api + OIDCAuthenticatorConstants.CLIENT_ID)) != null) {
                 clientId = String.valueOf(context.getProperty(api + OIDCAuthenticatorConstants.CLIENT_ID));
-            }
         }
         return clientId;
     }
@@ -123,14 +120,11 @@ public class EmailOTPUtils {
             IdentityHelperUtil.loadApplicationAuthenticationXMLFromRegistry(context, authenticatorName, tenantDomain);
             propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         }
-        if (propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
-            if (parametersMap.containsKey(api + OIDCAuthenticatorConstants.CLIENT_SECRET)) {
+        if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT))&&
+                parametersMap.containsKey(api + OIDCAuthenticatorConstants.CLIENT_SECRET)) {
                 clientSecret = parametersMap.get(api + OIDCAuthenticatorConstants.CLIENT_SECRET);
-            }
-        } else {
-            if ((context.getProperty(api + OIDCAuthenticatorConstants.CLIENT_SECRET)) != null) {
+        } else if ((context.getProperty(api + OIDCAuthenticatorConstants.CLIENT_SECRET)) != null) {
                 clientSecret = String.valueOf(context.getProperty(api + OIDCAuthenticatorConstants.CLIENT_SECRET));
-            }
         }
         return clientSecret;
     }
@@ -147,14 +141,11 @@ public class EmailOTPUtils {
             IdentityHelperUtil.loadApplicationAuthenticationXMLFromRegistry(context, authenticatorName, tenantDomain);
             propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         }
-        if (propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
-            if (parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.REFRESH_TOKEN)) {
+        if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
+                parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.REFRESH_TOKEN)) {
                 refreshToken = parametersMap.get(api + EmailOTPAuthenticatorConstants.REFRESH_TOKEN);
-            }
-        } else {
-            if ((context.getProperty(api + EmailOTPAuthenticatorConstants.REFRESH_TOKEN)) != null) {
+        } else if ((context.getProperty(api + EmailOTPAuthenticatorConstants.REFRESH_TOKEN)) != null) {
                 refreshToken = String.valueOf(context.getProperty(api + EmailOTPAuthenticatorConstants.REFRESH_TOKEN));
-            }
         }
         return refreshToken;
     }
@@ -171,14 +162,11 @@ public class EmailOTPUtils {
             IdentityHelperUtil.loadApplicationAuthenticationXMLFromRegistry(context, authenticatorName, tenantDomain);
             propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         }
-        if (propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
-            if (parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.EMAILOTP_API_KEY)) {
+        if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
+                parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.EMAILOTP_API_KEY)) {
                 apiKey = parametersMap.get(api + EmailOTPAuthenticatorConstants.EMAILOTP_API_KEY);
-            }
-        } else {
-            if ((context.getProperty(api + EmailOTPAuthenticatorConstants.EMAILOTP_API_KEY)) != null) {
+        } else if ((context.getProperty(api + EmailOTPAuthenticatorConstants.EMAILOTP_API_KEY)) != null) {
                 apiKey = String.valueOf(context.getProperty(api + EmailOTPAuthenticatorConstants.EMAILOTP_API_KEY));
-            }
         }
         return apiKey;
     }
@@ -195,15 +183,12 @@ public class EmailOTPUtils {
             IdentityHelperUtil.loadApplicationAuthenticationXMLFromRegistry(context, authenticatorName, tenantDomain);
             propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         }
-        if (propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
-            if (parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.MAILING_ENDPOINT)) {
+        if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
+                parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.MAILING_ENDPOINT)) {
                 mailingEndpoint = parametersMap.get(api + EmailOTPAuthenticatorConstants.MAILING_ENDPOINT);
-            }
-        } else {
-            if ((context.getProperty(api + EmailOTPAuthenticatorConstants.MAILING_ENDPOINT)) != null) {
+        } else if ((context.getProperty(api + EmailOTPAuthenticatorConstants.MAILING_ENDPOINT)) != null) {
                 mailingEndpoint = String.valueOf(context.getProperty
                         (api + EmailOTPAuthenticatorConstants.MAILING_ENDPOINT));
-            }
         }
         return mailingEndpoint;
     }
@@ -220,14 +205,11 @@ public class EmailOTPUtils {
             IdentityHelperUtil.loadApplicationAuthenticationXMLFromRegistry(context, authenticatorName, tenantDomain);
             propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         }
-        if (propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
-            if (parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.PAYLOAD)) {
+        if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
+                parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.PAYLOAD)) {
                 payload = parametersMap.get(api + EmailOTPAuthenticatorConstants.PAYLOAD);
-            }
-        } else {
-            if ((context.getProperty(api + EmailOTPAuthenticatorConstants.PAYLOAD)) != null) {
+        } else if ((context.getProperty(api + EmailOTPAuthenticatorConstants.PAYLOAD)) != null) {
                 payload = String.valueOf(context.getProperty(api + EmailOTPAuthenticatorConstants.PAYLOAD));
-            }
         }
         return payload;
     }
@@ -244,14 +226,11 @@ public class EmailOTPUtils {
             IdentityHelperUtil.loadApplicationAuthenticationXMLFromRegistry(context, authenticatorName, tenantDomain);
             propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         }
-        if (propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
-            if (parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.FORM_DATA)) {
+        if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
+                parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.FORM_DATA)) {
                 prepareFormData = parametersMap.get(api + EmailOTPAuthenticatorConstants.FORM_DATA);
-            }
-        } else {
-            if ((context.getProperty(api + EmailOTPAuthenticatorConstants.FORM_DATA)) != null) {
+        } else if ((context.getProperty(api + EmailOTPAuthenticatorConstants.FORM_DATA)) != null) {
                 prepareFormData = String.valueOf(context.getProperty(api + EmailOTPAuthenticatorConstants.FORM_DATA));
-            }
         }
         return prepareFormData;
     }
@@ -268,14 +247,11 @@ public class EmailOTPUtils {
             IdentityHelperUtil.loadApplicationAuthenticationXMLFromRegistry(context, authenticatorName, tenantDomain);
             propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         }
-        if (propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
-            if (parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.URL_PARAMS)) {
+        if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
+                parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.URL_PARAMS)) {
                 prepareUrlParams = parametersMap.get(api + EmailOTPAuthenticatorConstants.URL_PARAMS);
-            }
-        } else {
-            if ((context.getProperty(api + EmailOTPAuthenticatorConstants.URL_PARAMS)) != null) {
+        } else if ((context.getProperty(api + EmailOTPAuthenticatorConstants.URL_PARAMS)) != null) {
                 prepareUrlParams = String.valueOf(context.getProperty(api + EmailOTPAuthenticatorConstants.URL_PARAMS));
-            }
         }
         return prepareUrlParams;
     }
@@ -292,14 +268,11 @@ public class EmailOTPUtils {
             IdentityHelperUtil.loadApplicationAuthenticationXMLFromRegistry(context, authenticatorName, tenantDomain);
             propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         }
-        if (propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
-            if (parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.FAILURE)) {
+        if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
+                parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.FAILURE)) {
                 failureString = parametersMap.get(api + EmailOTPAuthenticatorConstants.FAILURE);
-            }
-        } else {
-            if ((context.getProperty(api + EmailOTPAuthenticatorConstants.FAILURE)) != null) {
+        } else if ((context.getProperty(api + EmailOTPAuthenticatorConstants.FAILURE)) != null) {
                 failureString = String.valueOf(context.getProperty(api + EmailOTPAuthenticatorConstants.FAILURE));
-            }
         }
         return failureString;
     }
@@ -316,15 +289,12 @@ public class EmailOTPUtils {
             IdentityHelperUtil.loadApplicationAuthenticationXMLFromRegistry(context, authenticatorName, tenantDomain);
             propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         }
-        if (propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
-            if (parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.HTTP_AUTH_TOKEN_TYPE)) {
+        if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
+                parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.HTTP_AUTH_TOKEN_TYPE)) {
                 authTokenType = parametersMap.get(api + EmailOTPAuthenticatorConstants.HTTP_AUTH_TOKEN_TYPE);
-            }
-        } else {
-            if ((context.getProperty(api + EmailOTPAuthenticatorConstants.HTTP_AUTH_TOKEN_TYPE)) != null) {
+        } else if ((context.getProperty(api + EmailOTPAuthenticatorConstants.HTTP_AUTH_TOKEN_TYPE)) != null) {
                 authTokenType = String.valueOf(context.getProperty
                         (api + EmailOTPAuthenticatorConstants.HTTP_AUTH_TOKEN_TYPE));
-            }
         }
         return authTokenType;
     }
@@ -342,15 +312,12 @@ public class EmailOTPUtils {
             IdentityHelperUtil.loadApplicationAuthenticationXMLFromRegistry(context, authenticatorName, tenantDomain);
             propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         }
-        if (propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
-            if (parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.EMAILOTP_TOKEN_ENDPOINT)) {
+        if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
+                parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.EMAILOTP_TOKEN_ENDPOINT)) {
                 tokenEndpoint = parametersMap.get(api + EmailOTPAuthenticatorConstants.EMAILOTP_TOKEN_ENDPOINT);
-            }
-        } else {
-            if ((context.getProperty(api + EmailOTPAuthenticatorConstants.EMAILOTP_TOKEN_ENDPOINT)) != null) {
+        } else if ((context.getProperty(api + EmailOTPAuthenticatorConstants.EMAILOTP_TOKEN_ENDPOINT)) != null) {
                 tokenEndpoint = String.valueOf(context.getProperty
                         (api + EmailOTPAuthenticatorConstants.EMAILOTP_TOKEN_ENDPOINT));
-            }
         }
         return tokenEndpoint;
     }
@@ -367,15 +334,12 @@ public class EmailOTPUtils {
             IdentityHelperUtil.loadApplicationAuthenticationXMLFromRegistry(context, authenticatorName, tenantDomain);
             propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         }
-        if (propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
-            if (parametersMap.containsKey(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL)) {
+        if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
+                parametersMap.containsKey(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL)) {
                 errorPage = parametersMap.get(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL);
-            }
-        } else {
-            if ((context.getProperty(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL)) != null) {
+        } else if ((context.getProperty(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL)) != null) {
                 errorPage = String.valueOf(context.getProperty
                         (EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL));
-            }
         }
         return errorPage;
     }
@@ -392,15 +356,12 @@ public class EmailOTPUtils {
             IdentityHelperUtil.loadApplicationAuthenticationXMLFromRegistry(context, authenticatorName, tenantDomain);
             propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         }
-        if (propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
-            if (parametersMap.containsKey(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ENDPOINT_URL)) {
+        if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
+                parametersMap.containsKey(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ENDPOINT_URL)) {
                 loginPage = parametersMap.get(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ENDPOINT_URL);
-            }
-        } else {
-            if ((context.getProperty(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ENDPOINT_URL)) != null) {
+        } else if ((context.getProperty(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ENDPOINT_URL)) != null) {
                 loginPage = String.valueOf(context.getProperty
                         (EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ENDPOINT_URL));
-            }
         }
         return loginPage;
     }
