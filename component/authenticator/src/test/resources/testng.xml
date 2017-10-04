@@ -19,7 +19,7 @@
 
 <suite name="Suite1" verbose="1" >
 
-    <test name="TOTP-Authenticator-Unit-Tests">
+    <test name="EmailOTP-Authenticator-Unit-Tests">
         <classes>
             <class name="org.wso2.carbon.identity.application.authenticator.emailotp.EmailOTPAuthenticatorTest" />
         </classes>
