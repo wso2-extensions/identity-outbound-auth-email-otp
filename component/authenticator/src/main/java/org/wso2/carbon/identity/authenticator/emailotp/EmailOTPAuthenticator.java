@@ -945,8 +945,10 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             username = MultitenantUtils.getTenantAwareUsername(String.valueOf(username));
             if (userRealm != null) {
                 if (isAdminMakeUserToEnableOrDisableEmailOTP(context, parametersMap)) {
-                    String isEmailOTPEnabledByUser = userRealm.getUserStoreManager().getUserClaimValue(username,
-                            EmailOTPAuthenticatorConstants.USER_EMAILOTP_DISABLED_CLAIM_URI, null);
+                    Map<String, String> claimValues = userRealm.getUserStoreManager().getUserClaimValues(username,
+                            new String[]{EmailOTPAuthenticatorConstants.USER_EMAILOTP_DISABLED_CLAIM_URI}, null);
+                    String isEmailOTPEnabledByUser = claimValues.
+                            get(EmailOTPAuthenticatorConstants.USER_EMAILOTP_DISABLED_CLAIM_URI);
                     return Boolean.parseBoolean(isEmailOTPEnabledByUser);
                 }
             } else {
