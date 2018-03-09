@@ -23,6 +23,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ page import="org.wso2.carbon.identity.application.authentication.endpoint.util.TenantDataManager" %>
+<%@ page import="org.owasp.encoder.Encode" %>
 
     <%
         request.getSession().invalidate();
@@ -111,7 +112,7 @@
                             <%
                                 if ("true".equals(authenticationFailed)) {
                             %>
-                                    <div class="alert alert-danger" id="failed-msg"><%=errorMessage%></div>
+                                    <div class="alert alert-danger" id="failed-msg"><%=Encode.forHtmlContent(errorMessage)%></div>
                             <% } %>
                             <div id="alertDiv"></div>
                             <div class="clearfix"></div>

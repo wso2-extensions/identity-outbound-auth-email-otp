@@ -24,6 +24,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ page import="org.wso2.carbon.identity.application.authentication.endpoint.util.TenantDataManager" %>
+<%@ page import="org.owasp.encoder.Encode" %>
 
 <fmt:bundle basename="org.wso2.carbon.identity.application.authentication.endpoint.i18n.Resources">
 
@@ -106,7 +107,7 @@
                             <%
                                 if ("true".equals(authenticationFailed)) {
                             %>
-                                    <div class="alert alert-danger" id="failed-msg"><%=errorMessage%></div>
+                                    <div class="alert alert-danger" id="failed-msg"><%=Encode.forHtmlContent(errorMessage)%></div>
                             <% } %>
                             <div id="alertDiv"></div>
                             <form id="pin_form" name="pin_form" action="../../commonauth"  method="POST">
@@ -128,7 +129,7 @@
                                                 class="input-xlarge" size='30'/>
                                              </div>
                                              <input type="hidden" name="sessionDataKey"
-                                                value='<%=request.getParameter("sessionDataKey")%>'/>
+                                                value='<%=Encode.forHtmlAttribute(request.getParameter("sessionDataKey"))%>'/>
                                              <br><div>
                                                   <input type="button" name="update" id="update" value="Update"
                                                   class="btn btn-primary">

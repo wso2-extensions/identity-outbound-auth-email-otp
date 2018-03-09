@@ -21,6 +21,7 @@
 <%@ page import="java.util.Map" %>
 <%@page import="org.wso2.carbon.identity.application.authentication.endpoint.util.Constants" %>
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="org.owasp.encoder.Encode" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ page import="org.wso2.carbon.identity.application.authentication.endpoint.util.TenantDataManager" %>
  <%
@@ -96,7 +97,7 @@
                             <%
                                 if ("true".equals(authenticationFailed)) {
                             %>
-                                    <div class="alert alert-danger" id="failed-msg"><%=errorMessage%></div>
+                                    <div class="alert alert-danger" id="failed-msg"><%=Encode.forHtmlContent(errorMessage)%></div>
                             <% } %>
                             <div id="alertDiv"></div>
                             <form id="codeForm" name="codeForm" action="../commonauth"  method="POST">
@@ -114,7 +115,7 @@
                                              <!-- Token Pin -->
                                              <% if (request.getParameter("screenValue") != null) { %>
                                                 <div class="control-group">
-                                                <label class="control-label" for="password">Enter the code sent to your email ID:<%=request.getParameter("screenValue")%></label>
+                                                <label class="control-label" for="password">Enter the code sent to your email ID:<%=Encode.forHtmlContent(request.getParameter("screenValue"))%></label>
                                                 <input type="password" id='OTPCode' name="OTPCode" class="input-xlarge" size='30'/>
                                              <% } else { %>
                                                 <div class="control-group">
@@ -123,7 +124,7 @@
                                              <% } %>
                                              </div>
                                              <input type="hidden" name="sessionDataKey"
-                                                value='<%=request.getParameter("sessionDataKey")%>'/><br/>
+                                                value='<%=Encode.forHtmlAttribute(request.getParameter("sessionDataKey"))%>'/><br/>
                                              <div> <input type="button" name="authenticate" id="authenticate" value="Authenticate" class="btn btn-primary"></div>
                                              <%
                                                  if ("true".equals(authenticationFailed)) {
