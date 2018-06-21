@@ -116,6 +116,8 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             if (context.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATION)
                     .equals(EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME)) {
                 // if the request comes with authentication is EmailOTP, it will go through this flow.
+                // set the current authenticator name
+                context.setCurrentAuthenticator(getName());
                 return AuthenticatorFlowStatus.INCOMPLETE;
             } else {
                 // if the request comes with authentication is basic, complete the flow.
