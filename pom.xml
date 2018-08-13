@@ -171,9 +171,9 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>jstl</artifactId>
-            <version>${javax.servelet.jstl.version}</version>
+            <groupId>org.apache.taglibs</groupId>
+            <artifactId>taglibs-standard-impl</artifactId>
+            <version>${taglibs-standard-impl.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-codec.wso2</groupId>
@@ -395,6 +395,7 @@
         <carbon.identity.package.import.version.range>[5.0.0, 6.0.0)</carbon.identity.package.import.version.range>
         <javax.servlet-api.version>3.0-alpha-1</javax.servlet-api.version>
         <javax.servelet.jstl.version>1.2</javax.servelet.jstl.version>
+        <taglibs-standard-impl.version>1.2.5</taglibs-standard-impl.version>
         <commons-codec.version>1.4.0.wso2v1</commons-codec.version>
         <axiom.version>1.2.11-wso2v6</axiom.version>
         <org.wso2.securevault.version>1.0.0-wso2v2</org.wso2.securevault.version>
