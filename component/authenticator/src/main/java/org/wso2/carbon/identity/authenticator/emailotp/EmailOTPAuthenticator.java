@@ -1300,7 +1300,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
     }
 
     private String getAPI(Map<String, String> authenticatorProperties) {
-        return authenticatorProperties.get(EmailOTPAuthenticatorConstants.EMAIL_API).trim();
+        return StringUtils.trim(authenticatorProperties.get(EmailOTPAuthenticatorConstants.EMAIL_API));
     }
 
     /**
