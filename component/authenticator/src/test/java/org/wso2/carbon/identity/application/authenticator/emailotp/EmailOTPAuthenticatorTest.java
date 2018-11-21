@@ -162,7 +162,7 @@ public class EmailOTPAuthenticatorTest {
                 EmailOTPAuthenticatorConstants.AUTHENTICATOR_FRIENDLY_NAME);
     }
 
-    @Test(description = "Test case for getName() method.")
+    @Test(description = "Test case for getAuthenticatorName() method.")
     public void testGetName() {
         Assert.assertEquals(emailOTPAuthenticator.getName(), EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME);
     }
@@ -227,7 +227,7 @@ public class EmailOTPAuthenticatorTest {
         when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
         when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(),anyString()))
                 .thenReturn(null);
-        getName();
+        getAuthenticatorName();
         when(stepConfig.getAuthenticatedAutenticator()).thenReturn(authenticatorConfig);
         getEmailOTPErrorPage(parameters);
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
@@ -253,7 +253,7 @@ public class EmailOTPAuthenticatorTest {
         when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
         when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(),anyString()))
                 .thenReturn(null);
-        getName();
+        getAuthenticatorName();
         when(stepConfig.getAuthenticatedAutenticator()).thenReturn(authenticatorConfig);
         getEmailOTPErrorPage(parameters);
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
@@ -283,7 +283,7 @@ public class EmailOTPAuthenticatorTest {
                 .thenReturn(null);
         when(stepConfig.getAuthenticatedAutenticator()).thenReturn(authenticatorConfig);
         when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
-        getName();
+        getAuthenticatorName();
         getEmailOTPErrorPage(parameters);
         mockUserRealm();
         when(userRealm.getUserStoreManager()).thenReturn(userStoreManager);
@@ -318,7 +318,7 @@ public class EmailOTPAuthenticatorTest {
                 .thenReturn(null);
         when(stepConfig.getAuthenticatedAutenticator()).thenReturn(authenticatorConfig);
         when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
-        getName();
+        getAuthenticatorName();
         getEmailOTPErrorPage(parameters);
         mockUserRealm();
         when(userRealm.getUserStoreManager()).thenReturn(userStoreManager);
@@ -394,7 +394,7 @@ public class EmailOTPAuthenticatorTest {
         when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(),anyString()))
                 .thenReturn(null);
         when(stepConfig.getAuthenticatedAutenticator()).thenReturn(authenticatorConfig);
-        getName();
+        getAuthenticatorName();
         getEmailOTPErrorPage(parameters);
         mockFederatedEmailAttributeKey(parameters, authenticatedUser, EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
         mockSendOTP();
@@ -589,7 +589,10 @@ public class EmailOTPAuthenticatorTest {
                 EmailOTPAuthenticatorTestConstants.USER_NAME, "123456");
     }
 
-    private void getName(){
+    /**
+     * Gets the authenticator name.
+     */
+    private void getAuthenticatorName(){
         when(context.getSequenceConfig()).thenReturn(sequenceConfig);
         when(sequenceConfig.getStepMap()).thenReturn(mockedMap);
         when(mockedMap.get(anyObject())).thenReturn(stepConfig);
@@ -599,6 +602,10 @@ public class EmailOTPAuthenticatorTest {
         when(authenticatorConfig.getName()).thenReturn(EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME);
     }
 
+    /**
+     * Get the EmailOTP error page.
+     * @param parameters Parameters map.
+     */
     private void getEmailOTPErrorPage(Map<String, String> parameters) {
         parameters.put(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL,
                 "emailotpauthenticationendpoint/custom/error.jsp");
@@ -608,7 +615,14 @@ public class EmailOTPAuthenticatorTest {
                 .thenReturn(authenticatorConfig);
     }
 
-    private void mockFederatedEmailAttributeKey(Map<String, String> parameters, AuthenticatedUser authenticatedUser, String emailAddress) {
+    /**
+     * Mock the federated attribute key.
+     * @param parameters paramters map.
+     * @param authenticatedUser authenticated user.
+     * @param emailAddress email address of the user.
+     */
+    private void mockFederatedEmailAttributeKey(Map<String, String> parameters, AuthenticatedUser authenticatedUser,
+                                                String emailAddress) {
         Map<ClaimMapping, String> userClaims = new HashMap<>();
         userClaims.put(ClaimMapping.build("email", null, null, false),
                 emailAddress);
@@ -623,6 +637,12 @@ public class EmailOTPAuthenticatorTest {
                 .thenReturn(parameters);
     }
 
+    /**
+     * Mock method to send OTP.
+     * @throws AxisFault
+     * @throws IdentityMgtConfigException
+     * @throws IdentityMgtServiceException
+     */
     private void mockSendOTP() throws AxisFault, IdentityMgtConfigException, IdentityMgtServiceException {
         when(ConfigurationContextFactory.createConfigurationContextFromFileSystem(null,
                 null)).thenReturn(configurationContext);
