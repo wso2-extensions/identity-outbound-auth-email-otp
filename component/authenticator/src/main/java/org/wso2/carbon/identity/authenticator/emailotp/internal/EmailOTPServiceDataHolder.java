@@ -21,6 +21,9 @@ package org.wso2.carbon.identity.authenticator.emailotp.internal;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.user.core.service.RealmService;
 
+/**
+ *  Encapsulates the data of EmailOTP authenticator.
+ */
 public class EmailOTPServiceDataHolder {
     private static EmailOTPServiceDataHolder emailOTPServiceDataHolder;
     private IdentityEventService identityEventService;
