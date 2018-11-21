@@ -46,7 +46,10 @@ import org.wso2.carbon.identity.application.authenticator.oidc.OpenIDConnectAuth
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.authenticator.emailotp.exception.EmailOTPException;
+import org.wso2.carbon.identity.authenticator.emailotp.internal.EmailOTPServiceDataHolder;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.event.IdentityEventConstants;
+import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.mgt.IdentityMgtConfigException;
 import org.wso2.carbon.identity.mgt.IdentityMgtServiceException;
 import org.wso2.carbon.identity.mgt.NotificationSender;
@@ -260,7 +263,16 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                                         Map<String, String> authenticatorProperties, String email, String username,
                                         String myToken) throws AuthenticationFailedException {
         if (isSMTP(authenticatorProperties, emailOTPParameters, context)) {
-            sendOTP(username, myToken, email);
+            // Check whether the authenticator is configured to use the event handler implementation.
+            if (emailOTPParameters.get(EmailOTPAuthenticatorConstants.USE_EVENT_HANDLER_BASED_EMAIL_SENDER) != null &&
+                    Boolean.parseBoolean(emailOTPParameters.get(EmailOTPAuthenticatorConstants.USE_EVENT_HANDLER_BASED_EMAIL_SENDER))) {
+                AuthenticatedUser authenticatedUser = (AuthenticatedUser) context.getProperty
+                        (EmailOTPAuthenticatorConstants.AUTHENTICATED_USER);
+                triggerEvent(authenticatedUser.getUserName(), authenticatedUser.getTenantDomain(),
+                        authenticatedUser.getUserStoreDomain(), EmailOTPAuthenticatorConstants.EVENT_NAME, myToken);
+            } else {
+                sendOTP(username, myToken, email);
+            }
         } else if (StringUtils.isNotEmpty(email)) {
             authenticatorProperties = getAuthenticatorPropertiesWithTokenResponse(context, emailOTPParameters,
                     authenticatorProperties);
@@ -1556,5 +1568,27 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         configProperties.add(email);
 
         return configProperties;
+    }
+
+
+    protected void triggerEvent(String userName, String tenantDomain, String userStoreDomainName,
+                                String notificationEvent, String otpCode) {
+
+        String eventName = IdentityEventConstants.Event.TRIGGER_NOTIFICATION;
+
+        HashMap<String, Object> properties = new HashMap<>();
+        properties.put(IdentityEventConstants.EventProperty.USER_NAME, userName);
+        properties.put(IdentityEventConstants.EventProperty.USER_STORE_DOMAIN, userStoreDomainName);
+        properties.put(IdentityEventConstants.EventProperty.TENANT_DOMAIN, tenantDomain);
+        properties.put(EmailOTPAuthenticatorConstants.CODE, otpCode);
+
+        properties.put(EmailOTPAuthenticatorConstants.TEMPLATE_TYPE, notificationEvent);
+        Event identityMgtEvent = new Event(eventName, properties);
+        try {
+            EmailOTPServiceDataHolder.getInstance().getIdentityEventService().handleEvent(identityMgtEvent);
+        } catch (Exception e) {
+            String errorMsg = "Error occurred while calling triggerNotification, detail : " + e.getMessage();
+            log.warn(errorMsg);
+        }
     }
 }
