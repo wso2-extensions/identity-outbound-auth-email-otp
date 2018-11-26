@@ -30,10 +30,9 @@ public class EmailOTPServiceDataHolder {
     private RealmService realmService;
 
     public static EmailOTPServiceDataHolder getInstance() {
-        if (emailOTPServiceDataHolder != null) {
-            return emailOTPServiceDataHolder;
+        if (emailOTPServiceDataHolder == null) {
+            emailOTPServiceDataHolder = new EmailOTPServiceDataHolder();
         }
-        emailOTPServiceDataHolder = new EmailOTPServiceDataHolder();
         return emailOTPServiceDataHolder;
     }
 

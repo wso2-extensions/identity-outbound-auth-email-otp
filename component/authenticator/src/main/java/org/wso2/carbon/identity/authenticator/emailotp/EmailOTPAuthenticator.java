@@ -1591,13 +1591,11 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                                 String notificationEvent, String otpCode) throws AuthenticationFailedException {
 
         String eventName = IdentityEventConstants.Event.TRIGGER_NOTIFICATION;
-
         HashMap<String, Object> properties = new HashMap<>();
         properties.put(IdentityEventConstants.EventProperty.USER_NAME, userName);
         properties.put(IdentityEventConstants.EventProperty.USER_STORE_DOMAIN, userStoreDomainName);
         properties.put(IdentityEventConstants.EventProperty.TENANT_DOMAIN, tenantDomain);
         properties.put(EmailOTPAuthenticatorConstants.CODE, otpCode);
-
         properties.put(EmailOTPAuthenticatorConstants.TEMPLATE_TYPE, notificationEvent);
         Event identityMgtEvent = new Event(eventName, properties);
         try {
