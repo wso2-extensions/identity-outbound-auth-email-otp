@@ -24,11 +24,19 @@ import org.apache.commons.logging.LogFactory;
 import org.osgi.service.component.ComponentContext;
 import org.wso2.carbon.identity.application.authentication.framework.ApplicationAuthenticator;
 import org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticator;
+import org.wso2.carbon.identity.event.services.IdentityEventService;
+import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.Hashtable;
 
 /**
  * @scr.component name="identity.application.authenticator.emailotp.component" immediate="true"
+ * @scr.reference name="EventMgtService"
+ * interface="org.wso2.carbon.identity.event.services.IdentityEventService" cardinality="1..1"
+ * policy="dynamic" bind="setIdentityEventService" unbind="unsetIdentityEventService"
+ * @scr.reference name="RealmService"
+ * interface="org.wso2.carbon.user.core.service.RealmService" cardinality="1..1"
+ * policy="dynamic" bind="setRealmService" unbind="unsetRealmService"
  */
 public class EmailOTPAuthenticatorServiceComponent {
 
@@ -52,5 +60,20 @@ public class EmailOTPAuthenticatorServiceComponent {
         if (log.isDebugEnabled()) {
             log.debug("EmailOTP authenticator is deactivated");
         }
+    }
+    protected void unsetIdentityEventService(IdentityEventService eventService) {
+        EmailOTPServiceDataHolder.getInstance().setIdentityEventService(null);
+    }
+
+    protected void setIdentityEventService(IdentityEventService eventService) {
+        EmailOTPServiceDataHolder.getInstance().setIdentityEventService(eventService);
+    }
+
+    protected void setRealmService(RealmService realmService) {
+         EmailOTPServiceDataHolder.getInstance().setRealmService(realmService);
+    }
+
+    protected void unsetRealmService(RealmService realmService) {
+        EmailOTPServiceDataHolder.getInstance().setRealmService(null);
     }
 }

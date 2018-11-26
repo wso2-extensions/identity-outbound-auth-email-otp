@@ -99,6 +99,11 @@
             <scope>test</scope>
             <version>${slf4j.api.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.identity.event</artifactId>
+            <version>${carbon.identity.event.version}</version>
+        </dependency>
     </dependencies>
     <scm>
         <connection>scm:git:https://github.com/wso2-extensions/identity-outbound-auth-email-otp.git</connection>
@@ -284,6 +289,7 @@
     </distributionManagement>
     <properties>
         <carbon.identity.version>5.0.7</carbon.identity.version>
+        <carbon.identity.event.version>5.11.256</carbon.identity.event.version>
         <commons-logging.version>4.4.3</commons-logging.version>
         <carbon.kernel.version>4.4.3</carbon.kernel.version>
         <oltu.version>1.0.0.wso2v2</oltu.version>
