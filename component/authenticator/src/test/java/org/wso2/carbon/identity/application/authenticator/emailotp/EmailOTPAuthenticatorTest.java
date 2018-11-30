@@ -218,11 +218,12 @@ public class EmailOTPAuthenticatorTest {
         authenticatorConfig.setParameterMap(parameters);
         when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
-        AuthenticatedUser authenticatedUser = AuthenticatedUser
-                .createLocalAuthenticatedUserFromSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setAuthenticatedSubjectIdentifier("admin");
+        when((AuthenticatedUser) context.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER))
+                .thenReturn(authenticatedUser);
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
-        context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER, authenticatedUser);
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
         when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
         when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(),anyString()))
@@ -244,11 +245,12 @@ public class EmailOTPAuthenticatorTest {
         authenticatorConfig.setParameterMap(parameters);
         when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
-        AuthenticatedUser authenticatedUser = AuthenticatedUser
-                .createLocalAuthenticatedUserFromSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setAuthenticatedSubjectIdentifier("admin");
+        when((AuthenticatedUser) context.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER))
+                .thenReturn(authenticatedUser);
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
-        context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER, authenticatedUser);
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
         when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
         when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(),anyString()))
@@ -272,11 +274,12 @@ public class EmailOTPAuthenticatorTest {
         authenticatorConfig.setParameterMap(parameters);
         when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
-        AuthenticatedUser authenticatedUser = AuthenticatedUser
-                .createLocalAuthenticatedUserFromSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setAuthenticatedSubjectIdentifier("admin");
+        when((AuthenticatedUser) context.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER))
+                .thenReturn(authenticatedUser);
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
-        context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER, authenticatedUser);
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
         when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
         when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(),anyString()))
@@ -307,11 +310,12 @@ public class EmailOTPAuthenticatorTest {
         authenticatorConfig.setParameterMap(parameters);
         when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
-        AuthenticatedUser authenticatedUser = AuthenticatedUser
-                .createLocalAuthenticatedUserFromSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setAuthenticatedSubjectIdentifier("admin");
+        when((AuthenticatedUser) context.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER))
+                .thenReturn(authenticatedUser);
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
-        context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER, authenticatedUser);
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
         when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
         when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(),anyString()))
@@ -381,11 +385,12 @@ public class EmailOTPAuthenticatorTest {
         parameters.put(EmailOTPAuthenticatorConstants.FEDERATED_EMAIL_ATTRIBUTE_KEY, "email");
         parameters.put(EmailOTPAuthenticatorConstants.EMAIL_API, "EmailAPI" );
         authenticatorConfig.setParameterMap(parameters);
-        AuthenticatedUser authenticatedUser = AuthenticatedUser
-                .createLocalAuthenticatedUserFromSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setAuthenticatedSubjectIdentifier("admin");
+        when((AuthenticatedUser) context.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER))
+                .thenReturn(authenticatedUser);
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
-        context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER, authenticatedUser);
         context.setAuthenticatorProperties(parameters);
         when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
