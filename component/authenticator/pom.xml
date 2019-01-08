@@ -206,13 +206,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <properties>
-        <!--Test Dependencies-->
-        <junit.version>4.12</junit.version>
-        <testng.version>6.9.10</testng.version>
-        <jacoco.version>0.7.9</jacoco.version>
-        <powermock.version>1.7.4</powermock.version>
-        <slf4j.api.version>1.7.12</slf4j.api.version>
-        <maven.surefire.plugin.version>2.18.1</maven.surefire.plugin.version>
-    </properties>
 </project>

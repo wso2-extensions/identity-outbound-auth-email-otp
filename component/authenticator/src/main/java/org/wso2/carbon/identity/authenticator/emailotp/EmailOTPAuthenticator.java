@@ -1590,14 +1590,15 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
      * @throws AuthenticationFailedException : In occasions of failing sending the email to the user.
      */
     protected void triggerEvent(String userName, String tenantDomain, String userStoreDomainName,
-                                String notificationEvent, String otpCode, String email) throws AuthenticationFailedException {
+                                String notificationEvent, String otpCode, String sendToAddress)
+            throws AuthenticationFailedException {
 
         String eventName = IdentityEventConstants.Event.TRIGGER_NOTIFICATION;
         HashMap<String, Object> properties = new HashMap<>();
         properties.put(IdentityEventConstants.EventProperty.USER_NAME, userName);
         properties.put(IdentityEventConstants.EventProperty.USER_STORE_DOMAIN, userStoreDomainName);
         properties.put(IdentityEventConstants.EventProperty.TENANT_DOMAIN, tenantDomain);
-        properties.put(EmailOTPAuthenticatorConstants.ATTRIBUTE_EMAIL_SENT_TO, email);
+        properties.put(EmailOTPAuthenticatorConstants.ATTRIBUTE_EMAIL_SENT_TO, sendToAddress);
         properties.put(EmailOTPAuthenticatorConstants.CODE, otpCode);
         properties.put(EmailOTPAuthenticatorConstants.TEMPLATE_TYPE, notificationEvent);
         Event identityMgtEvent = new Event(eventName, properties);

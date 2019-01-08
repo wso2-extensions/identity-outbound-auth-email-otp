@@ -482,7 +482,7 @@
         <testng.version>6.9.10</testng.version>
         <jacoco.version>0.7.9</jacoco.version>
         <powermock.version>1.6.5</powermock.version>
-        <slf4j.api.version>1.7.12</slf4j.api.version>
+        <slf4j.api.version>1.5.6</slf4j.api.version>
         <maven.surefire.plugin.version>2.18.1</maven.surefire.plugin.version>
     </properties>
 </project>
