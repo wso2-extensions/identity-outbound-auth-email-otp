@@ -37,6 +37,7 @@ import org.testng.annotations.ObjectFactory;
 import org.testng.annotations.Test;
 import org.wso2.carbon.extension.identity.helper.FederatedAuthenticatorUtil;
 import org.wso2.carbon.identity.application.authentication.framework.AuthenticatorFlowStatus;
+import org.wso2.carbon.identity.application.authentication.framework.LocalApplicationAuthenticator;
 import org.wso2.carbon.identity.application.authentication.framework.config.builder.FileBasedConfigurationBuilder;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.AuthenticatorConfig;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.SequenceConfig;
@@ -70,6 +71,7 @@ import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -82,7 +84,6 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.doNothing;
 import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
@@ -118,6 +119,7 @@ public class EmailOTPAuthenticatorTest {
     @Mock private Config config;
     @Mock private Properties properties;
     @Mock private Notification notification;
+    @Mock private LocalApplicationAuthenticator localApplicationAuthenticator;
 
     @BeforeMethod
     public void setUp() {
@@ -188,7 +190,7 @@ public class EmailOTPAuthenticatorTest {
         Assert.assertEquals(status, AuthenticatorFlowStatus.SUCCESS_COMPLETED);
     }
 
-    @Test(description = "Test case for process() method for the request comes with EMAIL ADDRESS and authenticated user is null.",
+    @Test(description = "Test case for process() method when authenticated user is null.",
             expectedExceptions = {AuthenticationFailedException.class})
     public void testProcessWithoutAuthenticatedUser() throws AuthenticationFailedException, LogoutFailedException {
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
@@ -196,146 +198,183 @@ public class EmailOTPAuthenticatorTest {
         parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "true");
         parameters.put(EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE, "true");
         authenticatorConfig.setParameterMap(parameters);
-        when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS))
-                .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
         context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER, null);
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
         when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
-        doNothing().when(FederatedAuthenticatorUtil.class);
-        FederatedAuthenticatorUtil.setUsernameFromFirstStep(context);
+        setStepCongigWithBasicAuthenticator(null, authenticatorConfig);
         emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
     }
 
-    @Test(description = "Test case for process() method for the request comes with EMAIL ADDRESS.")
-    public void testProcessWithEmailOTPOptional() throws AuthenticationFailedException, LogoutFailedException {
+    @Test(description = "Test case for process() method when email OTP is optional for local user")
+    public void testProcessWithEmailOTPOptional() throws AuthenticationFailedException, LogoutFailedException,
+            UserStoreException, IdentityMgtServiceException, AxisFault, IdentityMgtConfigException {
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
         Map<String, String> parameters = new HashMap<>();
         parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "false");
-        parameters.put(EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE, "false");
         authenticatorConfig.setParameterMap(parameters);
-        when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS))
-                .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
         AuthenticatedUser authenticatedUser = new AuthenticatedUser();
-        authenticatedUser.setAuthenticatedSubjectIdentifier("admin");
-        when((AuthenticatedUser) context.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER))
-                .thenReturn(authenticatedUser);
+        authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
         when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
-        when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(),anyString()))
+        when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(), anyString()))
                 .thenReturn(null);
-        getAuthenticatorName();
-        when(stepConfig.getAuthenticatedAutenticator()).thenReturn(authenticatorConfig);
-        getEmailOTPErrorPage(parameters);
-        AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
-                context);
-        Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
-    }
-
-    @Test(description = "Test case for process() method for the request comes with EMAIL ADDRESS.")
-    public void testProcessWithEmailOTPMandatory() throws AuthenticationFailedException, LogoutFailedException {
-        AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "true");
-        parameters.put(EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE, "false");
-        authenticatorConfig.setParameterMap(parameters);
-        when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS))
-                .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
-        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
-        authenticatedUser.setAuthenticatedSubjectIdentifier("admin");
-        when((AuthenticatedUser) context.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER))
-                .thenReturn(authenticatedUser);
-        context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
-        context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
-        when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
-        when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
-        when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(),anyString()))
-                .thenReturn(null);
-        getAuthenticatorName();
-        when(stepConfig.getAuthenticatedAutenticator()).thenReturn(authenticatorConfig);
-        getEmailOTPErrorPage(parameters);
-        AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
-                context);
-        Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
-    }
-
-    @Test(description = "Test case for process() method for the request comes with EMAIL ADDRESS.")
-    public void testProcessWithUserExistence() throws AuthenticationFailedException, LogoutFailedException,
-            UserStoreException {
-        AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "true");
-        parameters.put(EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE, "true");
-        parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_ENABLE_BY_USER, "true");
-        authenticatorConfig.setParameterMap(parameters);
-        when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS))
-                .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
-        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
-        authenticatedUser.setAuthenticatedSubjectIdentifier("admin");
-        when((AuthenticatedUser) context.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER))
-                .thenReturn(authenticatedUser);
-        context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
-        context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
-        when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
-        when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
-        when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(),anyString()))
-                .thenReturn(null);
-        when(stepConfig.getAuthenticatedAutenticator()).thenReturn(authenticatorConfig);
-        when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
-        getAuthenticatorName();
-        getEmailOTPErrorPage(parameters);
+        setStepCongigWithBasicAuthenticator(authenticatedUser, authenticatorConfig);
         mockUserRealm();
-        when(userRealm.getUserStoreManager()).thenReturn(userStoreManager);
-        when(userStoreManager.getUserClaimValue(EmailOTPAuthenticatorTestConstants.USER_NAME,
-                EmailOTPAuthenticatorConstants.USER_EMAILOTP_DISABLED_CLAIM_URI, null)).thenReturn("true");
-        context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
-        when(userStoreManager.isExistingUser(anyString())).thenReturn(true);
-        AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
-                context);
-        Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
-    }
-
-    @Test(description = "Test case for process() method for the request comes with EMAIL ADDRESS.")
-    public void testProcessWithEmailOTPEnabled() throws AuthenticationFailedException, LogoutFailedException,
-            UserStoreException {
-        AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "true");
-        parameters.put(EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE, "true");
-        parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_ENABLE_BY_USER, "true");
-        authenticatorConfig.setParameterMap(parameters);
-        when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS))
-                .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
-        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
-        authenticatedUser.setAuthenticatedSubjectIdentifier("admin");
-        when((AuthenticatedUser) context.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER))
-                .thenReturn(authenticatedUser);
-        context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
-        context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
-        when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
-        when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
-        when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(),anyString()))
-                .thenReturn(null);
-        when(stepConfig.getAuthenticatedAutenticator()).thenReturn(authenticatorConfig);
-        when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
-        getAuthenticatorName();
-        getEmailOTPErrorPage(parameters);
-        mockUserRealm();
-        when(userRealm.getUserStoreManager()).thenReturn(userStoreManager);
-        when(userStoreManager.getUserClaimValue(EmailOTPAuthenticatorTestConstants.USER_NAME,
-                EmailOTPAuthenticatorConstants.USER_EMAILOTP_DISABLED_CLAIM_URI, null)).thenReturn("false");
-        context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
-        when(userStoreManager.isExistingUser(anyString())).thenReturn(true);
+        when(MultitenantUtils.getTenantAwareUsername(EmailOTPAuthenticatorTestConstants.USER_NAME))
+                .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
         when(userStoreManager.getUserClaimValue(EmailOTPAuthenticatorTestConstants.USER_NAME,
                 EmailOTPAuthenticatorConstants.EMAIL_CLAIM, null))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
+        mockSendOTP();
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
+    }
+
+    @Test(description = "Test case for process() method when email OTP is mandatory for local user.")
+    public void testProcessWithEmailOTPMandatory() throws AuthenticationFailedException, LogoutFailedException,
+            UserStoreException, IdentityMgtServiceException, AxisFault, IdentityMgtConfigException {
+        AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "true");
+        authenticatorConfig.setParameterMap(parameters);
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
+        context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
+        when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
+        when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
+        when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(), anyString()))
+                .thenReturn(null);
+        setStepCongigWithBasicAuthenticator(authenticatedUser, authenticatorConfig);
+        mockUserRealm();
+        when(MultitenantUtils.getTenantAwareUsername(EmailOTPAuthenticatorTestConstants.USER_NAME))
+                .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        when(userStoreManager.getUserClaimValue(EmailOTPAuthenticatorTestConstants.USER_NAME,
+                EmailOTPAuthenticatorConstants.EMAIL_CLAIM, null))
+                .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
+        mockSendOTP();
+        AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
+                context);
+        Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
+    }
+
+    @Test(description = "Test case for process() method when email OTP is mandatory and user disabled email OTP.")
+    public void testProcessWhenEmailOTPIsMandatoryAndUserDisabledEmailOTP()
+            throws AuthenticationFailedException, LogoutFailedException,
+            UserStoreException, IdentityMgtServiceException, AxisFault, IdentityMgtConfigException {
+        AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "true");
+        parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_ENABLE_BY_USER, "true");
+        authenticatorConfig.setParameterMap(parameters);
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
+        context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
+        when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
+        when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
+        when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(), anyString()))
+                .thenReturn(null);
+        when(stepConfig.getAuthenticatedAutenticator()).thenReturn(authenticatorConfig);
+        when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
+        setStepCongigWithBasicAuthenticator(authenticatedUser, authenticatorConfig);
+        mockUserRealm();
+        when(MultitenantUtils.getTenantAwareUsername(EmailOTPAuthenticatorTestConstants.USER_NAME))
+                .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        Map<String, String> claimMap = new HashMap<>();
+        claimMap.put(EmailOTPAuthenticatorConstants.USER_EMAILOTP_DISABLED_CLAIM_URI, "true");
+        when(userStoreManager.getUserClaimValues(EmailOTPAuthenticatorTestConstants.USER_NAME,
+                new String[]{EmailOTPAuthenticatorConstants.USER_EMAILOTP_DISABLED_CLAIM_URI}, null))
+                .thenReturn(claimMap);
+        when(userStoreManager.getUserClaimValue(EmailOTPAuthenticatorTestConstants.USER_NAME,
+                EmailOTPAuthenticatorConstants.EMAIL_CLAIM, null))
+                .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
+        mockSendOTP();
+        AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
+                context);
+        Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
+    }
+
+    @Test(description = "Test case for process() method when email OTP is mandatory and user enabled email OTP.")
+    public void testProcessWhenEmailOTPIsMandatoryAndUserEnabledEmailOTP() throws AuthenticationFailedException,
+            LogoutFailedException, UserStoreException, IdentityMgtServiceException, AxisFault,
+            IdentityMgtConfigException {
+        AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "true");
+        parameters.put(EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE, "true");
+        parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_ENABLE_BY_USER, "true");
+        authenticatorConfig.setParameterMap(parameters);
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
+        context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
+        when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
+        when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
+        when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(), anyString()))
+                .thenReturn(null);
+        when(stepConfig.getAuthenticatedAutenticator()).thenReturn(authenticatorConfig);
+        when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
+        setStepCongigWithBasicAuthenticator(authenticatedUser, authenticatorConfig);
+        mockUserRealm();
+        when(MultitenantUtils.getTenantAwareUsername(EmailOTPAuthenticatorTestConstants.USER_NAME))
+                .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        Map<String, String> claimMap = new HashMap<>();
+        claimMap.put(EmailOTPAuthenticatorConstants.USER_EMAILOTP_DISABLED_CLAIM_URI, "false");
+        when(userStoreManager.getUserClaimValues(EmailOTPAuthenticatorTestConstants.USER_NAME,
+                new String[]{EmailOTPAuthenticatorConstants.USER_EMAILOTP_DISABLED_CLAIM_URI}, null))
+                .thenReturn(claimMap);
+        when(userStoreManager.getUserClaimValue(EmailOTPAuthenticatorTestConstants.USER_NAME,
+                EmailOTPAuthenticatorConstants.EMAIL_CLAIM, null))
+                .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
+        mockSendOTP();
+        AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
+                context);
+        Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
+    }
+
+    @Test(description = "Test case for process() method when email OTP is optional and user disabled email OTP.")
+    public void testProcessWhenEmailOTPIsOptionalAndUserDisabledEmailOTP() throws AuthenticationFailedException,
+            LogoutFailedException, UserStoreException {
+        AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "false");
+        parameters.put(EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE, "true");
+        parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_ENABLE_BY_USER, "true");
+        authenticatorConfig.setParameterMap(parameters);
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
+        context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
+        when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
+        when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
+        when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(), anyString()))
+                .thenReturn(null);
+        when(stepConfig.getAuthenticatedAutenticator()).thenReturn(authenticatorConfig);
+        when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
+        setStepCongigWithBasicAuthenticator(authenticatedUser, authenticatorConfig);
+        mockUserRealm();
+        when(MultitenantUtils.getTenantAwareUsername(EmailOTPAuthenticatorTestConstants.USER_NAME))
+                .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        Map<String, String> claimMap = new HashMap<>();
+        claimMap.put(EmailOTPAuthenticatorConstants.USER_EMAILOTP_DISABLED_CLAIM_URI, "true");
+        when(userStoreManager.getUserClaimValues(EmailOTPAuthenticatorTestConstants.USER_NAME,
+                new String[]{EmailOTPAuthenticatorConstants.USER_EMAILOTP_DISABLED_CLAIM_URI}, null))
+                .thenReturn(claimMap);
+        AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
+                context);
+        Assert.assertEquals(status, AuthenticatorFlowStatus.SUCCESS_COMPLETED);
     }
 
     private void mockUserRealm() throws UserStoreException {
@@ -344,6 +383,7 @@ public class EmailOTPAuthenticatorTest {
         when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_ID);
         when(IdentityTenantUtil.getRealmService()).thenReturn(realmService);
         when(realmService.getTenantUserRealm(anyInt())).thenReturn(userRealm);
+        when(userRealm.getUserStoreManager()).thenReturn(userStoreManager);
     }
 
     @Test(expectedExceptions = {AuthenticationFailedException.class})
@@ -373,9 +413,9 @@ public class EmailOTPAuthenticatorTest {
                 parameters);
     }
 
-    @Test(description = "Test case for process() method for the request comes with EMAIL ADDRESS.")
-    public void testProcessWithFederatedEmail() throws AuthenticationFailedException, LogoutFailedException, AxisFault,
-            IdentityMgtConfigException, IdentityMgtServiceException {
+    @Test(description = "Test case for process() method when email OTP is mandatory for federated user.")
+    public void testProcessWhenEmailOTPIsMandatoryWithFederatedEmail() throws AuthenticationFailedException,
+            LogoutFailedException, AxisFault, IdentityMgtConfigException, IdentityMgtServiceException {
         when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_ID);
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
@@ -383,29 +423,170 @@ public class EmailOTPAuthenticatorTest {
         parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "true");
         parameters.put(EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE, "true");
         parameters.put(EmailOTPAuthenticatorConstants.FEDERATED_EMAIL_ATTRIBUTE_KEY, "email");
-        parameters.put(EmailOTPAuthenticatorConstants.EMAIL_API, "EmailAPI" );
+        parameters.put(EmailOTPAuthenticatorConstants.EMAIL_API, "EmailAPI");
         authenticatorConfig.setParameterMap(parameters);
         AuthenticatedUser authenticatedUser = new AuthenticatedUser();
-        authenticatedUser.setAuthenticatedSubjectIdentifier("admin");
-        when((AuthenticatedUser) context.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER))
-                .thenReturn(authenticatedUser);
+        authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
         context.setAuthenticatorProperties(parameters);
-        when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS))
-                .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
         when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
-        when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(),anyString()))
+        when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(), anyString()))
                 .thenReturn(null);
-        when(stepConfig.getAuthenticatedAutenticator()).thenReturn(authenticatorConfig);
-        getAuthenticatorName();
-        getEmailOTPErrorPage(parameters);
+        setStepConfigWithFederatedAuthenticator(authenticatedUser, authenticatorConfig);
         mockFederatedEmailAttributeKey(parameters, authenticatedUser, EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
         mockSendOTP();
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
+    }
+
+    @Test(description = "Test case for process() method when email OTP is optional for federated user.")
+    public void testProcessWhenEmailOTPIsOptionalWithFederatedEmail() throws AuthenticationFailedException,
+            LogoutFailedException, AxisFault, IdentityMgtConfigException, IdentityMgtServiceException {
+        when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorConstants.SUPER_TENANT);
+        when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_ID);
+        AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "false");
+        parameters.put(EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE, "true");
+        parameters.put(EmailOTPAuthenticatorConstants.FEDERATED_EMAIL_ATTRIBUTE_KEY, "email");
+        parameters.put(EmailOTPAuthenticatorConstants.EMAIL_API, "EmailAPI");
+        authenticatorConfig.setParameterMap(parameters);
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
+        context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
+        context.setAuthenticatorProperties(parameters);
+        when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
+        when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
+        when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(), anyString()))
+                .thenReturn(null);
+        setStepConfigWithFederatedAuthenticator(authenticatedUser, authenticatorConfig);
+        mockFederatedEmailAttributeKey(parameters, authenticatedUser, EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
+        mockSendOTP();
+        AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
+                context);
+        Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
+    }
+
+    @Test(description = "Test case for process() method when email OTP is mandatory for federated user and email " +
+            "attribute is not available.", expectedExceptions = AuthenticationFailedException.class)
+    public void testProcessWhenEmailOTPIsMandatoryWithoutFederatedEmail() throws AuthenticationFailedException,
+            LogoutFailedException {
+        when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorConstants.SUPER_TENANT);
+        when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_ID);
+        AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "true");
+        parameters.put(EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE, "true");
+        parameters.put(EmailOTPAuthenticatorConstants.EMAIL_API, "EmailAPI");
+        authenticatorConfig.setParameterMap(parameters);
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
+        context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
+        context.setAuthenticatorProperties(parameters);
+        when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
+        when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
+        when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(), anyString()))
+                .thenReturn(null);
+        setStepConfigWithFederatedAuthenticator(authenticatedUser, authenticatorConfig);
+        mockFederatedEmailAttributeKey(parameters, authenticatedUser, EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
+        emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
+                context);
+    }
+
+    @Test(description = "Test case for process() method when email OTP is optional and federated email attribute is " +
+            "not available.")
+    public void testProcessWhenEmailOTPIsOptionalWithoutFederatedEmail() throws AuthenticationFailedException,
+            LogoutFailedException {
+        when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorConstants.SUPER_TENANT);
+        when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_ID);
+        AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "false");
+        parameters.put(EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE, "true");
+        parameters.put(EmailOTPAuthenticatorConstants.EMAIL_API, "EmailAPI");
+        authenticatorConfig.setParameterMap(parameters);
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
+        context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
+        context.setAuthenticatorProperties(parameters);
+        when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
+        when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
+        when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(), anyString()))
+                .thenReturn(null);
+        setStepConfigWithFederatedAuthenticator(authenticatedUser, authenticatorConfig);
+        mockFederatedEmailAttributeKey(parameters, authenticatedUser, EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
+        AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
+                context);
+        Assert.assertEquals(status, AuthenticatorFlowStatus.SUCCESS_COMPLETED);
+    }
+
+    @Test(description = "Test case for process() method when email OTP is Mandatory and send OTP to federated " +
+            "email attribute is diabled.", expectedExceptions = AuthenticationFailedException.class)
+    public void testProcessWhenEmailOTPIsMandatoryWithoutSendOTPToFederatedEmail() throws AuthenticationFailedException,
+            LogoutFailedException {
+        when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorConstants.SUPER_TENANT);
+        when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_ID);
+        AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "true");
+        parameters.put(EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE, "false");
+        parameters.put(EmailOTPAuthenticatorConstants.FEDERATED_EMAIL_ATTRIBUTE_KEY, "email");
+        parameters.put(EmailOTPAuthenticatorConstants.EMAIL_API, "EmailAPI");
+        authenticatorConfig.setParameterMap(parameters);
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
+        context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
+        context.setAuthenticatorProperties(parameters);
+        when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
+        when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
+        when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(), anyString()))
+                .thenReturn(null);
+        setStepConfigWithFederatedAuthenticator(authenticatedUser, authenticatorConfig);
+        mockFederatedEmailAttributeKey(parameters, authenticatedUser, EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
+        emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
+                context);
+    }
+
+    @Test(description = "Test case for process() method when email OTP is Optional and send OTP to federated " +
+            "email attribute is diabled.")
+    public void testProcessWhenEmailOTPIsOptionalWithoutSendOTPToFederatedEmail() throws AuthenticationFailedException,
+            LogoutFailedException {
+        when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorConstants.SUPER_TENANT);
+        when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_ID);
+        AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "false");
+        parameters.put(EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE, "false");
+        parameters.put(EmailOTPAuthenticatorConstants.FEDERATED_EMAIL_ATTRIBUTE_KEY, "email");
+        parameters.put(EmailOTPAuthenticatorConstants.EMAIL_API, "EmailAPI");
+        authenticatorConfig.setParameterMap(parameters);
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
+        context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
+        context.setAuthenticatorProperties(parameters);
+        when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
+        when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
+        when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(), anyString()))
+                .thenReturn(null);
+        setStepConfigWithFederatedAuthenticator(authenticatedUser, authenticatorConfig);
+        mockFederatedEmailAttributeKey(parameters, authenticatedUser, EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
+        AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
+                context);
+        Assert.assertEquals(status, AuthenticatorFlowStatus.SUCCESS_COMPLETED);
     }
 
     @Test
@@ -662,6 +843,76 @@ public class EmailOTPAuthenticatorTest {
         when(config.getProperty(anyString())).thenReturn("Code is : ");
         when(NotificationBuilder.createNotification("Email", "Email Template",
                 new NotificationData())).thenReturn(notification);
+    }
+
+    /**
+     * Set a step configuration to the context with local authenticator and email OTP authenticator.
+     *
+     * @param authenticatedUser {@link AuthenticatedUser} object
+     * @param authenticatorConfig {@link AuthenticatorConfig} object
+     */
+    private void setStepCongigWithBasicAuthenticator(AuthenticatedUser authenticatedUser,
+                                                     AuthenticatorConfig authenticatorConfig) {
+        Map<Integer, StepConfig> stepConfigMap = new HashMap<>();
+        StepConfig stepConfig = new StepConfig();
+        stepConfig.setAuthenticatedUser(authenticatedUser);
+        stepConfig.setSubjectAttributeStep(true);
+        stepConfig.setAuthenticatedIdP("LOCAL");
+        AuthenticatorConfig localAuthenticatorConfig = new AuthenticatorConfig();
+        localAuthenticatorConfig.setName("BasicAuthenticator");
+        when(localApplicationAuthenticator.getName()).thenReturn("BasicAuthenticator");
+        localAuthenticatorConfig.setApplicationAuthenticator(localApplicationAuthenticator);
+        stepConfig.setAuthenticatedAutenticator(localAuthenticatorConfig);
+        stepConfigMap.put(1, stepConfig);
+
+        // Email OTP authenticator step
+        StepConfig emailOTPStep = new StepConfig();
+        authenticatorConfig.setName(EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME);
+        List<AuthenticatorConfig> authenticatorList = new ArrayList<>();
+        authenticatorList.add(authenticatorConfig);
+        emailOTPStep.setAuthenticatorList(authenticatorList);
+        stepConfigMap.put(2, emailOTPStep);
+
+        SequenceConfig sequenceConfig = new SequenceConfig();
+        sequenceConfig.setStepMap(stepConfigMap);
+        context.setSequenceConfig(sequenceConfig);
+        context.setCurrentStep(2);
+    }
+
+    /**
+     * Set a step configuration to the context with federated authenticator and email OTP authenticator.
+     *
+     * @param authenticatedUser {@link AuthenticatedUser} object
+     * @param authenticatorConfig {@link AuthenticatorConfig} object
+     */
+    private void setStepConfigWithFederatedAuthenticator(AuthenticatedUser authenticatedUser,
+                                                         AuthenticatorConfig authenticatorConfig) {
+        Map<Integer, StepConfig> stepConfigMap = new HashMap<>();
+        StepConfig stepConfig = new StepConfig();
+        stepConfig.setSubjectAttributeStep(true);
+        Map<ClaimMapping, String> userClaims = new HashMap<>();
+        userClaims.put(ClaimMapping.build("email", null, null, false),
+                EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
+        authenticatedUser.setUserAttributes(userClaims);
+        authenticatedUser.setFederatedUser(true);
+        stepConfig.setAuthenticatedUser(authenticatedUser);
+        stepConfig.setAuthenticatedIdP("FEDERATED");
+        AuthenticatorConfig federatedAuthenticatorConfig = new AuthenticatorConfig();
+        stepConfig.setAuthenticatedAutenticator(federatedAuthenticatorConfig);
+        stepConfigMap.put(1, stepConfig);
+
+        // Email OTP authenticator step
+        StepConfig emailOTPStep = new StepConfig();
+        authenticatorConfig.setName(EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME);
+        List<AuthenticatorConfig> authenticatorList = new ArrayList<>();
+        authenticatorList.add(authenticatorConfig);
+        emailOTPStep.setAuthenticatorList(authenticatorList);
+        stepConfigMap.put(2, emailOTPStep);
+
+        SequenceConfig sequenceConfig = new SequenceConfig();
+        sequenceConfig.setStepMap(stepConfigMap);
+        context.setSequenceConfig(sequenceConfig);
+        context.setCurrentStep(2);
     }
 
     @ObjectFactory

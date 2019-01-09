@@ -145,13 +145,12 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             throws AuthenticationFailedException {
         try {
             boolean isEmailOTPMandatory, sendOtpToFederatedEmail;
+            String usecase;
             Object propertiesFromLocal = null;
             String email;
-            AuthenticatedUser authenticatedUser;
+            AuthenticatedUser authenticatedUser = null;
             Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
             String tenantDomain = context.getTenantDomain();
-            context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATION,
-                    EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME);
             if (!tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
                 IdentityHelperUtil.loadApplicationAuthenticationXMLFromRegistry(context, getName(), tenantDomain);
                 propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
@@ -161,58 +160,107 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                         .get(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY));
                 sendOtpToFederatedEmail = Boolean.parseBoolean(emailOTPParameters
                         .get(EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE));
+                usecase = emailOTPParameters.get(EmailOTPAuthenticatorConstants.USE_CASE);
             } else {
                 isEmailOTPMandatory = Boolean.parseBoolean(String.valueOf(context.getProperty
                         (EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY)));
                 sendOtpToFederatedEmail = Boolean.parseBoolean(String.valueOf(context.getProperty
                         (EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE)));
+                usecase = (String) context.getProperty(EmailOTPAuthenticatorConstants.USE_CASE);
             }
-            FederatedAuthenticatorUtil.setUsernameFromFirstStep(context);
-            String username = String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.USER_NAME));
-            authenticatedUser = (AuthenticatedUser) context.getProperty
-                    (EmailOTPAuthenticatorConstants.AUTHENTICATED_USER);
-            // find the authenticated user.
-            if (authenticatedUser == null) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Cannot find the authenticated user, the username : " + username + " may be null");
-                }
-                throw new AuthenticationFailedException
-                        ("Authentication failed!. Cannot find the authenticated user, the username : "
-                                + username + " may be null");
-            }
-            boolean isUserExistence = FederatedAuthenticatorUtil.isUserExistInUserStore(username);
-            String queryParams = FrameworkUtils.getQueryStringWithFrameworkContextId(
-                    context.getQueryParams(), context.getCallerSessionKey(),
-                    context.getContextIdentifier());
-            if (isEmailOTPMandatory) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Process the EmailOTP mandatory flow ");
-                }
-                processEmailOTPMandatory(context, request, response, isUserExistence, username, queryParams,
-                        emailOTPParameters, sendOtpToFederatedEmail);
-            } else if (isUserExistence && !isEmailOTPDisableForUser(username, context,
-                    emailOTPParameters)) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Process the EmailOTP optional flow, but user enable emailOTP as second step ");
-                }
-                email = getEmailValueForUsername(username, context);
-                if (StringUtils.isEmpty(email)) {
-                    if (request.getParameter(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS) == null) {
-                        redirectToEmailAddressReqPage(response, context, emailOTPParameters, queryParams, username);
-                    } else {
-                        updateEmailAddressForUsername(context, request, username);
-                        email = getEmailValueForUsername(username, context);
+
+            context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATION,
+                    EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME);
+            String queryParams = FrameworkUtils.getQueryStringWithFrameworkContextId(context.getQueryParams(),
+                    context.getCallerSessionKey(), context.getContextIdentifier());
+
+            // If 'usecase' property is not configured for email OTP authenticator, the below flow will be executed
+            // (Recommended flow)
+            if (StringUtils.isEmpty(usecase)) {
+                Map<Integer, StepConfig> stepConfigMap = context.getSequenceConfig().getStepMap();
+                Map<ClaimMapping, String> userAttributes = new HashMap<>();
+                String federatedEmailAttributeKey = null;
+                String username = null;
+                boolean isLocalUser = false;
+                // Iterate through the steps to identify from which step the user email address need to extracted
+                for (StepConfig stepConfig : stepConfigMap.values()) {
+                    authenticatedUser = stepConfig.getAuthenticatedUser();
+                    if (authenticatedUser != null && stepConfig.isSubjectAttributeStep()) {
+                        username = authenticatedUser.getUserName();
+                        if (stepConfig.getAuthenticatedIdP().equals(EmailOTPAuthenticatorConstants
+                                .LOCAL_AUTHENTICATOR)) {
+                            isLocalUser = true;
+                            break;
+                        }
+                        userAttributes = authenticatedUser.getUserAttributes();
+                        federatedEmailAttributeKey = getFederatedEmailAttributeKey(context,
+                                stepConfig.getAuthenticatedAutenticator().getName());
+                        break;
                     }
                 }
-                if (StringUtils.isNotEmpty(email)) {
-                    processEmailOTPFlow(request, response, email, username, queryParams, context);
+
+                if (username == null) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Cannot find the subject attributed step with authenticated user.");
+                    }
+                    throw new AuthenticationFailedException
+                            ("Authentication failed. Cannot find the subject attributed step with authenticated user.");
                 }
+
+                if (isLocalUser) {
+                    handleEmailOTPForLocalUser(username, authenticatedUser, context, emailOTPParameters,
+                            isEmailOTPMandatory, queryParams, request, response);
+
+                } else {
+                    handleEmailOTPForFederatedUser(sendOtpToFederatedEmail, isEmailOTPMandatory, context,
+                            userAttributes, federatedEmailAttributeKey, authenticatedUser, username, emailOTPParameters,
+                            queryParams, request, response);
+                }
+
             } else {
-                if (log.isDebugEnabled()) {
-                    log.debug("Process with the first step (basic) authenticator only");
+                // This block need to be revised and recommended to be removed
+                FederatedAuthenticatorUtil.setUsernameFromFirstStep(context);
+                String username = String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.USER_NAME));
+                authenticatedUser = (AuthenticatedUser) context.getProperty
+                        (EmailOTPAuthenticatorConstants.AUTHENTICATED_USER);
+                // find the authenticated user.
+                if (authenticatedUser == null) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Cannot find the authenticated user, the username : " + username + " may be null");
+                    }
+                    throw new AuthenticationFailedException
+                            ("Authentication failed!. Cannot find the authenticated user, the username : "
+                                    + username + " may be null");
                 }
-                processFirstStepOnly(authenticatedUser, context);
+
+                boolean isUserExistence = FederatedAuthenticatorUtil.isUserExistInUserStore(username);
+
+                if (isEmailOTPMandatory) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Process the EmailOTP mandatory flow ");
+                    }
+                    processEmailOTPMandatory(context, request, response, isUserExistence, username, queryParams,
+                            emailOTPParameters, sendOtpToFederatedEmail);
+
+                } else if (isUserExistence && !isEmailOTPDisableForUser(username, context,
+                        emailOTPParameters)) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Process the EmailOTP optional flow, but user enable emailOTP as second step ");
+                    }
+
+                    email = getEmailForLocalUser(username, context, emailOTPParameters, queryParams, request, response);
+
+                    if (StringUtils.isNotEmpty(email)) {
+                        processEmailOTPFlow(request, response, email, username, queryParams, context);
+                    }
+                } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Process with the first step (basic) authenticator only");
+                    }
+                    processFirstStepOnly(authenticatedUser, context);
+                }
             }
+
         } catch (EmailOTPException e) {
             throw new AuthenticationFailedException("Failed to get the email claim when proceed the EmailOTP flow ", e);
         } catch (UserStoreException e) {
@@ -982,6 +1030,178 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         return false;
     }
 
+    /**
+     * Email OTP handled for local users.
+     *
+     * @param username            name of the user
+     * @param authenticatedUser   {@link AuthenticatedUser} object of the authenticated user
+     * @param context             {@link AuthenticationContext} object of the authentication request
+     * @param emailOTPParameters  {@link Map} of email OTP authenticator specific parameters
+     * @param isEmailOTPMandatory boolean value to identify whether email OTP is configured as mandatory or not
+     * @param queryParams         extracted query parameters from the context
+     * @param request             {@link HttpServletRequest}
+     * @param response            {@link HttpServletResponse}
+     * @throws AuthenticationFailedException when anything failed during handling email OTP for local user.
+     */
+    private void handleEmailOTPForLocalUser(String username, AuthenticatedUser authenticatedUser,
+                                            AuthenticationContext context, Map<String, String> emailOTPParameters,
+                                            boolean isEmailOTPMandatory, String queryParams,
+                                            HttpServletRequest request, HttpServletResponse response)
+            throws AuthenticationFailedException {
+        try {
+            if (isEmailOTPDisableForUser(username, context, emailOTPParameters) && !isEmailOTPMandatory) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Email OTP authentication is skipped for the user " + username +
+                            ". Email OTP is not mandatory and disabled for the user.");
+                }
+                processFirstStepOnly(authenticatedUser, context);
+            } else {
+                String email = getEmailForLocalUser(username, context, emailOTPParameters, queryParams, request,
+                        response);
+                if (StringUtils.isNotEmpty(email)) {
+                    processEmailOTPFlow(request, response, email, username, queryParams, context);
+                }
+            }
+        } catch (AuthenticationFailedException e) {
+            throw new AuthenticationFailedException("Email OTP authentication failed for the local user " +
+                    username, e);
+        }
+    }
+
+    /**
+     * Email OTP handled for federated users.
+     *
+     * @param sendOtpToFederatedEmail    boolean value to identify whether email OTP can be send to federated email
+     * @param isEmailOTPMandatory        boolean value to identify whether email OTP is configured as mandatory or not
+     * @param context                    {@link AuthenticationContext} object of the authentication request
+     * @param userAttributes             {@link Map} with federated user attributes
+     * @param federatedEmailAttributeKey used to identify the email value of federated authenticator
+     * @param authenticatedUser          {@link AuthenticatedUser} object of the authenticated user
+     * @param username                   name of the user
+     * @param emailOTPParameters         {@link Map} of email OTP authenticator specific parameters
+     * @param queryParams                extracted query parameters from the context
+     * @param request                    {@link HttpServletRequest}
+     * @param response                   {@link HttpServletResponse}
+     * @throws AuthenticationFailedException when anything failed during handling email OTP for federated user.
+     */
+    private void handleEmailOTPForFederatedUser(boolean sendOtpToFederatedEmail, boolean isEmailOTPMandatory,
+                                                AuthenticationContext context, Map<ClaimMapping, String> userAttributes,
+                                                String federatedEmailAttributeKey, AuthenticatedUser authenticatedUser,
+                                                String username, Map<String, String> emailOTPParameters,
+                                                String queryParams, HttpServletRequest request,
+                                                HttpServletResponse response)
+            throws AuthenticationFailedException {
+        try {
+            if (sendOtpToFederatedEmail) {
+                if (StringUtils.isEmpty(federatedEmailAttributeKey)) {
+                    federatedEmailAttributeKey = getFederatedEmailAttributeKey(context, context.getSequenceConfig()
+                            .getStepMap().get(context.getCurrentStep()).getAuthenticatorList().iterator().next()
+                            .getName());
+                }
+
+                String email = getEmailForFederatedUser(userAttributes, federatedEmailAttributeKey);
+                if (StringUtils.isEmpty(email)) {
+                    if (isEmailOTPMandatory) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Email OTP authentication is failed for the federated user" + username +
+                                    ". There is no email claim to send OTP and email OTP is mandatory.");
+                        }
+                        throw new AuthenticationFailedException("Email OTP authentication is failed for the " +
+                                "federated user" + username + ". There is no email claim to send OTP and email OTP " +
+                                "is mandatory.");
+                    } else {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Email OTP authentication is skipped for the federated user " + username +
+                                    ". There is no email claim to send OTP and email OTP is not mandatory.");
+                        }
+                        processFirstStepOnly(authenticatedUser, context);
+                    }
+
+                } else {
+                    context.setProperty(EmailOTPAuthenticatorConstants.RECEIVER_EMAIL, email);
+                    processEmailOTPFlow(request, response, email, username, queryParams, context);
+                }
+
+            } else if (isEmailOTPMandatory) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Email OTP authentication is failed for federated user " + username + ". Send OTP to " +
+                            "federated email is disabled.");
+                }
+                throw new AuthenticationFailedException("Email OTP authentication is failed for federated user "
+                        + username + ". Send OTP to federated email is disabled.");
+
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("Email OTP authentication is skipped for federated user " + username + ". Send OTP to " +
+                            "federated email is not enabled.");
+                }
+                processFirstStepOnly(authenticatedUser, context);
+            }
+        } catch (AuthenticationFailedException e) {
+            throw new AuthenticationFailedException("Email OTP authentication is failed for federated user " +
+                    username, e);
+        }
+    }
+
+    /**
+     * Extract the email value for local user.
+     *
+     * @param username           name of the user
+     * @param context            {@link AuthenticationContext} object of the authentication request
+     * @param emailOTPParameters {@link Map} of email OTP authenticator specific parameters
+     * @param queryParams        extracted query parameters from the context
+     * @param request            {@link HttpServletRequest}
+     * @param response           {@link HttpServletResponse}
+     * @return the email attribute
+     * @throws AuthenticationFailedException when anything failed during extracting email of local user.
+     */
+    private String getEmailForLocalUser(String username, AuthenticationContext context,
+                                        Map<String, String> emailOTPParameters, String queryParams,
+                                        HttpServletRequest request, HttpServletResponse response)
+            throws AuthenticationFailedException {
+        String email;
+        try {
+            email = getEmailValueForUsername(username, context);
+            if (StringUtils.isEmpty(email)) {
+                String requestEmail = request.getParameter(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS);
+                if (requestEmail == null || requestEmail.trim().isEmpty()) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("email claim is not available for the user " + username);
+                    }
+                    redirectToEmailAddressReqPage(response, context, emailOTPParameters, queryParams,
+                            username);
+                } else {
+                    updateEmailAddressForUsername(context, request, username);
+                    email = getEmailValueForUsername(username, context);
+                }
+            }
+        } catch (EmailOTPException | AuthenticationFailedException e) {
+            throw new AuthenticationFailedException("Extracting email claim is failed for the local user " +
+                    username, e);
+        }
+        return email;
+    }
+
+    /**
+     * Extract the email value from federated user attributes.
+     *
+     * @param userAttributes             {@link Map} with federated user attributes
+     * @param federatedEmailAttributeKey used to identify the email value of federated authenticator
+     * @return the email attribute
+     */
+    private String getEmailForFederatedUser(Map<ClaimMapping, String> userAttributes,
+                                            String federatedEmailAttributeKey) {
+        String email = null;
+        for (Map.Entry<ClaimMapping, String> entry : userAttributes.entrySet()) {
+            String key = String.valueOf(entry.getKey().getLocalClaim().getClaimUri());
+            String value = entry.getValue();
+            if (key.equals(federatedEmailAttributeKey)) {
+                email = String.valueOf(value);
+                break;
+            }
+        }
+        return email;
+    }
 
     /**
      * Check whether Admin gives the priority to user to make the two factor authentication as optional.

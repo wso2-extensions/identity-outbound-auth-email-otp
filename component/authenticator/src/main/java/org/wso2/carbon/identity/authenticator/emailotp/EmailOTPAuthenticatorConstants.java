@@ -88,6 +88,7 @@ public class EmailOTPAuthenticatorConstants {
     public static final String SUPER_TENANT = "carbon.super";
     public static final String USER_NAME = "username";
     public static final String AUTHENTICATED_USER = "authenticatedUser";
+    public static final String LOCAL_AUTHENTICATOR = "LOCAL";
 
     public static final String IS_EMAILOTP_MANDATORY = "EMAILOTPMandatory";
     public static final String EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL = "EmailOTPAuthenticationEndpointErrorPage";
@@ -98,6 +99,7 @@ public class EmailOTPAuthenticatorConstants {
     public static final String FEDERETOR = "federator";
     public static final String SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE = "sendOTPToFederatedEmailAttribute";
     public static final String FEDERATED_EMAIL_ATTRIBUTE_KEY = "federatedEmailAttributeKey";
+    public static final String USE_CASE = "usecase";
     public static final String USER_EMAILOTP_DISABLED_CLAIM_URI = "http://wso2.org/claims/identity/emailotp_disabled";
     public static final String IS_ENABLE_EMAIL_VALUE_UPDATE = "CaptureAndUpdateEmailAddress";
     public static final String EMAIL_ADDRESS = "EMAIL_ADDRESS";
