@@ -1,6 +1,6 @@
 # EmailOTP Authenticator
  
-The Email OTP authenticator allows you to authenticate users via email services using Email APIs through WSO2 IS. 
+The Email OTP authenticator allows you to authenticate users via email services using Email APIs through WSO2 Identity Server. 
  
 ## Getting started
  - To download the authenticator and other artifacts, go to https://store.wso2.com/store/assets/isconnector/emailotp.
