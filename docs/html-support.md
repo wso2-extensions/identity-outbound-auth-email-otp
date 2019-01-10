@@ -1,9 +1,11 @@
 # Enable HTML Templates in EmailOTP
 
-Use this configurations if you need to use HTML Templates in the Emails.
-**This feature is supported from Identity Server v5.6 onwards**.
+Follow the steps below if you want to use HTML templates in emails when you use the Email OTP authenticator.
 
-1. Configure Email settings in \<IS_HOME>/repository/conf/output-event-adapters.xml file. 
+**NOTE:** The use of HTML templates is only supported from WSO2 Identity Server version 5.6.0 onwards.
+
+1. Open the \<IS_HOME>/repository/conf/output-event-adapters.xml file and configure the appropriate email settings as
+ follows. 
 ```
 <adapterConfig type="email">
     <!-- Comment mail.smtp.user and mail.smtp.password properties to support connecting SMTP servers which use trust
