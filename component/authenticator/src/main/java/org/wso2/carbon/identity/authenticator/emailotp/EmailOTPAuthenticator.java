@@ -143,6 +143,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
     protected void initiateAuthenticationRequest(HttpServletRequest request,
                                                  HttpServletResponse response, AuthenticationContext context)
             throws AuthenticationFailedException {
+
         try {
             boolean isEmailOTPMandatory, sendOtpToFederatedEmail;
             String usecase;
@@ -213,12 +214,14 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
 
                 } else {
                     handleEmailOTPForFederatedUser(sendOtpToFederatedEmail, isEmailOTPMandatory, context,
-                            userAttributes, federatedEmailAttributeKey, authenticatedUser, username, emailOTPParameters,
+                            userAttributes, federatedEmailAttributeKey, authenticatedUser, username,
                             queryParams, request, response);
                 }
 
             } else {
+                // If the attribute 'usecase' is configured, this block will be executed.
                 // This block need to be revised and recommended to be removed
+
                 FederatedAuthenticatorUtil.setUsernameFromFirstStep(context);
                 String username = String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.USER_NAME));
                 authenticatedUser = (AuthenticatedUser) context.getProperty
@@ -229,8 +232,8 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                         log.debug("Cannot find the authenticated user, the username : " + username + " may be null");
                     }
                     throw new AuthenticationFailedException
-                            ("Authentication failed!. Cannot find the authenticated user, the username : "
-                                    + username + " may be null");
+                            ("Authentication failed!. Cannot find the authenticated user, the username : " + username +
+                                    " may be null");
                 }
 
                 boolean isUserExistence = FederatedAuthenticatorUtil.isUserExistInUserStore(username);
@@ -245,7 +248,8 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                 } else if (isUserExistence && !isEmailOTPDisableForUser(username, context,
                         emailOTPParameters)) {
                     if (log.isDebugEnabled()) {
-                        log.debug("Process the EmailOTP optional flow, but user enable emailOTP as second step ");
+                        log.debug("Process the EmailOTP optional flow, because email OTP is enabled for the user " +
+                                username);
                     }
 
                     email = getEmailForLocalUser(username, context, emailOTPParameters, queryParams, request, response);
@@ -255,7 +259,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                     }
                 } else {
                     if (log.isDebugEnabled()) {
-                        log.debug("Process with the first step (basic) authenticator only");
+                        log.debug("Process with the first step (basic) authenticator only for user " + username);
                     }
                     processFirstStepOnly(authenticatedUser, context);
                 }
@@ -1048,6 +1052,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                                             boolean isEmailOTPMandatory, String queryParams,
                                             HttpServletRequest request, HttpServletResponse response)
             throws AuthenticationFailedException {
+
         try {
             if (isEmailOTPDisableForUser(username, context, emailOTPParameters) && !isEmailOTPMandatory) {
                 if (log.isDebugEnabled()) {
@@ -1060,6 +1065,11 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                         response);
                 if (StringUtils.isNotEmpty(email)) {
                     processEmailOTPFlow(request, response, email, username, queryParams, context);
+
+                } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Email attribute is not available for the user " + username);
+                    }
                 }
             }
         } catch (AuthenticationFailedException e) {
@@ -1078,7 +1088,6 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
      * @param federatedEmailAttributeKey used to identify the email value of federated authenticator
      * @param authenticatedUser          {@link AuthenticatedUser} object of the authenticated user
      * @param username                   name of the user
-     * @param emailOTPParameters         {@link Map} of email OTP authenticator specific parameters
      * @param queryParams                extracted query parameters from the context
      * @param request                    {@link HttpServletRequest}
      * @param response                   {@link HttpServletResponse}
@@ -1087,10 +1096,10 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
     private void handleEmailOTPForFederatedUser(boolean sendOtpToFederatedEmail, boolean isEmailOTPMandatory,
                                                 AuthenticationContext context, Map<ClaimMapping, String> userAttributes,
                                                 String federatedEmailAttributeKey, AuthenticatedUser authenticatedUser,
-                                                String username, Map<String, String> emailOTPParameters,
-                                                String queryParams, HttpServletRequest request,
+                                                String username, String queryParams, HttpServletRequest request,
                                                 HttpServletResponse response)
             throws AuthenticationFailedException {
+
         try {
             if (sendOtpToFederatedEmail) {
                 if (StringUtils.isEmpty(federatedEmailAttributeKey)) {
@@ -1159,6 +1168,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                                         Map<String, String> emailOTPParameters, String queryParams,
                                         HttpServletRequest request, HttpServletResponse response)
             throws AuthenticationFailedException {
+
         String email;
         try {
             email = getEmailValueForUsername(username, context);
@@ -1191,6 +1201,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
      */
     private String getEmailForFederatedUser(Map<ClaimMapping, String> userAttributes,
                                             String federatedEmailAttributeKey) {
+
         String email = null;
         for (Map.Entry<ClaimMapping, String> entry : userAttributes.entrySet()) {
             String key = String.valueOf(entry.getKey().getLocalClaim().getClaimUri());
