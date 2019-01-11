@@ -193,6 +193,7 @@ public class EmailOTPAuthenticatorTest {
     @Test(description = "Test case for process() method when authenticated user is null.",
             expectedExceptions = {AuthenticationFailedException.class})
     public void testProcessWithoutAuthenticatedUser() throws AuthenticationFailedException, LogoutFailedException {
+
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
         Map<String, String> parameters = new HashMap<>();
         parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "true");
@@ -211,6 +212,7 @@ public class EmailOTPAuthenticatorTest {
     @Test(description = "Test case for process() method when email OTP is optional for local user")
     public void testProcessWithEmailOTPOptional() throws AuthenticationFailedException, LogoutFailedException,
             UserStoreException, IdentityMgtServiceException, AxisFault, IdentityMgtConfigException {
+
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
         Map<String, String> parameters = new HashMap<>();
         parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "false");
@@ -240,6 +242,7 @@ public class EmailOTPAuthenticatorTest {
     @Test(description = "Test case for process() method when email OTP is mandatory for local user.")
     public void testProcessWithEmailOTPMandatory() throws AuthenticationFailedException, LogoutFailedException,
             UserStoreException, IdentityMgtServiceException, AxisFault, IdentityMgtConfigException {
+
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
         Map<String, String> parameters = new HashMap<>();
         parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "true");
@@ -270,6 +273,7 @@ public class EmailOTPAuthenticatorTest {
     public void testProcessWhenEmailOTPIsMandatoryAndUserDisabledEmailOTP()
             throws AuthenticationFailedException, LogoutFailedException,
             UserStoreException, IdentityMgtServiceException, AxisFault, IdentityMgtConfigException {
+
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
         Map<String, String> parameters = new HashMap<>();
         parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "true");
@@ -308,6 +312,7 @@ public class EmailOTPAuthenticatorTest {
     public void testProcessWhenEmailOTPIsMandatoryAndUserEnabledEmailOTP() throws AuthenticationFailedException,
             LogoutFailedException, UserStoreException, IdentityMgtServiceException, AxisFault,
             IdentityMgtConfigException {
+
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
         Map<String, String> parameters = new HashMap<>();
         parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "true");
@@ -346,6 +351,7 @@ public class EmailOTPAuthenticatorTest {
     @Test(description = "Test case for process() method when email OTP is optional and user disabled email OTP.")
     public void testProcessWhenEmailOTPIsOptionalAndUserDisabledEmailOTP() throws AuthenticationFailedException,
             LogoutFailedException, UserStoreException {
+
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
         Map<String, String> parameters = new HashMap<>();
         parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "false");
@@ -416,6 +422,7 @@ public class EmailOTPAuthenticatorTest {
     @Test(description = "Test case for process() method when email OTP is mandatory for federated user.")
     public void testProcessWhenEmailOTPIsMandatoryWithFederatedEmail() throws AuthenticationFailedException,
             LogoutFailedException, AxisFault, IdentityMgtConfigException, IdentityMgtServiceException {
+
         when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_ID);
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
@@ -446,6 +453,7 @@ public class EmailOTPAuthenticatorTest {
     @Test(description = "Test case for process() method when email OTP is optional for federated user.")
     public void testProcessWhenEmailOTPIsOptionalWithFederatedEmail() throws AuthenticationFailedException,
             LogoutFailedException, AxisFault, IdentityMgtConfigException, IdentityMgtServiceException {
+
         when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_ID);
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
@@ -477,6 +485,7 @@ public class EmailOTPAuthenticatorTest {
             "attribute is not available.", expectedExceptions = AuthenticationFailedException.class)
     public void testProcessWhenEmailOTPIsMandatoryWithoutFederatedEmail() throws AuthenticationFailedException,
             LogoutFailedException {
+
         when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_ID);
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
@@ -505,6 +514,7 @@ public class EmailOTPAuthenticatorTest {
             "not available.")
     public void testProcessWhenEmailOTPIsOptionalWithoutFederatedEmail() throws AuthenticationFailedException,
             LogoutFailedException {
+
         when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_ID);
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
@@ -534,6 +544,7 @@ public class EmailOTPAuthenticatorTest {
             "email attribute is diabled.", expectedExceptions = AuthenticationFailedException.class)
     public void testProcessWhenEmailOTPIsMandatoryWithoutSendOTPToFederatedEmail() throws AuthenticationFailedException,
             LogoutFailedException {
+
         when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_ID);
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
@@ -563,6 +574,7 @@ public class EmailOTPAuthenticatorTest {
             "email attribute is diabled.")
     public void testProcessWhenEmailOTPIsOptionalWithoutSendOTPToFederatedEmail() throws AuthenticationFailedException,
             LogoutFailedException {
+
         when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_ID);
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
@@ -853,6 +865,7 @@ public class EmailOTPAuthenticatorTest {
      */
     private void setStepCongigWithBasicAuthenticator(AuthenticatedUser authenticatedUser,
                                                      AuthenticatorConfig authenticatorConfig) {
+        
         Map<Integer, StepConfig> stepConfigMap = new HashMap<>();
         StepConfig stepConfig = new StepConfig();
         stepConfig.setAuthenticatedUser(authenticatedUser);
@@ -887,6 +900,7 @@ public class EmailOTPAuthenticatorTest {
      */
     private void setStepConfigWithFederatedAuthenticator(AuthenticatedUser authenticatedUser,
                                                          AuthenticatorConfig authenticatorConfig) {
+
         Map<Integer, StepConfig> stepConfigMap = new HashMap<>();
         StepConfig stepConfig = new StepConfig();
         stepConfig.setSubjectAttributeStep(true);
