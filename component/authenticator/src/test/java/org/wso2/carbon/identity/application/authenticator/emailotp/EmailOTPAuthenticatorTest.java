@@ -23,11 +23,13 @@ import org.apache.axis2.context.ConfigurationContext;
 import org.apache.axis2.context.ConfigurationContextFactory;
 import org.apache.axis2.description.TransportOutDescription;
 import org.apache.axis2.engine.AxisConfiguration;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.testng.PowerMockObjectFactory;
 import org.powermock.reflect.Whitebox;
 import org.testng.Assert;
@@ -84,12 +86,14 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.powermock.api.mockito.PowerMockito.doNothing;
 import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
-@PrepareForTest({FileBasedConfigurationBuilder.class, FederatedAuthenticatorUtil.class, FrameworkUtils.class,
-        MultitenantUtils.class, IdentityTenantUtil.class, ConfigurationContextFactory.class, ConfigBuilder.class,
-        NotificationBuilder.class})
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({EmailOTPAuthenticator.class, FileBasedConfigurationBuilder.class, FederatedAuthenticatorUtil.class,
+        FrameworkUtils.class, MultitenantUtils.class, IdentityTenantUtil.class, ConfigurationContextFactory.class,
+        ConfigBuilder.class, NotificationBuilder.class})
 @PowerMockIgnore({"javax.crypto.*" })
 public class EmailOTPAuthenticatorTest {
     private EmailOTPAuthenticator emailOTPAuthenticator;
@@ -210,8 +214,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test(description = "Test case for process() method when email OTP is optional for local user")
-    public void testProcessWithEmailOTPOptional() throws AuthenticationFailedException, LogoutFailedException,
-            UserStoreException, IdentityMgtServiceException, AxisFault, IdentityMgtConfigException {
+    public void testProcessWithEmailOTPOptional() throws Exception {
 
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
         Map<String, String> parameters = new HashMap<>();
@@ -233,15 +236,15 @@ public class EmailOTPAuthenticatorTest {
         when(userStoreManager.getUserClaimValue(EmailOTPAuthenticatorTestConstants.USER_NAME,
                 EmailOTPAuthenticatorConstants.EMAIL_CLAIM, null))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
-        mockSendOTP();
+        emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
+        doNothing().when(emailOTPAuthenticator, "sendOTP",anyString(),anyString(),anyString());
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
     }
 
     @Test(description = "Test case for process() method when email OTP is mandatory for local user.")
-    public void testProcessWithEmailOTPMandatory() throws AuthenticationFailedException, LogoutFailedException,
-            UserStoreException, IdentityMgtServiceException, AxisFault, IdentityMgtConfigException {
+    public void testProcessWithEmailOTPMandatory() throws Exception {
 
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
         Map<String, String> parameters = new HashMap<>();
@@ -263,7 +266,8 @@ public class EmailOTPAuthenticatorTest {
         when(userStoreManager.getUserClaimValue(EmailOTPAuthenticatorTestConstants.USER_NAME,
                 EmailOTPAuthenticatorConstants.EMAIL_CLAIM, null))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
-        mockSendOTP();
+        emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
+        doNothing().when(emailOTPAuthenticator, "sendOTP",anyString(),anyString(),anyString());
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
@@ -271,8 +275,7 @@ public class EmailOTPAuthenticatorTest {
 
     @Test(description = "Test case for process() method when email OTP is mandatory and user disabled email OTP.")
     public void testProcessWhenEmailOTPIsMandatoryAndUserDisabledEmailOTP()
-            throws AuthenticationFailedException, LogoutFailedException,
-            UserStoreException, IdentityMgtServiceException, AxisFault, IdentityMgtConfigException {
+            throws Exception {
 
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
         Map<String, String> parameters = new HashMap<>();
@@ -302,16 +305,15 @@ public class EmailOTPAuthenticatorTest {
         when(userStoreManager.getUserClaimValue(EmailOTPAuthenticatorTestConstants.USER_NAME,
                 EmailOTPAuthenticatorConstants.EMAIL_CLAIM, null))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
-        mockSendOTP();
+        emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
+        doNothing().when(emailOTPAuthenticator, "sendOTP",anyString(),anyString(),anyString());
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
     }
 
     @Test(description = "Test case for process() method when email OTP is mandatory and user enabled email OTP.")
-    public void testProcessWhenEmailOTPIsMandatoryAndUserEnabledEmailOTP() throws AuthenticationFailedException,
-            LogoutFailedException, UserStoreException, IdentityMgtServiceException, AxisFault,
-            IdentityMgtConfigException {
+    public void testProcessWhenEmailOTPIsMandatoryAndUserEnabledEmailOTP() throws Exception {
 
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
         Map<String, String> parameters = new HashMap<>();
@@ -342,7 +344,8 @@ public class EmailOTPAuthenticatorTest {
         when(userStoreManager.getUserClaimValue(EmailOTPAuthenticatorTestConstants.USER_NAME,
                 EmailOTPAuthenticatorConstants.EMAIL_CLAIM, null))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
-        mockSendOTP();
+        emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
+        doNothing().when(emailOTPAuthenticator, "sendOTP",anyString(),anyString(),anyString());
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
@@ -420,8 +423,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test(description = "Test case for process() method when email OTP is mandatory for federated user.")
-    public void testProcessWhenEmailOTPIsMandatoryWithFederatedEmail() throws AuthenticationFailedException,
-            LogoutFailedException, AxisFault, IdentityMgtConfigException, IdentityMgtServiceException {
+    public void testProcessWhenEmailOTPIsMandatoryWithFederatedEmail() throws Exception {
 
         when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_ID);
@@ -444,15 +446,15 @@ public class EmailOTPAuthenticatorTest {
                 .thenReturn(null);
         setStepConfigWithFederatedAuthenticator(authenticatedUser, authenticatorConfig);
         mockFederatedEmailAttributeKey(parameters, authenticatedUser, EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
-        mockSendOTP();
+        emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
+        doNothing().when(emailOTPAuthenticator, "sendOTP",anyString(),anyString(),anyString());
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
     }
 
     @Test(description = "Test case for process() method when email OTP is optional for federated user.")
-    public void testProcessWhenEmailOTPIsOptionalWithFederatedEmail() throws AuthenticationFailedException,
-            LogoutFailedException, AxisFault, IdentityMgtConfigException, IdentityMgtServiceException {
+    public void testProcessWhenEmailOTPIsOptionalWithFederatedEmail() throws Exception {
 
         when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_ID);
@@ -475,7 +477,8 @@ public class EmailOTPAuthenticatorTest {
                 .thenReturn(null);
         setStepConfigWithFederatedAuthenticator(authenticatedUser, authenticatorConfig);
         mockFederatedEmailAttributeKey(parameters, authenticatedUser, EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
-        mockSendOTP();
+        emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
+        doNothing().when(emailOTPAuthenticator, "sendOTP",anyString(),anyString(),anyString());
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
