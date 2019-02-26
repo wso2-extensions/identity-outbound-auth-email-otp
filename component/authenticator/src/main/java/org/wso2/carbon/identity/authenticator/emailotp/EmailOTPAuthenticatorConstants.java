@@ -106,4 +106,8 @@ public class EmailOTPAuthenticatorConstants {
 
     public static final String SCREEN_VALUE = "&screenValue=";
     public static final String SHOW_EMAIL_ADDRESS_IN_UI = "showEmailAddressInUI";
+
+    public static final String OTP_GENERATED_TIME="otpGenTime";
+    public static final String OTP_EXPIRE_TIME_IN_MILIS="otpExpirationTime" ;
+    public static final String OTP_EXPIRE_TIME_DEFAULT="300000";
 }
