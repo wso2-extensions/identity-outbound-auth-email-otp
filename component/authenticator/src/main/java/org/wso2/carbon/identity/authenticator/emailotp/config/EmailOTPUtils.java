@@ -56,10 +56,14 @@ public class EmailOTPUtils {
         return configValue;
     }
 
+    /**
+     * Calls the getConfiguration function
+     *
+     * @param context    Authentication Context
+     * @return Config value.
+     */
     public static String getExpirationTimeAttribute(AuthenticationContext context) {
 
         return getConfiguration(context, EmailOTPAuthenticatorConstants.OTP_EXPIRE_TIME_IN_MILIS);
     }
-
-
 }
