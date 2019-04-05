@@ -325,8 +325,8 @@
                 <version>2.3.1</version>
                 <configuration>
                     <encoding>UTF-8</encoding>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
         </plugins>
@@ -461,8 +461,8 @@
         </snapshotRepository>
     </distributionManagement>
     <properties>
-        <carbon.identity.version>5.12.153</carbon.identity.version>
-        <carbon.identity.event.version>5.12.153</carbon.identity.event.version>
+        <carbon.identity.version>5.12.335</carbon.identity.version>
+        <carbon.identity.event.version>5.12.335</carbon.identity.event.version>
         <commons-logging.version>4.4.3</commons-logging.version>
         <carbon.kernel.version>4.4.35</carbon.kernel.version>
         <oltu.version>1.0.0.wso2v2</oltu.version>
@@ -483,8 +483,8 @@
         <rampart.wso2.osgi.version.range>[1.6.1,2.0.0)</rampart.wso2.osgi.version.range>
         <rampart.mar.version>1.6.1.wso2v17</rampart.mar.version>
         <org.wso2.carbon.identity.association.account>5.1.5</org.wso2.carbon.identity.association.account>
-        <org.wso2.carbon.identity.outbound.auth.oidc>5.1.17</org.wso2.carbon.identity.outbound.auth.oidc>
-        <identity.outbound.auth.oidc.import.version.range>[5.1.17,6.0.0)</identity.outbound.auth.oidc.import.version.range>
+        <org.wso2.carbon.identity.outbound.auth.oidc>5.1.20</org.wso2.carbon.identity.outbound.auth.oidc>
+        <identity.outbound.auth.oidc.import.version.range>[5.1.20,6.0.0)</identity.outbound.auth.oidc.import.version.range>
         <!--Test Dependencies-->
         <junit.version>4.12</junit.version>
         <testng.version>6.9.10</testng.version>
