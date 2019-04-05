@@ -150,7 +150,7 @@ public class EmailOTPAuthenticatorTest {
         when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.RESEND)).thenReturn(null);
         when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.CODE)).thenReturn(null);
         when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS)).thenReturn(null);
-        Assert.assertEquals(emailOTPAuthenticator.canHandle(httpServletRequest), false);
+        Assert.assertFalse(emailOTPAuthenticator.canHandle(httpServletRequest));
     }
 
     @Test(description = "Test case for getContextIdentifier() method.")
@@ -175,14 +175,13 @@ public class EmailOTPAuthenticatorTest {
 
     @Test(description = "Test case for retryAuthenticationEnabled() method.")
     public void testRetryAuthenticationEnabled() throws Exception {
-        Assert.assertEquals(Whitebox.invokeMethod(emailOTPAuthenticator, "retryAuthenticationEnabled"),
-                true);
+        Assert.assertTrue(Whitebox.invokeMethod(emailOTPAuthenticator, "retryAuthenticationEnabled"));
     }
 
     @Test(description = "Test case for retryAuthenticationEnabled() method.")
     public void testRequiredIDToken() throws Exception {
-        Assert.assertEquals(Whitebox.invokeMethod(emailOTPAuthenticator, "requiredIDToken",
-                new HashMap<String, String>()), false);
+        Assert.assertFalse(Whitebox.invokeMethod(emailOTPAuthenticator, "requiredIDToken",
+                new HashMap<String, String>()));
     }
 
     @Test(description = "Test case for successful logout request.")
@@ -718,16 +717,16 @@ public class EmailOTPAuthenticatorTest {
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         Map<String, String> parametersMap = new HashMap<>();
         parametersMap.put(EmailOTPAuthenticatorConstants.SHOW_EMAIL_ADDRESS_IN_UI, "true");
-        Assert.assertEquals(Whitebox.invokeMethod(emailOTPAuthenticator, "isShowEmailAddressInUIEnable",
-                context, parametersMap), true);
+        Assert.assertTrue(Whitebox.invokeMethod(emailOTPAuthenticator, "isShowEmailAddressInUIEnable",
+                context, parametersMap));
     }
 
     @Test
     public void testIsShowEmailAddressInUIEnableForTenant() throws Exception {
         context.setTenantDomain(EmailOTPAuthenticatorTestConstants.TENANT_DOMAIN);
         context.setProperty(EmailOTPAuthenticatorConstants.SHOW_EMAIL_ADDRESS_IN_UI, "false");
-        Assert.assertEquals(Whitebox.invokeMethod(emailOTPAuthenticator, "isShowEmailAddressInUIEnable",
-                context, null), false);
+        Assert.assertFalse(Whitebox.invokeMethod(emailOTPAuthenticator, "isShowEmailAddressInUIEnable",
+                context, null));
     }
 
     @Test
@@ -735,16 +734,16 @@ public class EmailOTPAuthenticatorTest {
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         Map<String, String> parametersMap = new HashMap<>();
         parametersMap.put(EmailOTPAuthenticatorConstants.IS_ENABLE_EMAIL_VALUE_UPDATE, "true");
-        Assert.assertEquals(Whitebox.invokeMethod(emailOTPAuthenticator, "isEmailAddressUpdateEnable",
-                context, parametersMap), true);
+        Assert.assertTrue(Whitebox.invokeMethod(emailOTPAuthenticator, "isEmailAddressUpdateEnable",
+                context, parametersMap));
     }
 
     @Test
     public void testisEmailAddressUpdateEnableForTenant() throws Exception {
         context.setTenantDomain(EmailOTPAuthenticatorTestConstants.TENANT_DOMAIN);
         context.setProperty(EmailOTPAuthenticatorConstants.IS_ENABLE_EMAIL_VALUE_UPDATE, "false");
-        Assert.assertEquals(Whitebox.invokeMethod(emailOTPAuthenticator, "isEmailAddressUpdateEnable",
-                context, null), false);
+        Assert.assertFalse(Whitebox.invokeMethod(emailOTPAuthenticator, "isEmailAddressUpdateEnable",
+                context, null));
     }
 
     @Test(expectedExceptions = {AuthenticationFailedException.class})
