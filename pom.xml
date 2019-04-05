@@ -484,6 +484,7 @@
         <rampart.mar.version>1.6.1.wso2v17</rampart.mar.version>
         <org.wso2.carbon.identity.association.account>5.1.5</org.wso2.carbon.identity.association.account>
         <org.wso2.carbon.identity.outbound.auth.oidc>5.1.17</org.wso2.carbon.identity.outbound.auth.oidc>
+        <identity.outbound.auth.oidc.import.version.range>[5.1.17,6.0.0)</identity.outbound.auth.oidc.import.version.range>
         <!--Test Dependencies-->
         <junit.version>4.12</junit.version>
         <testng.version>6.9.10</testng.version>
