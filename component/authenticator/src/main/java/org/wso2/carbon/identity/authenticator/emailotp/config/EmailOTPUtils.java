@@ -48,6 +48,7 @@ public class EmailOTPUtils {
         return Collections.emptyMap();
 
     }
+
     /**
      * Get the corresponding configuration from Email parameters.
      *
@@ -64,19 +65,8 @@ public class EmailOTPUtils {
             configValue = String.valueOf(context.getProperty(configName));
         }
         if (log.isDebugEnabled()) {
-            log.debug("Config value for key " + configName + configValue);
+            log.debug("Config value for key " + configName + ": " + configValue);
         }
         return configValue;
-    }
-
-    /**
-     * Calls the getConfiguration function.
-     *
-     * @param context    Authentication Context
-     * @return Config value.
-     */
-    public static String getExpirationTimeAttribute(AuthenticationContext context) {
-
-        return getConfiguration(context, EmailOTPAuthenticatorConstants.TOKEN_EXPIRE_TIME_IN_MILIS);
     }
 }

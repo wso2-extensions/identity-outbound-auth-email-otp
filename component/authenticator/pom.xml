@@ -168,7 +168,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
         <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.event</artifactId>
@@ -224,9 +223,5 @@
             <version>${powermock.version}</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
-
-
-
 </project>

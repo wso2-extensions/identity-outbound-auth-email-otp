@@ -33,8 +33,6 @@
             <artifactId>org.wso2.carbon.extension.identity.authenticator.emailotp.connector</artifactId>
             <version>${project.version}</version>
         </dependency>
-
-
     </dependencies>
     <build>
         <plugins>

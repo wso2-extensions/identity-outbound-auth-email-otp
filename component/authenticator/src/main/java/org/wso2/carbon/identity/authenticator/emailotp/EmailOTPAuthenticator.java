@@ -295,42 +295,25 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         String contextToken = (String) context.getProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN);
         long generatedTime = (long) context.getProperty(EmailOTPAuthenticatorConstants.OTP_GENERATED_TIME);
         boolean isExpired = isExpired(generatedTime, context);
-        if (userToken.equals(contextToken) && isExpired) {
+        if (userToken.equals(contextToken) && !isExpired) {
             context.setProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN, "");
             context.setProperty(EmailOTPAuthenticatorConstants.EMAILOTP_ACCESS_TOKEN, "");
             String emailFromProfile = context.getProperty(EmailOTPAuthenticatorConstants.RECEIVER_EMAIL).toString();
-            context.setSubject(AuthenticatedUser.createFederateAuthenticatedUserFromSubjectIdentifier(emailFromProfile));
+            context.setSubject(
+                    AuthenticatedUser.createFederateAuthenticatedUserFromSubjectIdentifier(emailFromProfile));
         } else {
             if (isExpired) {
                 if (log.isDebugEnabled()) {
-                    log.debug("Given otp code is  expired ");
+                    log.debug("Given otp code is  expired.");
                 }
                 throw new AuthenticationFailedException("Code expired");
             } else {
                 if (log.isDebugEnabled()) {
-                    log.debug("Given otp code is expired ");
+                    log.debug("Given otp code is mismatch");
                 }
                 throw new AuthenticationFailedException("Code mismatch");
-
             }
-
         }
-    }
-
-    /**
-     * Checks whether otp is Expired or not.
-     */
-    protected boolean isExpired(long generatedTime, AuthenticationContext context) {
-        Long expireTime= new  Long(getExpireTime(context));
-        if (System.currentTimeMillis() <= generatedTime+ expireTime) {
-            return true;
-
-        } else {
-            return false;
-
-        }
-
-
     }
 
     /**
@@ -351,7 +334,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             // Check whether the authenticator is configured to use the event handler implementation.
             if (emailOTPParameters.get(EmailOTPAuthenticatorConstants.USE_EVENT_HANDLER_BASED_EMAIL_SENDER) != null
                     && Boolean.parseBoolean(emailOTPParameters.get(
-                    EmailOTPAuthenticatorConstants.USE_EVENT_HANDLER_BASED_EMAIL_SENDER))) {
+                            EmailOTPAuthenticatorConstants.USE_EVENT_HANDLER_BASED_EMAIL_SENDER))) {
                 AuthenticatedUser authenticatedUser = (AuthenticatedUser) context.getProperty
                         (EmailOTPAuthenticatorConstants.AUTHENTICATED_USER);
                 triggerEvent(authenticatedUser.getUserName(), authenticatedUser.getTenantDomain(),
@@ -620,8 +603,8 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
      * @throws AuthenticationFailedException
      */
     private void proceedOTPWithFederatedEmailAddress(AuthenticationContext context, HttpServletRequest request,
-                                                     HttpServletResponse response, String username, String queryParams,
-                                                     boolean sendOtpToFederatedEmail, Map<String, String> emailOTPParameters)
+                                            HttpServletResponse response, String username, String queryParams,
+                                            boolean sendOtpToFederatedEmail, Map<String, String> emailOTPParameters)
             throws AuthenticationFailedException {
         try {
             String federatedEmailAttributeKey;
@@ -831,7 +814,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                     if (payload.startsWith("{")) {
                         connection.setRequestProperty(EmailOTPAuthenticatorConstants.HTTP_CONTENT_TYPE
                                 , payload.startsWith("{") ? EmailOTPAuthenticatorConstants.HTTP_CONTENT_TYPE_JSON
-                                        : EmailOTPAuthenticatorConstants.HTTP_CONTENT_TYPE_XML);
+                                : EmailOTPAuthenticatorConstants.HTTP_CONTENT_TYPE_XML);
                     }
                 } else {
                     connection.setRequestProperty(EmailOTPAuthenticatorConstants.HTTP_CONTENT_TYPE
@@ -1252,7 +1235,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
      * @return true or false
      */
     private boolean isAdminMakeUserToEnableOrDisableEmailOTP(AuthenticationContext context,
-                                                             Map<String, String> parametersMap) {
+                                                                   Map<String, String> parametersMap) {
         boolean isAdminMakeUserToEnableEmailOTP = false;
         String tenantDomain = context.getTenantDomain();
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
@@ -1367,7 +1350,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
      * Get MailingEndpoint for Gmail APIs
      */
     private String getMailingEndpoint(AuthenticationContext context, Map<String, String> parametersMap,
-                                      String api) {
+                                            String api) {
         String mailingEndpoint = null;
         String tenantDomain = context.getTenantDomain();
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
@@ -1385,7 +1368,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
      * Get required payload for Gmail APIs
      */
     private String getPreparePayload(AuthenticationContext context, Map<String, String> parametersMap,
-                                     String api) {
+                                           String api) {
         String payload = null;
         String tenantDomain = context.getTenantDomain();
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
@@ -1402,7 +1385,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
      * Get required FormData for Gmail APIs
      */
     private String getPrepareFormData(AuthenticationContext context, Map<String, String> parametersMap,
-                                      String api) {
+                                            String api) {
         String prepareFormData = null;
         String tenantDomain = context.getTenantDomain();
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
@@ -1419,7 +1402,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
      * Get required URL params for Gmail APIs
      */
     private String getPrepareURLParams(AuthenticationContext context, Map<String, String> parametersMap,
-                                       String api) {
+                                             String api) {
         String prepareUrlParams = null;
         String tenantDomain = context.getTenantDomain();
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
@@ -1469,7 +1452,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
      * Get AccessToken endpoint for Gmail APIs
      */
     private String getAccessTokenEndpoint(AuthenticationContext context, Map<String, String> parametersMap,
-                                          String api) {
+                                                String api) {
         String tokenEndpoint = null;
         String tenantDomain = context.getTenantDomain();
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
@@ -1618,7 +1601,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             if (StringUtils.isNotEmpty(endpoint) && StringUtils.isNotEmpty(tokenType)) {
                 if (endpoint != null) {
                     response = sendRESTCall(endpoint.replace(EmailOTPAuthenticatorConstants.ADMIN_EMAIL
-                            , authenticatorProperties.get(EmailOTPAuthenticatorConstants.EMAILOTP_EMAIL))
+                                    , authenticatorProperties.get(EmailOTPAuthenticatorConstants.EMAILOTP_EMAIL))
                             , StringUtils.isNotEmpty(urlParams) ? urlParams : ""
                             , tokenType + " " + (isAccessTokenRequired(context, emailOTPParameters, authenticatorProperties)
                                     ? authenticatorProperties.get(EmailOTPAuthenticatorConstants.EMAILOTP_ACCESS_TOKEN) : apiKey),
@@ -1838,10 +1821,9 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         return configProperties;
     }
 
-
     /**
      * @deprecated this method and replaced by triggerEvent(String userName, String tenantDomain,
-    String userStoreDomainName, String notificationEvent, String otpCode, String sendToAddress).
+        String userStoreDomainName, String notificationEvent, String otpCode, String sendToAddress).
      * Method to Trigger the Email otp event.
      *
      * @param userName : Identity user name
@@ -1907,12 +1889,12 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
     /**
      * Method to GET Expire Time configuration from EmailOTPUTils.
      *
-     * @param context : the AuthenticationContext
-     * @throws AuthenticationFailedException : In occasions of failing sending the email to the user.
+     * @param context :  AuthenticationContext
      */
     private String getExpireTime(AuthenticationContext context) {
 
-        String expireTime = EmailOTPUtils.getExpirationTimeAttribute(context);
+        String expireTime = EmailOTPUtils
+                .getConfiguration(context, EmailOTPAuthenticatorConstants.TOKEN_EXPIRE_TIME_IN_MILIS);
         if (StringUtils.isEmpty(expireTime)) {
             expireTime = EmailOTPAuthenticatorConstants.OTP_EXPIRE_TIME_DEFAULT;
             if (log.isDebugEnabled()) {
@@ -1920,5 +1902,32 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             }
         }
         return expireTime;
+    }
+
+    /**
+     * Checks whether otp is Expired or not.
+     *
+     * @param generatedTime : Email OTP generated time
+     * @param context       : the Authentication Context
+     */
+    protected boolean isExpired(long generatedTime, AuthenticationContext context)
+            throws AuthenticationFailedException {
+
+        Long expireTime;
+        try {
+            expireTime = new Long(getExpireTime(context));
+        } catch (NumberFormatException e) {
+            throw new AuthenticationFailedException("Invalid Email OTP expiration time configured.");
+        }
+        if (expireTime == -1) {
+            if (log.isDebugEnabled()) {
+                log.debug("Email OTP configured not to expire");
+            }
+            return false;
+        } else if (System.currentTimeMillis() < generatedTime + expireTime) {
+            return false;
+        } else {
+            return true;
+        }
     }
 }
