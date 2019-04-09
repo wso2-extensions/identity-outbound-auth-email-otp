@@ -107,7 +107,9 @@ If you need to use HTML Templates in emails, skip this and check [Using HTML Tem
    7. Start WSO2 IS.
 
 ### Configure the Email OTP provider
+Note:
 
+    If you have already enabled the SMTP transport sender to send the OTP, you would not have to configure Gmail APIs.So you can skip the following steps.
 You can send the One Time Password (OTP) using Gmail APIs or using SendGrid. Follow the steps given below to configure Gmail APIs as the mechanisam to send the OTP.
 
    1. Create a Google account at [https://gmail.com](https://gmail.com).
