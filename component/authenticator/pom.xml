@@ -63,15 +63,15 @@
                             org.wso2.carbon.identity.application.authentication.framework.*,
                             javax.servlet,
                             javax.servlet.http,
+                            org.wso2.carbon.extension.identity.helper.*;
+                            version="${identity.extension.utils.import.version.range}",
                             org.apache.oltu.oauth2.*; version="${oltu.package.import.version.range}",
                             org.wso2.carbon.identity.application.authenticator.oidc; version="${identity.outbound.auth.oidc.import.version.range}",
                             *;resolution:=optional
                         </Import-Package>
                         <Export-Package>
                             !org.wso2.carbon.identity.authenticator.emailotp.internal,
-                            org.wso2.carbon.identity.authenticator.emailotp.*,
-                            org.wso2.carbon.extension.identity.helper.*;
-                            version="${identity.extension.utils}",
+                            org.wso2.carbon.identity.authenticator.emailotp.*
                         </Export-Package>
                     </instructions>
                 </configuration>
