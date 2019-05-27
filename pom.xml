@@ -477,7 +477,9 @@
         <org.wso2.securevault.version>1.0.0-wso2v2</org.wso2.securevault.version>
         <commons-lang.wso2.version>2.6.0.wso2v1</commons-lang.wso2.version>
         <encoder.wso2.version>1.2.0.wso2v1</encoder.wso2.version>
-        <identity.extension.utils>1.0.4</identity.extension.utils>
+        <identity.extension.utils>1.0.8</identity.extension.utils>
+        <identity.extension.utils.import.version.range>[1.0.8,2.0.0)
+        </identity.extension.utils.import.version.range>
         <log4j.version>1.2.13</log4j.version>
         <rampart.wso2.version>1.6.1.wso2v17</rampart.wso2.version>
         <rampart.wso2.osgi.version.range>[1.6.1,2.0.0)</rampart.wso2.osgi.version.range>
