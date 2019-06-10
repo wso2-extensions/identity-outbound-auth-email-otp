@@ -329,7 +329,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                 triggerEvent(authenticatedUser.getUserName(), authenticatedUser.getTenantDomain(),
                         authenticatedUser.getUserStoreDomain(), EmailOTPAuthenticatorConstants.EVENT_NAME, myToken, email);
             } else {
-                sendOTP(username, myToken, email);
+                sendOTP(username, myToken, email, context);
             }
         } else if (StringUtils.isNotEmpty(email)) {
             authenticatorProperties = getAuthenticatorPropertiesWithTokenResponse(context, emailOTPParameters,
@@ -1668,7 +1668,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
      * @param email the email address to send otp
      * @throws AuthenticationFailedException
      */
-    private void sendOTP(String username, String otp, String email) throws AuthenticationFailedException {
+    private void sendOTP(String username, String otp, String email, AuthenticationContext context) throws AuthenticationFailedException {
         System.setProperty(EmailOTPAuthenticatorConstants.AXIS2, EmailOTPAuthenticatorConstants.AXIS2_FILE);
         try {
             ConfigurationContext configurationContext =
@@ -1694,6 +1694,8 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                             + username, e);
                 }
                 emailNotificationData.setTagData(EmailOTPAuthenticatorConstants.CODE, otp);
+                emailNotificationData.setTagData(EmailOTPAuthenticatorConstants.SERVICE_PROVIDER_NAME, context.getServiceProviderName());
+                emailNotificationData.setTagData(EmailOTPAuthenticatorConstants.USER_NAME, username);
                 emailNotificationData.setSendTo(email);
                 if (config.getProperties().containsKey(EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME)) {
                     emailTemplate = config.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME);
