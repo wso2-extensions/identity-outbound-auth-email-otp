@@ -23,4 +23,5 @@ public class EmailOTPAuthenticatorTestConstants {
     public static String USER_NAME = "admin";
     public static String TENANT_DOMAIN = "wso2.org";
     public static int TENANT_ID = -1234;
+    public static String IP_ADDRESS = "172.16.254.1";
 }
