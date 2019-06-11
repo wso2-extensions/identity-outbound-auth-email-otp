@@ -48,6 +48,7 @@ import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.authenticator.emailotp.exception.EmailOTPException;
 import org.wso2.carbon.identity.authenticator.emailotp.internal.EmailOTPServiceDataHolder;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.IdentityEventConstants;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
@@ -318,7 +319,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
      */
     private void checkEmailOTPBehaviour(AuthenticationContext context, Map<String, String> emailOTPParameters,
                                         Map<String, String> authenticatorProperties, String email, String username,
-                                        String myToken) throws AuthenticationFailedException {
+                                        String myToken, String ipAddress) throws AuthenticationFailedException {
         if (isSMTP(authenticatorProperties, emailOTPParameters, context)) {
             // Check whether the authenticator is configured to use the event handler implementation.
             if (emailOTPParameters.get(EmailOTPAuthenticatorConstants.USE_EVENT_HANDLER_BASED_EMAIL_SENDER) != null
@@ -329,7 +330,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                 triggerEvent(authenticatedUser.getUserName(), authenticatedUser.getTenantDomain(),
                         authenticatedUser.getUserStoreDomain(), EmailOTPAuthenticatorConstants.EVENT_NAME, myToken, email);
             } else {
-                sendOTP(username, myToken, email, context);
+                sendOTP(username, myToken, email, context, ipAddress);
             }
         } else if (StringUtils.isNotEmpty(email)) {
             authenticatorProperties = getAuthenticatorPropertiesWithTokenResponse(context, emailOTPParameters,
@@ -722,11 +723,12 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                 String secret = OneTimePassword.getRandomNumber(EmailOTPAuthenticatorConstants.SECRET_KEY_LENGTH);
                 String myToken = token.generateToken(secret, "" + EmailOTPAuthenticatorConstants.NUMBER_BASE
                         , EmailOTPAuthenticatorConstants.NUMBER_DIGIT);
+                String ipAddress = IdentityUtil.getClientIpAddress(request);
                 context.setProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN, myToken);
                 if (authenticatorProperties != null) {
                     if (StringUtils.isNotEmpty(myToken)) {
                         checkEmailOTPBehaviour(context, emailOTPParameters, authenticatorProperties, email, username,
-                                myToken);
+                                myToken, ipAddress);
                     }
                 } else {
                     throw new AuthenticationFailedException(
@@ -1668,7 +1670,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
      * @param email the email address to send otp
      * @throws AuthenticationFailedException
      */
-    private void sendOTP(String username, String otp, String email, AuthenticationContext context) throws AuthenticationFailedException {
+    private void sendOTP(String username, String otp, String email, AuthenticationContext context, String ipAddress) throws AuthenticationFailedException {
         System.setProperty(EmailOTPAuthenticatorConstants.AXIS2, EmailOTPAuthenticatorConstants.AXIS2_FILE);
         try {
             ConfigurationContext configurationContext =
@@ -1696,6 +1698,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                 emailNotificationData.setTagData(EmailOTPAuthenticatorConstants.CODE, otp);
                 emailNotificationData.setTagData(EmailOTPAuthenticatorConstants.SERVICE_PROVIDER_NAME, context.getServiceProviderName());
                 emailNotificationData.setTagData(EmailOTPAuthenticatorConstants.USER_NAME, username);
+                emailNotificationData.setTagData(EmailOTPAuthenticatorConstants.IP_ADDRESS, ipAddress);
                 emailNotificationData.setSendTo(email);
                 if (config.getProperties().containsKey(EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME)) {
                     emailTemplate = config.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME);

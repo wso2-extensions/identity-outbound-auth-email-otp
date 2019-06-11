@@ -114,4 +114,5 @@ public class EmailOTPAuthenticatorConstants {
     public static final String ATTRIBUTE_EMAIL_SENT_TO = "send-to" ;
 
     public static final String SERVICE_PROVIDER_NAME = "serviceProviderName";
+    public static final String IP_ADDRESS = "ipAddress";
 }
