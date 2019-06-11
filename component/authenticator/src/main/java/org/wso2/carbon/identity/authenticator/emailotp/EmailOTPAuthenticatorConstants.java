@@ -112,4 +112,6 @@ public class EmailOTPAuthenticatorConstants {
     public static final String TEMPLATE_TYPE = "TEMPLATE_TYPE";
     public static final String EVENT_NAME = "EmailOTP";
     public static final String ATTRIBUTE_EMAIL_SENT_TO = "send-to" ;
+
+    public static final String SERVICE_PROVIDER_NAME = "serviceProviderName";
 }
