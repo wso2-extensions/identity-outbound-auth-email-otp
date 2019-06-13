@@ -71,6 +71,8 @@ import org.wso2.carbon.user.api.UserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -84,8 +86,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * Authenticator of EmailOTP
@@ -794,7 +794,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         HttpURLConnection connection = null;
         try {
             URL emailOTPEP = new URL(url + urlParameters);
-            URLConnection  urlConnection = emailOTPEP.openConnection();
+            URLConnection urlConnection = emailOTPEP.openConnection();
             if (urlConnection instanceof HttpURLConnection) {
                 connection = (HttpURLConnection) urlConnection;
                 connection.setDoInput(true);
