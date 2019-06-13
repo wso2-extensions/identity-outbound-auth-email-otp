@@ -15,16 +15,12 @@
 ~  specific language governing permissions and limitations
 ~  under the License.
 -->
-<%@page import="java.util.ArrayList" %>
-<%@page import="java.util.Arrays" %>
-<%@ page import="java.util.List" %>
-<%@ page import="java.util.Map" %>
+<%@page import="org.owasp.encoder.Encode" %>
 <%@page import="org.wso2.carbon.identity.application.authentication.endpoint.util.Constants" %>
+<%@ page import="java.util.Map" %>
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="org.owasp.encoder.Encode" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-<%@ page import="org.wso2.carbon.identity.application.authentication.endpoint.util.TenantDataManager" %>
- <%
+<%
         request.getSession().invalidate();
         String queryString = request.getQueryString();
         Map<String, String> idpAuthenticatorMapping = null;
