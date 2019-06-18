@@ -279,6 +279,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
     @Override
     protected void processAuthenticationResponse(HttpServletRequest request, HttpServletResponse response,
                                                  AuthenticationContext context) throws AuthenticationFailedException {
+
         if (StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.CODE))) {
             if (log.isDebugEnabled()) {
                 log.debug("One time password cannot be null");
@@ -296,8 +297,20 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         if (userToken.equals(contextToken)) {
             context.setProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN, "");
             context.setProperty(EmailOTPAuthenticatorConstants.EMAILOTP_ACCESS_TOKEN, "");
-            String emailFromProfile = context.getProperty(EmailOTPAuthenticatorConstants.RECEIVER_EMAIL).toString();
-            context.setSubject(AuthenticatedUser.createFederateAuthenticatedUserFromSubjectIdentifier(emailFromProfile));
+            Map<Integer, StepConfig> stepConfigMap = context.getSequenceConfig().getStepMap();
+            AuthenticatedUser authenticatedUser = null;
+            for (StepConfig stepConfig : stepConfigMap.values()) {
+                AuthenticatedUser authenticatedUserInStepConfig = stepConfig.getAuthenticatedUser();
+                if (stepConfig.isSubjectAttributeStep() && authenticatedUserInStepConfig != null) {
+                    authenticatedUser = stepConfig.getAuthenticatedUser();
+                    break;
+                }
+            }
+            if (authenticatedUser == null) {
+                String errorMessage = "Authenticated user is NULL";
+                throw new AuthenticationFailedException(errorMessage);
+            }
+            context.setSubject(authenticatedUser);
         } else {
             if (log.isDebugEnabled()) {
                 log.debug("Given otp code is mismatch");
