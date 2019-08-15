@@ -31,7 +31,7 @@ public class OneTimePassword {
     // These are used to calculate the check-sum digits.
     // 0 1 2 3 4 5 6 7 8 9
     private static final int[] doubleDigits = {0, 2, 4, 6, 8, 1, 3, 5, 7, 9};
-    private static Log log = LogFactory.getLog(OneTimePassword.class);
+    private static final Log log = LogFactory.getLog(OneTimePassword.class);
 
     public static String getRandomNumber(int size) {
 
