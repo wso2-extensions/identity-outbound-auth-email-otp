@@ -40,7 +40,7 @@ import java.util.Hashtable;
  */
 public class EmailOTPAuthenticatorServiceComponent {
 
-    private static Log log = LogFactory.getLog(EmailOTPAuthenticatorServiceComponent.class);
+    private static final Log log = LogFactory.getLog(EmailOTPAuthenticatorServiceComponent.class);
 
     protected void activate(ComponentContext ctxt) {
         try {
