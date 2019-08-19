@@ -45,6 +45,7 @@ import org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticator
 import org.wso2.carbon.identity.application.authenticator.oidc.OpenIDConnectAuthenticator;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.Property;
+import org.wso2.carbon.identity.authenticator.emailotp.config.EmailOTPUtils;
 import org.wso2.carbon.identity.authenticator.emailotp.exception.EmailOTPException;
 import org.wso2.carbon.identity.authenticator.emailotp.internal.EmailOTPServiceDataHolder;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
@@ -88,14 +89,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Authenticator of EmailOTP
+ * Authenticator of EmailOTP.
  */
 public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements FederatedApplicationAuthenticator {
 
     private static final Log log = LogFactory.getLog(EmailOTPAuthenticator.class);
 
     /**
-     * Check whether the authentication or logout request can be handled by the authenticator
+     * Check whether the authentication or logout request can be handled by the authenticator.
      */
     public boolean canHandle(HttpServletRequest request) {
         if (log.isDebugEnabled()) {
@@ -294,7 +295,9 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         }
         String userToken = request.getParameter(EmailOTPAuthenticatorConstants.CODE);
         String contextToken = (String) context.getProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN);
-        if (userToken.equals(contextToken)) {
+        long generatedTime = (long) context.getProperty(EmailOTPAuthenticatorConstants.OTP_GENERATED_TIME);
+        boolean isExpired = isExpired(generatedTime, context);
+        if (userToken.equals(contextToken) && !isExpired) {
             context.setProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN, "");
             context.setProperty(EmailOTPAuthenticatorConstants.EMAILOTP_ACCESS_TOKEN, "");
             Map<Integer, StepConfig> stepConfigMap = context.getSequenceConfig().getStepMap();
@@ -311,11 +314,21 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                 throw new AuthenticationFailedException(errorMessage);
             }
             context.setSubject(authenticatedUser);
+            String emailFromProfile = context.getProperty(EmailOTPAuthenticatorConstants.RECEIVER_EMAIL).toString();
+            context.setSubject(
+                    AuthenticatedUser.createFederateAuthenticatedUserFromSubjectIdentifier(emailFromProfile));
         } else {
-            if (log.isDebugEnabled()) {
-                log.debug("Given otp code is mismatch");
+            if (isExpired) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Given otp code is  expired.");
+                }
+                throw new AuthenticationFailedException("Code expired");
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("Given otp code is mismatch");
+                }
+                throw new AuthenticationFailedException("Code mismatch");
             }
-            throw new AuthenticationFailedException("Code mismatch");
         }
     }
 
@@ -738,6 +751,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                         , EmailOTPAuthenticatorConstants.NUMBER_DIGIT);
                 String ipAddress = IdentityUtil.getClientIpAddress(request);
                 context.setProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN, myToken);
+                context.setProperty(EmailOTPAuthenticatorConstants.OTP_GENERATED_TIME, System.currentTimeMillis());
                 if (authenticatorProperties != null) {
                     if (StringUtils.isNotEmpty(myToken)) {
                         checkEmailOTPBehaviour(context, emailOTPParameters, authenticatorProperties, email, username,
@@ -1889,6 +1903,51 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         } catch (IdentityEventException e) {
             String errorMsg = "Error occurred while calling triggerNotification. " + e.getMessage();
             throw new AuthenticationFailedException(errorMsg, e.getCause());
+        }
+    }
+
+    /**
+     * Method to GET Expire Time configuration from EmailOTPUTils.
+     *
+     * @param context :  AuthenticationContext
+     */
+    private String getExpireTime(AuthenticationContext context) {
+
+        String expireTime = EmailOTPUtils
+                .getConfiguration(context, EmailOTPAuthenticatorConstants.TOKEN_EXPIRE_TIME_IN_MILIS);
+        if (StringUtils.isEmpty(expireTime)) {
+            expireTime = EmailOTPAuthenticatorConstants.OTP_EXPIRE_TIME_DEFAULT;
+            if (log.isDebugEnabled()) {
+                log.debug("OTP Expiration Time not specified default value will be used");
+            }
+        }
+        return expireTime;
+    }
+
+    /**
+     * Checks whether otp is Expired or not.
+     *
+     * @param generatedTime : Email OTP generated time
+     * @param context       : the Authentication Context
+     */
+    protected boolean isExpired(long generatedTime, AuthenticationContext context)
+            throws AuthenticationFailedException {
+
+        Long expireTime;
+        try {
+            expireTime = new Long(getExpireTime(context));
+        } catch (NumberFormatException e) {
+            throw new AuthenticationFailedException("Invalid Email OTP expiration time configured.");
+        }
+        if (expireTime == -1) {
+            if (log.isDebugEnabled()) {
+                log.debug("Email OTP configured not to expire");
+            }
+            return false;
+        } else if (System.currentTimeMillis() < generatedTime + expireTime) {
+            return false;
+        } else {
+            return true;
         }
     }
 }
