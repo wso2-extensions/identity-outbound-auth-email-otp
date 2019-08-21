@@ -145,6 +145,11 @@
             <version>${carbon.identity.event.version}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.taglibs</groupId>
+            <artifactId>taglibs-standard-impl</artifactId>
+            <version>${taglibs-standard-impl.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
