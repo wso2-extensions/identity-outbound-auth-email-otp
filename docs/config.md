@@ -17,6 +17,11 @@ Let's take a look at the tasks you need to follow to configure MFA using Email O
 
    To ensure you get the full understanding of configuring Email OTP with WSO2 IS, the sample travelocity application is used in this use case. The samples run on the Apache Tomcat server and are written based on Servlet 3.0. Therefore, download Tomcat 7.x from here.
    Install Apache Maven to build the samples. For more information, see Installation Prerequisites.
+   
+**Note:** If you are using WSO2 EmailOTP version 2.0.22 or above, make sure you have org.wso2.carbon.extension
+.identity.helper-1.0.8.jar or above inside IS_HOME>/repository/components/dropins folder. If not, navigate to [WSO2 
+Store](https://store.wso2.com/store/pages/top-assets) and download the artifacts for the respective EmailOTP connector version. Then place the identity.helper jar 
+version  which is found inside the artifacts folder, to <IS_HOME>/repository/components/dropins folder. 
 
 ### Enabling email configuration on WSO2 IS
 
