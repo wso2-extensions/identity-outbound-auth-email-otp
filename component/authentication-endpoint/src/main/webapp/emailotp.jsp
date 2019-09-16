@@ -162,7 +162,12 @@
             if (code == "") {
                 document.getElementById('alertDiv').innerHTML = '<div id="error-msg" class="alert alert-danger">Please enter the code!</div>';
             } else {
-	            $('#codeForm').submit();
+                if ($('#codeForm').data("submitted") === true) {
+                    console.warn("Prevented a possible double submit event");
+                } else {
+                    $('#codeForm').data("submitted", true);
+                    $('#codeForm').submit();
+                }
 	        }
     	});
     });
