@@ -120,7 +120,8 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             // if the request comes with EMAIL ADDRESS, it will go through this flow.
             initiateAuthenticationRequest(request, response, context);
             return AuthenticatorFlowStatus.INCOMPLETE;
-        } else if (StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.CODE))) {
+        } else if (StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.CODE)) &&
+                StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))) {
             // if the request comes with code, it will go through this flow.
             initiateAuthenticationRequest(request, response, context);
             if (context.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATION)
