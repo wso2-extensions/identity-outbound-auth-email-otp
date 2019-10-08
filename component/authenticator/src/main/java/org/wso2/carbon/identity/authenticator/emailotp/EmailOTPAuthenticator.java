@@ -211,6 +211,9 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                             ("Authentication failed. Cannot find the subject attributed step with authenticated user.");
                 }
 
+                // Set authenticatedUser prop into context which will used in checkEmailOTPBehaviour()
+                context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER, authenticatedUser);
+
                 if (isLocalUser) {
                     handleEmailOTPForLocalUser(username, authenticatedUser, context, emailOTPParameters,
                             isEmailOTPMandatory, queryParams, request, response);
@@ -354,6 +357,10 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                             EmailOTPAuthenticatorConstants.USE_EVENT_HANDLER_BASED_EMAIL_SENDER))) {
                 AuthenticatedUser authenticatedUser = (AuthenticatedUser) context.getProperty
                         (EmailOTPAuthenticatorConstants.AUTHENTICATED_USER);
+                if (authenticatedUser == null) {
+                    throw new AuthenticationFailedException("Error occurred while triggering notification." +
+                            " Unable to find authenticated user.");
+                }
                 triggerEvent(authenticatedUser.getUserName(), authenticatedUser.getTenantDomain(),
                         authenticatedUser.getUserStoreDomain(), EmailOTPAuthenticatorConstants.EVENT_NAME, myToken, email);
             } else {
