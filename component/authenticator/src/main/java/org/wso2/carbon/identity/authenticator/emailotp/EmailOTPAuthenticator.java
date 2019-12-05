@@ -743,7 +743,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
      * @param context     the authentication context
      * @throws AuthenticationFailedException
      */
-    private void processEmailOTPFlow(HttpServletRequest request, HttpServletResponse response, String email,
+    protected void processEmailOTPFlow(HttpServletRequest request, HttpServletResponse response, String email,
                                      String username, String queryParams,
                                      AuthenticationContext context) throws AuthenticationFailedException {
         Map<String, String> authenticatorProperties = context.getAuthenticatorProperties();
