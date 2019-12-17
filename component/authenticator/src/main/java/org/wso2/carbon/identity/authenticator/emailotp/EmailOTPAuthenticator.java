@@ -309,7 +309,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             for (StepConfig stepConfig : stepConfigMap.values()) {
                 AuthenticatedUser authenticatedUserInStepConfig = stepConfig.getAuthenticatedUser();
                 if (stepConfig.isSubjectAttributeStep() && authenticatedUserInStepConfig != null) {
-                    authenticatedUser = stepConfig.getAuthenticatedUser();
+                    authenticatedUser = authenticatedUserInStepConfig;
                     break;
                 }
             }
