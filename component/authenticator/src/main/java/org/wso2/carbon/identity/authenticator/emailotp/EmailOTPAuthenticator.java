@@ -155,6 +155,8 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             AuthenticatedUser authenticatedUser = null;
             Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
             String tenantDomain = context.getTenantDomain();
+            context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATION,
+                    EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME);
             if (!tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
                 IdentityHelperUtil.loadApplicationAuthenticationXMLFromRegistry(context, getName(), tenantDomain);
                 propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
@@ -173,8 +175,6 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                 usecase = (String) context.getProperty(EmailOTPAuthenticatorConstants.USE_CASE);
             }
 
-            context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATION,
-                    EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME);
             String queryParams = FrameworkUtils.getQueryStringWithFrameworkContextId(context.getQueryParams(),
                     context.getCallerSessionKey(), context.getContextIdentifier());
 
