@@ -324,7 +324,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         } else {
             if (isExpired) {
                 if (log.isDebugEnabled()) {
-                    log.debug("Given otp code is  expired.");
+                    log.debug("Given otp code is expired.");
                 }
                 throw new AuthenticationFailedException("Code expired");
             } else {
