@@ -43,7 +43,7 @@ public class EmailOTPUtils {
             return authConfig.getParameterMap();
         }
         if (log.isDebugEnabled()) {
-            log.debug("Authenticator config related to given config name not found. Hence returning an empty map");
+            log.debug("Authenticator config related to given config name not found. Hence returning an empty map.");
         }
         return Collections.emptyMap();
 
