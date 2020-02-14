@@ -65,6 +65,8 @@ public class EmailOTPAuthenticatorConstants {
     public static final String MAILING_ENDPOINT = "EmailEndpoint";
     public static final String ADMIN_EMAIL = "[userId]";
     public static final String OTP_TOKEN = "otpToken";
+    public static final String OTP_BACKUP_CODES_CLAIM = "http://wso2.org/claims/otpbackupcodes";
+    public static final String BACKUP_CODES_SEPARATOR = ",";
 
     public static final String AXIS2 = "axis2.xml";
     public static final String AXIS2_FILE = "repository/conf/axis2/axis2.xml";
@@ -105,6 +107,8 @@ public class EmailOTPAuthenticatorConstants {
     public static final String EMAIL_ADDRESS = "EMAIL_ADDRESS";
     public static final String IS_EMAILOTP_ENABLE_BY_USER = "EmailOTPEnableByUserClaim";
     public static final String EMAIL_ADDRESS_REQ_PAGE = "EmailAddressRequestPage";
+    public static final String CODE_MISMATCH = "codeMismatch";
+    public static final String BACKUP_CODE = "BackupCode";
 
     public static final String SCREEN_VALUE = "&screenValue=";
     public static final String SHOW_EMAIL_ADDRESS_IN_UI = "showEmailAddressInUI";
