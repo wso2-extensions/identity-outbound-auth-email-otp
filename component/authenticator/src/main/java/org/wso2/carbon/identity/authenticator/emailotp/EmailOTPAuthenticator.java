@@ -23,6 +23,7 @@ import org.apache.axiom.om.util.Base64;
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.context.ConfigurationContext;
 import org.apache.axis2.context.ConfigurationContextFactory;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -174,7 +175,6 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                         (EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE)));
                 usecase = (String) context.getProperty(EmailOTPAuthenticatorConstants.USE_CASE);
             }
-
             String queryParams = FrameworkUtils.getQueryStringWithFrameworkContextId(context.getQueryParams(),
                     context.getCallerSessionKey(), context.getContextIdentifier());
 
@@ -301,26 +301,17 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         String contextToken = (String) context.getProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN);
         long generatedTime = (long) context.getProperty(EmailOTPAuthenticatorConstants.OTP_GENERATED_TIME);
         boolean isExpired = isExpired(generatedTime, context);
+
+        AuthenticatedUser authenticatedUser = getAuthenticatedUser(context);
+        if (authenticatedUser == null) {
+            String errorMessage = "Could not find an Authenticated user in the context.";
+            throw new AuthenticationFailedException(errorMessage);
+        }
+
         if (userToken.equals(contextToken) && !isExpired) {
-            context.setProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN, "");
-            context.setProperty(EmailOTPAuthenticatorConstants.EMAILOTP_ACCESS_TOKEN, "");
-            Map<Integer, StepConfig> stepConfigMap = context.getSequenceConfig().getStepMap();
-            AuthenticatedUser authenticatedUser = null;
-            for (StepConfig stepConfig : stepConfigMap.values()) {
-                AuthenticatedUser authenticatedUserInStepConfig = stepConfig.getAuthenticatedUser();
-                if (stepConfig.isSubjectAttributeStep() && authenticatedUserInStepConfig != null) {
-                    authenticatedUser = authenticatedUserInStepConfig;
-                    break;
-                }
-            }
-            if (authenticatedUser == null) {
-                String errorMessage = "Authenticated user is NULL";
-                throw new AuthenticationFailedException(errorMessage);
-            }
-            context.setSubject(authenticatedUser);
-            String emailFromProfile = context.getProperty(EmailOTPAuthenticatorConstants.RECEIVER_EMAIL).toString();
-            context.setSubject(
-                    AuthenticatedUser.createFederateAuthenticatedUserFromSubjectIdentifier(emailFromProfile));
+            processValidUserToken(context, authenticatedUser);
+        } else if (isBackupCodeEnabled(context)) {
+            validateWithBackUpCodes(context, userToken, authenticatedUser);
         } else {
             if (isExpired) {
                 if (log.isDebugEnabled()) {
@@ -334,6 +325,139 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                 throw new AuthenticationFailedException("Code mismatch");
             }
         }
+    }
+
+    /**
+     * Process valid user token.
+     *
+     * @param context           AuthenticationContext.
+     * @param authenticatedUser AuthenticatedUser.
+     */
+    private void processValidUserToken(AuthenticationContext context, AuthenticatedUser authenticatedUser) {
+
+        context.setProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN, StringUtils.EMPTY);
+        context.setProperty(EmailOTPAuthenticatorConstants.EMAILOTP_ACCESS_TOKEN, StringUtils.EMPTY);
+        context.setSubject(authenticatedUser);
+        String emailFromProfile = context.getProperty(EmailOTPAuthenticatorConstants.RECEIVER_EMAIL).toString();
+        if (StringUtils.isNotEmpty(emailFromProfile)) {
+            context.setSubject(
+                    AuthenticatedUser.createFederateAuthenticatedUserFromSubjectIdentifier(emailFromProfile));
+        }
+    }
+
+    /**
+     * Checks the backup codes for email otp.
+     *
+     * @param context           AuthenticationContext.
+     * @param userToken         EmailOTP token.
+     * @param authenticatedUser AuthenticatedUser
+     * @throws AuthenticationFailedException
+     */
+    private void validateWithBackUpCodes(AuthenticationContext context, String userToken,
+                                         AuthenticatedUser authenticatedUser) throws AuthenticationFailedException {
+
+        String[] savedOTPs = null;
+        String username = authenticatedUser.getUserName();
+        String tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(username);
+        UserRealm userRealm = getUserRealm(username);
+        try {
+            if (userRealm == null) {
+                throw new AuthenticationFailedException("UserRealm is null for user : " + authenticatedUser.getUserName());
+            }
+            UserStoreManager userStoreManager = userRealm.getUserStoreManager();
+            if (userStoreManager != null) {
+                String savedOTPString = userStoreManager
+                        .getUserClaimValue(tenantAwareUsername,
+                                EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_CLAIM, null);
+                if (StringUtils.isNotEmpty(savedOTPString)) {
+                    savedOTPs = savedOTPString.split(EmailOTPAuthenticatorConstants.BACKUP_CODES_SEPARATOR);
+                }
+            }
+
+            // Check whether there is any backup OTPs and return.
+            if (ArrayUtils.isEmpty(savedOTPs)) {
+                if (log.isDebugEnabled()) {
+                    log.debug("The claim " + EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_CLAIM + " does " +
+                            "not contain any values.");
+                }
+                throw new AuthenticationFailedException("The claim " +
+                        EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_CLAIM + " does not contain any values",
+                        authenticatedUser);
+            }
+            if (isBackUpCodeValid(savedOTPs, userToken)) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Found saved backup Email OTP for user :" + authenticatedUser.getUserName());
+                }
+                context.setSubject(authenticatedUser);
+                savedOTPs = (String[]) ArrayUtils.removeElement(savedOTPs, userToken);
+                if (log.isDebugEnabled()) {
+                    log.debug("Removed backup code :" + userToken + " from saved backup codes list.");
+                }
+                userRealm.getUserStoreManager().setUserClaimValue(tenantAwareUsername,
+                        EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_CLAIM,
+                        String.join(EmailOTPAuthenticatorConstants.BACKUP_CODES_SEPARATOR, savedOTPs),
+                        null);
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("User entered OTP :" + userToken + " does not match with any of the saved " +
+                            "backup codes.");
+                }
+                context.setProperty(EmailOTPAuthenticatorConstants.CODE_MISMATCH, true);
+                throw new AuthenticationFailedException("Verification Error due to Code " + userToken + " mismatch.",
+                        authenticatedUser);
+            }
+        } catch (UserStoreException e) {
+            throw new AuthenticationFailedException("Cannot find the user claim for OTP list for user : " +
+                    authenticatedUser.getUserName(), e);
+        }
+    }
+
+    /**
+     * Validates the usertoken from the saved backup otp codes.
+     *
+     * @param savedOTPs Array of saveOTPs.
+     * @param userToken Usertoken.
+     * @return True if the backup is valid, else returns false.
+     */
+    private boolean isBackUpCodeValid(String[] savedOTPs, String userToken) {
+
+        // Check whether the usertoken exists in the saved backup OTP list.
+        for (String value : savedOTPs) {
+            if (value.equals(userToken))
+                return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns whether backup code is enabled.
+     *
+     * @param context AuthenticationContext
+     * @return true if backup code is enabled, else returns false.
+     */
+    private boolean isBackupCodeEnabled(AuthenticationContext context) {
+
+        return EmailOTPUtils.getConfiguration(context, EmailOTPAuthenticatorConstants.BACKUP_CODE).equals("true");
+    }
+
+    /**
+     * Returns AuthenticatedUser object from context.
+     *
+     * @param context AuthenticationContext.
+     * @return AuthenticatedUser
+     */
+    private AuthenticatedUser getAuthenticatedUser(AuthenticationContext context) {
+
+        AuthenticatedUser authenticatedUser = null;
+        Map<Integer, StepConfig> stepConfigMap = context.getSequenceConfig().getStepMap();
+        for (StepConfig stepConfig : stepConfigMap.values()) {
+            AuthenticatedUser authenticatedUserInStepConfig = stepConfig.getAuthenticatedUser();
+            if (stepConfig.isSubjectAttributeStep() && authenticatedUserInStepConfig != null) {
+                authenticatedUser = stepConfig.getAuthenticatedUser();
+                break;
+            }
+        }
+        return authenticatedUser;
     }
 
     /**
@@ -1949,7 +2073,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         }
         if (expireTime == -1) {
             if (log.isDebugEnabled()) {
-                log.debug("Email OTP configured not to expire");
+                log.debug("Email OTP configured not to expire.");
             }
             return false;
         } else if (System.currentTimeMillis() < generatedTime + expireTime) {
@@ -1957,5 +2081,28 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         } else {
             return true;
         }
+    }
+
+    /**
+     * Get the user realm of the logged in user.
+     *
+     * @param username Username.
+     * @return UserRealm.
+     * @throws AuthenticationFailedException AuthenticatedFailedException.
+     */
+    private UserRealm getUserRealm(String username) throws AuthenticationFailedException {
+
+        UserRealm userRealm = null;
+        try {
+            if (StringUtils.isNotEmpty(username)) {
+                String tenantDomain = MultitenantUtils.getTenantDomain(username);
+                int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+                RealmService realmService = IdentityTenantUtil.getRealmService();
+                userRealm = realmService.getTenantUserRealm(tenantId);
+            }
+        } catch (UserStoreException e) {
+            throw new AuthenticationFailedException("Cannot find the user realm.", e);
+        }
+        return userRealm;
     }
 }

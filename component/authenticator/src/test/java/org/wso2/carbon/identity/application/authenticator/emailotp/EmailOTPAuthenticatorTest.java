@@ -54,6 +54,7 @@ import org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticator
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticator;
 import org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants;
+import org.wso2.carbon.identity.authenticator.emailotp.config.EmailOTPUtils;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.mgt.IdentityMgtConfigException;
 import org.wso2.carbon.identity.mgt.IdentityMgtServiceException;
@@ -81,6 +82,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.anyInt;
@@ -93,7 +95,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({EmailOTPAuthenticator.class, FileBasedConfigurationBuilder.class, FederatedAuthenticatorUtil.class,
         FrameworkUtils.class, MultitenantUtils.class, IdentityTenantUtil.class, ConfigurationContextFactory.class,
-        ConfigBuilder.class, NotificationBuilder.class})
+        ConfigBuilder.class, NotificationBuilder.class, EmailOTPUtils.class})
 @PowerMockIgnore({"javax.crypto.*" })
 public class EmailOTPAuthenticatorTest {
     private EmailOTPAuthenticator emailOTPAuthenticator;
@@ -137,6 +139,7 @@ public class EmailOTPAuthenticatorTest {
         mockStatic(ConfigurationContextFactory.class);
         mockStatic(ConfigBuilder.class);
         mockStatic(NotificationBuilder.class);
+        mockStatic(EmailOTPUtils.class);
     }
 
     @Test(description = "Test case for canHandle() method true case.")
@@ -207,7 +210,7 @@ public class EmailOTPAuthenticatorTest {
         context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER, null);
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
         when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
-        setStepCongigWithBasicAuthenticator(null, authenticatorConfig);
+        setStepConfigWithBasicAuthenticator(null, authenticatorConfig);
         emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
     }
@@ -228,7 +231,7 @@ public class EmailOTPAuthenticatorTest {
         when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
         when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(), anyString()))
                 .thenReturn(null);
-        setStepCongigWithBasicAuthenticator(authenticatedUser, authenticatorConfig);
+        setStepConfigWithBasicAuthenticator(authenticatedUser, authenticatorConfig);
         mockUserRealm();
         when(MultitenantUtils.getTenantAwareUsername(EmailOTPAuthenticatorTestConstants.USER_NAME))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
@@ -258,7 +261,7 @@ public class EmailOTPAuthenticatorTest {
         when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
         when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(), anyString()))
                 .thenReturn(null);
-        setStepCongigWithBasicAuthenticator(authenticatedUser, authenticatorConfig);
+        setStepConfigWithBasicAuthenticator(authenticatedUser, authenticatorConfig);
         mockUserRealm();
         when(MultitenantUtils.getTenantAwareUsername(EmailOTPAuthenticatorTestConstants.USER_NAME))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
@@ -292,7 +295,7 @@ public class EmailOTPAuthenticatorTest {
                 .thenReturn(null);
         when(stepConfig.getAuthenticatedAutenticator()).thenReturn(authenticatorConfig);
         when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
-        setStepCongigWithBasicAuthenticator(authenticatedUser, authenticatorConfig);
+        setStepConfigWithBasicAuthenticator(authenticatedUser, authenticatorConfig);
         mockUserRealm();
         when(MultitenantUtils.getTenantAwareUsername(EmailOTPAuthenticatorTestConstants.USER_NAME))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
@@ -331,7 +334,7 @@ public class EmailOTPAuthenticatorTest {
                 .thenReturn(null);
         when(stepConfig.getAuthenticatedAutenticator()).thenReturn(authenticatorConfig);
         when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
-        setStepCongigWithBasicAuthenticator(authenticatedUser, authenticatorConfig);
+        setStepConfigWithBasicAuthenticator(authenticatedUser, authenticatorConfig);
         mockUserRealm();
         when(MultitenantUtils.getTenantAwareUsername(EmailOTPAuthenticatorTestConstants.USER_NAME))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
@@ -371,7 +374,7 @@ public class EmailOTPAuthenticatorTest {
                 .thenReturn(null);
         when(stepConfig.getAuthenticatedAutenticator()).thenReturn(authenticatorConfig);
         when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
-        setStepCongigWithBasicAuthenticator(authenticatedUser, authenticatorConfig);
+        setStepConfigWithBasicAuthenticator(authenticatedUser, authenticatorConfig);
         mockUserRealm();
         when(MultitenantUtils.getTenantAwareUsername(EmailOTPAuthenticatorTestConstants.USER_NAME))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
@@ -865,7 +868,7 @@ public class EmailOTPAuthenticatorTest {
      * @param authenticatedUser {@link AuthenticatedUser} object
      * @param authenticatorConfig {@link AuthenticatorConfig} object
      */
-    private void setStepCongigWithBasicAuthenticator(AuthenticatedUser authenticatedUser,
+    private void setStepConfigWithBasicAuthenticator(AuthenticatedUser authenticatedUser,
                                                      AuthenticatorConfig authenticatorConfig) {
         
         Map<Integer, StepConfig> stepConfigMap = new HashMap<>();
@@ -929,6 +932,31 @@ public class EmailOTPAuthenticatorTest {
         sequenceConfig.setStepMap(stepConfigMap);
         context.setSequenceConfig(sequenceConfig);
         context.setCurrentStep(2);
+    }
+
+    @Test
+    public void testProcessAuthenticationResponseWithvalidBackupCode() throws Exception {
+
+        when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.CODE)).thenReturn("123456");
+        context.setProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN, "123");
+        context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        setStepConfigWithBasicAuthenticator(authenticatedUser, authenticatorConfig);
+        when((AuthenticatedUser) context.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER)).
+                thenReturn(authenticatedUser);
+        when(EmailOTPUtils.getConfiguration(context, EmailOTPAuthenticatorConstants.BACKUP_CODE)).thenReturn("true");
+        when(context.getProperty(EmailOTPAuthenticatorConstants.OTP_GENERATED_TIME)).thenReturn(anyLong());
+        when(IdentityTenantUtil.getTenantId("carbon.super")).thenReturn(-1234);
+        when(IdentityTenantUtil.getRealmService()).thenReturn(realmService);
+        mockUserRealm();
+        when(MultitenantUtils.getTenantAwareUsername(EmailOTPAuthenticatorTestConstants.USER_NAME))
+                .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        when(userStoreManager.getUserClaimValue(EmailOTPAuthenticatorTestConstants.USER_NAME,
+                EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_CLAIM, null)).thenReturn("123456,789123");
+        Whitebox.invokeMethod(emailOTPAuthenticator, "processAuthenticationResponse",
+                httpServletRequest, httpServletResponse, context);
     }
 
     @ObjectFactory
