@@ -22,6 +22,7 @@ package org.wso2.carbon.identity.authenticator.emailotp.internal;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.*;
 import org.wso2.carbon.identity.application.authentication.framework.ApplicationAuthenticator;
 import org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticator;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
@@ -29,15 +30,10 @@ import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.Hashtable;
 
-/**
- * @scr.component name="identity.application.authenticator.emailotp.component" immediate="true"
- * @scr.reference name="EventMgtService"
- * interface="org.wso2.carbon.identity.event.services.IdentityEventService" cardinality="1..1"
- * policy="dynamic" bind="setIdentityEventService" unbind="unsetIdentityEventService"
- * @scr.reference name="RealmService"
- * interface="org.wso2.carbon.user.core.service.RealmService" cardinality="1..1"
- * policy="dynamic" bind="setRealmService" unbind="unsetRealmService"
- */
+@Component(
+        name = "identity.application.authenticator.emailotp.component",
+        immediate = true
+)
 public class EmailOTPAuthenticatorServiceComponent {
 
     private static final Log log = LogFactory.getLog(EmailOTPAuthenticatorServiceComponent.class);
@@ -56,19 +52,33 @@ public class EmailOTPAuthenticatorServiceComponent {
         }
     }
 
+    @Deactivate
     protected void deactivate(ComponentContext ctxt) {
         if (log.isDebugEnabled()) {
             log.debug("EmailOTP authenticator is deactivated");
         }
     }
-    protected void unsetIdentityEventService(IdentityEventService eventService) {
-        EmailOTPServiceDataHolder.getInstance().setIdentityEventService(null);
-    }
 
+    @Reference(
+            name = "EventMgtService",
+            service = org.wso2.carbon.identity.event.services.IdentityEventService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetIdentityEventService")
     protected void setIdentityEventService(IdentityEventService eventService) {
         EmailOTPServiceDataHolder.getInstance().setIdentityEventService(eventService);
     }
 
+    protected void unsetIdentityEventService(IdentityEventService eventService) {
+        EmailOTPServiceDataHolder.getInstance().setIdentityEventService(null);
+    }
+
+    @Reference(
+            name = "RealmService",
+            service = org.wso2.carbon.user.core.service.RealmService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetRealmService")
     protected void setRealmService(RealmService realmService) {
          EmailOTPServiceDataHolder.getInstance().setRealmService(realmService);
     }
