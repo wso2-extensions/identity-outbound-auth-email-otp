@@ -338,11 +338,6 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         context.setProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN, StringUtils.EMPTY);
         context.setProperty(EmailOTPAuthenticatorConstants.EMAILOTP_ACCESS_TOKEN, StringUtils.EMPTY);
         context.setSubject(authenticatedUser);
-        String emailFromProfile = context.getProperty(EmailOTPAuthenticatorConstants.RECEIVER_EMAIL).toString();
-        if (StringUtils.isNotEmpty(emailFromProfile)) {
-            context.setSubject(
-                    AuthenticatedUser.createFederateAuthenticatedUserFromSubjectIdentifier(emailFromProfile));
-        }
     }
 
     /**
