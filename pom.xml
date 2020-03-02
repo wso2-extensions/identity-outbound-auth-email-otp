@@ -50,24 +50,6 @@
                 <version>${log4j.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.rampart.wso2</groupId>
-                <artifactId>rampart-core</artifactId>
-                <scope>provided</scope>
-                <version>${rampart.wso2.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.rampart.wso2</groupId>
-                <artifactId>rampart-policy</artifactId>
-                <scope>provided</scope>
-                <version>${rampart.wso2.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.rampart.wso2</groupId>
-                <artifactId>rampart-trust</artifactId>
-                <scope>provided</scope>
-                <version>${rampart.wso2.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <version>${junit.version}</version>
@@ -284,6 +266,11 @@
                 <artifactId>encoder</artifactId>
                 <version>${encoder.wso2.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>org.apache.felix.scr.ds-annotations</artifactId>
+                <version>${apache.felix.scr.ds.annotations.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -344,7 +331,7 @@
                 <plugin>
                     <groupId>org.apache.felix</groupId>
                     <artifactId>maven-scr-plugin</artifactId>
-                    <version>1.7.2</version>
+                    <version>1.26.0</version>
                     <executions>
                         <execution>
                             <id>generate-scr-scrdescriptor</id>
@@ -357,7 +344,7 @@
                 <plugin>
                     <groupId>org.apache.felix</groupId>
                     <artifactId>maven-bundle-plugin</artifactId>
-                    <version>2.3.5</version>
+                    <version>3.2.0</version>
                     <extensions>true</extensions>
                     <configuration>
                         <obrRepository>NONE</obrRepository>
@@ -474,7 +461,7 @@
         <carbon.identity.version>5.12.335</carbon.identity.version>
         <carbon.identity.event.version>5.12.350</carbon.identity.event.version>
         <commons-logging.version>4.4.3</commons-logging.version>
-        <carbon.kernel.version>4.4.35</carbon.kernel.version>
+        <carbon.kernel.version>4.6.0</carbon.kernel.version>
         <oltu.version>1.0.0.wso2v2</oltu.version>
         <org.apache.oltu.oauth2.client.version>1.0.0</org.apache.oltu.oauth2.client.version>
         <oltu.package.import.version.range>[1.0.0, 2.0.0)</oltu.package.import.version.range>
@@ -504,5 +491,7 @@
         <powermock.version>1.6.5</powermock.version>
         <slf4j.api.version>1.5.6</slf4j.api.version>
         <maven.surefire.plugin.version>2.18.1</maven.surefire.plugin.version>
+
+        <apache.felix.scr.ds.annotations.version>1.2.4</apache.felix.scr.ds.annotations.version>
     </properties>
 </project>
