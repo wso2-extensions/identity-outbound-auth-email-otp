@@ -49,21 +49,6 @@
             <version>${log4j.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.rampart.wso2</groupId>
-            <artifactId>rampart-core</artifactId>
-            <version>${rampart.wso2.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.rampart.wso2</groupId>
-            <artifactId>rampart-policy</artifactId>
-            <version>${rampart.wso2.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.rampart.wso2</groupId>
-            <artifactId>rampart-trust</artifactId>
-            <version>${rampart.wso2.version}</version>
-        </dependency>
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
@@ -463,9 +448,6 @@
         <encoder.wso2.version>1.2.0.wso2v1</encoder.wso2.version>
         <identity.extension.utils>1.0.4</identity.extension.utils>
         <log4j.version>1.2.13</log4j.version>
-        <rampart.wso2.version>1.6.1.wso2v17</rampart.wso2.version>
-        <rampart.wso2.osgi.version.range>[1.6.1,2.0.0)</rampart.wso2.osgi.version.range>
-        <rampart.mar.version>1.6.1.wso2v17</rampart.mar.version>
         <!--Test Dependencies-->
         <junit.version>4.12</junit.version>
         <testng.version>6.9.10</testng.version>
