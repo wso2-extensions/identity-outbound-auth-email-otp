@@ -26,6 +26,8 @@ import org.osgi.service.component.annotations.*;
 import org.wso2.carbon.identity.application.authentication.framework.ApplicationAuthenticator;
 import org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticator;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
+import org.wso2.carbon.identity.governance.IdentityGovernanceService;
+import org.wso2.carbon.identity.handler.event.account.lock.service.AccountLockService;
 import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.Hashtable;
@@ -85,5 +87,35 @@ public class EmailOTPAuthenticatorServiceComponent {
 
     protected void unsetRealmService(RealmService realmService) {
         EmailOTPServiceDataHolder.getInstance().setRealmService(null);
+    }
+
+    @Reference(
+            name = "IdentityGovernanceService",
+            service = org.wso2.carbon.identity.governance.IdentityGovernanceService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetIdentityGovernanceService"
+    )
+    protected void setIdentityGovernanceService(IdentityGovernanceService idpManager) {
+        EmailOTPServiceDataHolder.getInstance().setIdentityGovernanceService(idpManager);
+    }
+
+    protected void unsetIdentityGovernanceService(IdentityGovernanceService idpManager) {
+        EmailOTPServiceDataHolder.getInstance().setIdentityGovernanceService(null);
+    }
+
+    @Reference(
+            name = "AccountLockService",
+            service = org.wso2.carbon.identity.handler.event.account.lock.service.AccountLockService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetAccountLockService"
+    )
+    protected void setAccountLockService(AccountLockService accountLockService) {
+        EmailOTPServiceDataHolder.getInstance().setAccountLockService(accountLockService);
+    }
+
+    protected void unsetAccountLockService(AccountLockService accountLockService) {
+        EmailOTPServiceDataHolder.getInstance().setAccountLockService(null);
     }
 }

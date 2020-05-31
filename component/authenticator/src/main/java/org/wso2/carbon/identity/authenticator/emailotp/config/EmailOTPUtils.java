@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2020, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.authentication.framework.config.builder.FileBasedConfigurationBuilder;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.AuthenticatorConfig;
+import org.wso2.carbon.identity.application.authentication.framework.config.model.StepConfig;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
+import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
+import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
+import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants;
+import org.wso2.carbon.identity.authenticator.emailotp.internal.EmailOTPServiceDataHolder;
 import java.util.Collections;
 import java.util.Map;
 
@@ -69,4 +74,64 @@ public class EmailOTPUtils {
         }
         return configValue;
     }
+
+    /**
+     * Check whether account locking is enabled for SMS OTP
+     *
+     * @param context
+     * @return
+     */
+    public static boolean isAccountLockingEnabledForEmailOtp(AuthenticationContext context) {
+
+        return Boolean.parseBoolean(getConfiguration(context,
+                EmailOTPAuthenticatorConstants.ENABLE_ACCOUNT_LOCKING_FOR_FAILED_ATTEMPTS));
+    }
+
+    /**
+     * Get Account Lock Connector Configs
+     *
+     * @param tenantDomain
+     * @return AccountLockConnectorConfigs
+     * @throws AuthenticationFailedException
+     */
+    public static Property[] getAccountLockConnectorConfigs(String tenantDomain) throws AuthenticationFailedException {
+
+        Property[] connectorConfigs;
+        try {
+            connectorConfigs = EmailOTPServiceDataHolder.getInstance()
+                    .getIdentityGovernanceService()
+                    .getConfiguration(
+                            new String[]{
+                                    EmailOTPAuthenticatorConstants.PROPERTY_ACCOUNT_LOCK_ON_FAILURE,
+                                    EmailOTPAuthenticatorConstants.PROPERTY_ACCOUNT_LOCK_ON_FAILURE_MAX,
+                                    EmailOTPAuthenticatorConstants.PROPERTY_ACCOUNT_LOCK_TIME,
+                                    EmailOTPAuthenticatorConstants.PROPERTY_LOGIN_FAIL_TIMEOUT_RATIO
+                            }, tenantDomain);
+        } catch (Exception e) {
+            throw new AuthenticationFailedException("Error occurred while retrieving account lock connector " +
+                    "configuration", e);
+        }
+
+        return connectorConfigs;
+    }
+
+    /**
+     * Check whether a given user is locked
+     *
+     * @param authenticatedUser
+     * @return true or false
+     * @throws AuthenticationFailedException
+     */
+    public static boolean isAccountLocked(AuthenticatedUser authenticatedUser) throws AuthenticationFailedException {
+
+        try {
+            return EmailOTPServiceDataHolder.getInstance().getAccountLockService()
+                    .isAccountLocked(authenticatedUser.getUserName(), authenticatedUser.getTenantDomain(),
+                            authenticatedUser.getUserStoreDomain());
+        } catch (Exception e) {
+            throw new AuthenticationFailedException("Error while validating account lock status of user: " +
+                    authenticatedUser.getUserName(), e);
+        }
+    }
+
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *  Copyright (c) 2020, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  *  WSO2 Inc. licenses this file to you under the Apache License,
  *  Version 2.0 (the "License"); you may not use this file except
@@ -25,6 +25,7 @@ import org.apache.axis2.context.ConfigurationContext;
 import org.apache.axis2.context.ConfigurationContextFactory;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
@@ -70,6 +71,7 @@ import org.wso2.carbon.identity.mgt.mail.NotificationData;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.api.UserStoreManager;
+import org.wso2.carbon.user.core.UserCoreConstants;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
@@ -285,6 +287,22 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
     protected void processAuthenticationResponse(HttpServletRequest request, HttpServletResponse response,
                                                  AuthenticationContext context) throws AuthenticationFailedException {
 
+
+        AuthenticatedUser authenticatedUser = getAuthenticatedUser(context);
+        if (authenticatedUser == null) {
+            String errorMessage = "Could not find an Authenticated user in the context.";
+            throw new AuthenticationFailedException(errorMessage);
+        }
+
+        if (isLocalUser(context) && EmailOTPUtils.isAccountLocked(authenticatedUser)) {
+            String errorMessage = "Authentication failed since authenticated user: " + authenticatedUser +
+                    ", account is locked.";
+            if (log.isDebugEnabled()) {
+                log.debug(errorMessage);
+            }
+            throw new AuthenticationFailedException(errorMessage);
+        }
+
         if (StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.CODE))) {
             if (log.isDebugEnabled()) {
                 log.debug("One time password cannot be null");
@@ -302,29 +320,31 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         long generatedTime = (long) context.getProperty(EmailOTPAuthenticatorConstants.OTP_GENERATED_TIME);
         boolean isExpired = isExpired(generatedTime, context);
 
-        AuthenticatedUser authenticatedUser = getAuthenticatedUser(context);
-        if (authenticatedUser == null) {
-            String errorMessage = "Could not find an Authenticated user in the context.";
-            throw new AuthenticationFailedException(errorMessage);
+        try {
+            if (userToken.equals(contextToken) && !isExpired) {
+                processValidUserToken(context, authenticatedUser);
+            } else if (isBackupCodeEnabled(context)) {
+                validateWithBackUpCodes(context, userToken, authenticatedUser);
+            } else {
+                if (isExpired) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Given otp code is expired.");
+                    }
+                    throw new AuthenticationFailedException("Code expired");
+                } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Given otp code is mismatch");
+                    }
+                    throw new AuthenticationFailedException("Code mismatch");
+                }
+            }
+        } catch (AuthenticationFailedException e){
+            handleOtpVerificationFail(context);
+            throw e;
         }
 
-        if (userToken.equals(contextToken) && !isExpired) {
-            processValidUserToken(context, authenticatedUser);
-        } else if (isBackupCodeEnabled(context)) {
-            validateWithBackUpCodes(context, userToken, authenticatedUser);
-        } else {
-            if (isExpired) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Given otp code is expired.");
-                }
-                throw new AuthenticationFailedException("Code expired");
-            } else {
-                if (log.isDebugEnabled()) {
-                    log.debug("Given otp code is mismatch");
-                }
-                throw new AuthenticationFailedException("Code mismatch");
-            }
-        }
+        // It reached here means the authentication was successful
+        resetOtpFailedAttempts(context);
     }
 
     /**
@@ -432,7 +452,10 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
      */
     private boolean isBackupCodeEnabled(AuthenticationContext context) {
 
-        return EmailOTPUtils.getConfiguration(context, EmailOTPAuthenticatorConstants.BACKUP_CODE).equals("true");
+        boolean isLocalUser = isLocalUser(context);
+        boolean isBackupCodeEnabled = "true".equals(EmailOTPUtils.getConfiguration(context,
+                EmailOTPAuthenticatorConstants.BACKUP_CODE));
+        return isLocalUser && isBackupCodeEnabled;
     }
 
     /**
@@ -454,7 +477,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         }
         return authenticatedUser;
     }
-
+    
     /**
      * Checks whether email API or via SMTP protocol is used to send OTP to email
      *
@@ -2100,4 +2123,208 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         }
         return userRealm;
     }
+
+    /**
+     * Get the user realm of the logged in user.
+     *
+     * @param authenticatedUser
+     * @return the userRealm
+     * @throws AuthenticationFailedException
+     */
+    private UserRealm getUserRealm(AuthenticatedUser authenticatedUser) throws AuthenticationFailedException {
+
+        UserRealm userRealm = null;
+        try {
+            if (authenticatedUser != null) {
+                String tenantDomain = authenticatedUser.getTenantDomain();
+                int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+                RealmService realmService = IdentityTenantUtil.getRealmService();
+                userRealm = realmService.getTenantUserRealm(tenantId);
+            }
+        } catch (UserStoreException e) {
+            throw new AuthenticationFailedException("Cannot find the user realm. ", e);
+        }
+        return userRealm;
+    }
+
+    /**
+     * Reset OTP Failed Attempts count upon successful completion of the OTP verification
+     *
+     * @param context
+     * @throws AuthenticationFailedException
+     */
+    private void resetOtpFailedAttempts(AuthenticationContext context)
+            throws AuthenticationFailedException {
+
+        // Check whether account locking enabled for Email OTP to keep backward compatibility
+        // Account locking is not done for federated flows
+        if (!isLocalUser(context) || !EmailOTPUtils.isAccountLockingEnabledForEmailOtp(context)) {
+            return;
+        }
+
+        AuthenticatedUser authenticatedUser = getAuthenticatedUser(context);
+        Property[] connectorConfigs = EmailOTPUtils.getAccountLockConnectorConfigs(authenticatedUser.getTenantDomain());
+
+        // return if account lock handler is not enabled
+        for (Property connectorConfig : connectorConfigs) {
+            if ((EmailOTPAuthenticatorConstants.PROPERTY_ACCOUNT_LOCK_ON_FAILURE.equals(connectorConfig.getName())) &&
+                    !Boolean.parseBoolean(connectorConfig.getValue())) {
+                return;
+            }
+        }
+
+        String usernameWithDomain = IdentityUtil.addDomainToName(authenticatedUser.getUserName(),
+                authenticatedUser.getUserStoreDomain());
+        try {
+            UserRealm userRealm = getUserRealm(authenticatedUser);
+            UserStoreManager userStoreManager = userRealm.getUserStoreManager();
+
+            // avoid updating the claims if they are already zero
+            String[] claimsToCheck = {EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM,
+                    EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM};
+            Map<String, String> userClaims = userStoreManager.getUserClaimValues(usernameWithDomain, claimsToCheck,
+                    UserCoreConstants.DEFAULT_PROFILE);
+            String failedEmailOtpAttempts = userClaims.get(EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM);
+            String failedLoginLockoutCount = userClaims.get(EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM);
+
+            if(NumberUtils.isNumber(failedEmailOtpAttempts) && Integer.parseInt(failedEmailOtpAttempts) > 0 ||
+                    NumberUtils.isNumber(failedLoginLockoutCount) && Integer.parseInt(failedLoginLockoutCount) > 0){
+                Map<String, String> updatedClaims = new HashMap<>();
+                updatedClaims.put(EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM, "0");
+                updatedClaims.put(EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM, "0");
+                userStoreManager.setUserClaimValues(usernameWithDomain, updatedClaims, UserCoreConstants.DEFAULT_PROFILE);
+            }
+        } catch (UserStoreException e) {
+            String errorMessage = "Failed to reset failed attempts count for user : " + authenticatedUser;
+            log.error(errorMessage, e);
+            throw new AuthenticationFailedException(errorMessage, e);
+        }
+    }
+
+    /**
+     * Execute account lock flow for OTP verification failures
+     *
+     * @param context
+     * @throws AuthenticationFailedException
+     */
+    private void handleOtpVerificationFail(AuthenticationContext context) throws
+            AuthenticationFailedException {
+
+        AuthenticatedUser authenticatedUser = getAuthenticatedUser(context);
+        
+        // Account locking is not done for federated flows
+        // Check whether account locking enabled for Email OTP to keep backward compatibility
+        // No need to continue if the account is already locked
+        if (!isLocalUser(context) || !EmailOTPUtils.isAccountLockingEnabledForEmailOtp(context) || 
+                EmailOTPUtils.isAccountLocked(authenticatedUser)) {
+            return;
+        }
+
+        Property[] connectorConfigs = EmailOTPUtils.getAccountLockConnectorConfigs(authenticatedUser.getTenantDomain());
+
+        int maxAttempts = 0;
+        long unlockTimePropertyValue = 0;
+        double unlockTimeRatio = 1;
+        for (Property connectorConfig : connectorConfigs) {
+            if ((EmailOTPAuthenticatorConstants.PROPERTY_ACCOUNT_LOCK_ON_FAILURE.equals(connectorConfig.getName())) &&
+                    !Boolean.parseBoolean(connectorConfig.getValue())) {
+                return;
+            } else if (EmailOTPAuthenticatorConstants.PROPERTY_ACCOUNT_LOCK_ON_FAILURE_MAX.equals(connectorConfig.getName())
+                    && NumberUtils.isNumber(connectorConfig.getValue())) {
+                maxAttempts = Integer.parseInt(connectorConfig.getValue());
+            } else if (EmailOTPAuthenticatorConstants.PROPERTY_ACCOUNT_LOCK_TIME.equals(connectorConfig.getName())
+                    && NumberUtils.isNumber(connectorConfig.getValue())) {
+                unlockTimePropertyValue = Integer.parseInt(connectorConfig.getValue());
+            } else if (EmailOTPAuthenticatorConstants.PROPERTY_LOGIN_FAIL_TIMEOUT_RATIO.equals(connectorConfig.getName())
+                    && NumberUtils.isNumber(connectorConfig.getValue())) {
+                double value = Double.parseDouble(connectorConfig.getValue());
+                if (value > 0) {
+                    unlockTimeRatio = value;
+                }
+            }
+        }
+
+        UserStoreManager userStoreManager;
+        Map<String, String> claimValues;
+        try {
+            UserRealm userRealm = getUserRealm(authenticatedUser);
+            userStoreManager = userRealm.getUserStoreManager();
+
+            claimValues = userStoreManager.getUserClaimValues(IdentityUtil.addDomainToName(
+                    authenticatedUser.getUserName(), authenticatedUser.getUserStoreDomain()), new String[]{
+                            EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM,
+                            EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM},
+                    UserCoreConstants.DEFAULT_PROFILE);
+
+        } catch (UserStoreException e) {
+            log.error("Error while reading user claims", e);
+            throw new AuthenticationFailedException("Failed to read user claims for user : " +
+                    authenticatedUser, e);
+        }
+
+
+        int currentAttempts = 0;
+        if (NumberUtils.isNumber(claimValues.get(EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM))) {
+            currentAttempts = Integer.parseInt(claimValues.get(EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM));
+        }
+        int failedLoginLockoutCountValue = 0;
+        if (NumberUtils.isNumber(claimValues.get(EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM))) {
+            failedLoginLockoutCountValue =
+                    Integer.parseInt(claimValues.get(EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM));
+        }
+
+        Map<String, String> updatedClaims = new HashMap<>();
+        if ((currentAttempts + 1) >= maxAttempts) {
+            // Calculate the incremental unlock-time-interval in milli seconds.
+            unlockTimePropertyValue = (long) (unlockTimePropertyValue * 1000 * 60 * Math.pow (unlockTimeRatio,
+                    failedLoginLockoutCountValue));
+            // Calculate unlock-time by adding current-time and unlock-time-interval in milli seconds.
+            long unlockTime = System.currentTimeMillis() + unlockTimePropertyValue;
+            updatedClaims.put(EmailOTPAuthenticatorConstants.ACCOUNT_LOCKED_CLAIM, Boolean.TRUE.toString());
+            updatedClaims.put(EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM, "0");
+            updatedClaims.put(EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM, String.valueOf(unlockTime));
+            updatedClaims.put(EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM,
+                    String.valueOf(failedLoginLockoutCountValue + 1));
+            try {
+                IdentityUtil.threadLocalProperties.get().put(EmailOTPAuthenticatorConstants.ADMIN_INITIATED, false);
+                userStoreManager.setUserClaimValues(IdentityUtil.addDomainToName(authenticatedUser.getUserName(),
+                        authenticatedUser.getUserStoreDomain()), updatedClaims, UserCoreConstants.DEFAULT_PROFILE);
+                throw new AuthenticationFailedException("User account is locked " + authenticatedUser.getUserName());
+            } catch (UserStoreException e) {
+                log.error("Error while updating user claims", e);
+                throw new AuthenticationFailedException("Failed to update user claims for user : " +
+                        authenticatedUser, e);
+            }
+        } else {
+            updatedClaims.put(EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM, String.valueOf(currentAttempts + 1));
+            try {
+                userStoreManager.setUserClaimValues(IdentityUtil.addDomainToName(authenticatedUser.getUserName(),
+                        authenticatedUser.getUserStoreDomain()), updatedClaims, UserCoreConstants.DEFAULT_PROFILE);
+            } catch (UserStoreException e) {
+                log.error("Error while updating user claims", e);
+                throw new AuthenticationFailedException("Failed to update user claims for user : " +
+                        authenticatedUser, e);
+            }
+        }
+    }
+
+    /**
+     * Check whether the user being authenticated via a local authenticator or not
+     *
+     * @param context
+     * @return
+     */
+    public static boolean isLocalUser(AuthenticationContext context){
+        Map<Integer, StepConfig> stepConfigMap = context.getSequenceConfig().getStepMap();
+        for (StepConfig stepConfig : stepConfigMap.values()) {
+            if (stepConfig.getAuthenticatedUser() != null && stepConfig.isSubjectAttributeStep()) {
+                if (stepConfig.getAuthenticatedIdP().equals(EmailOTPAuthenticatorConstants.LOCAL_AUTHENTICATOR)) {
+                    return true;
+                }
+                break;
+            }
+        }
+        return false;
+    }
+
 }
