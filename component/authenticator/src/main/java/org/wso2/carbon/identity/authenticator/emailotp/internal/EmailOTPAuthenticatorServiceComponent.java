@@ -97,10 +97,12 @@ public class EmailOTPAuthenticatorServiceComponent {
             unbind = "unsetIdentityGovernanceService"
     )
     protected void setIdentityGovernanceService(IdentityGovernanceService idpManager) {
+
         EmailOTPServiceDataHolder.getInstance().setIdentityGovernanceService(idpManager);
     }
 
     protected void unsetIdentityGovernanceService(IdentityGovernanceService idpManager) {
+
         EmailOTPServiceDataHolder.getInstance().setIdentityGovernanceService(null);
     }
 
@@ -112,10 +114,12 @@ public class EmailOTPAuthenticatorServiceComponent {
             unbind = "unsetAccountLockService"
     )
     protected void setAccountLockService(AccountLockService accountLockService) {
+
         EmailOTPServiceDataHolder.getInstance().setAccountLockService(accountLockService);
     }
 
     protected void unsetAccountLockService(AccountLockService accountLockService) {
+
         EmailOTPServiceDataHolder.getInstance().setAccountLockService(null);
     }
 }

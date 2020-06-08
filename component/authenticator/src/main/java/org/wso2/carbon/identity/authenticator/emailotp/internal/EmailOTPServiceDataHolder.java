@@ -60,22 +60,46 @@ public class EmailOTPServiceDataHolder {
         this.realmService = realmService;
     }
 
+    /**
+     * Get Identity Governance Service.
+     *
+     * @return Identity Governance Service.
+     */
     public IdentityGovernanceService getIdentityGovernanceService() {
-        if(identityGovernanceService == null) {
+
+        if (identityGovernanceService == null) {
             throw new RuntimeException("IdentityGovernanceService not available. Component is not started properly.");
         }
         return identityGovernanceService;
     }
 
+    /**
+     * Set Identity Governance Service.
+     *
+     * @param identityGovernanceService Identity Governance Service.
+     */
     public void setIdentityGovernanceService(IdentityGovernanceService identityGovernanceService) {
+
         this.identityGovernanceService = identityGovernanceService;
     }
 
+    /**
+     * Get Account Lock service.
+     *
+     * @return Account Lock service.
+     */
     public AccountLockService getAccountLockService() {
+
         return accountLockService;
     }
 
+    /**
+     * set Account Lock service.
+     *
+     * @param accountLockService Account Lock service.
+     */
     public void setAccountLockService(AccountLockService accountLockService) {
+
         this.accountLockService = accountLockService;
     }
 }

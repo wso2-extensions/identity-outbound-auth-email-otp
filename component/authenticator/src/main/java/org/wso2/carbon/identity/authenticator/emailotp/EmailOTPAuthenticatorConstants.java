@@ -123,8 +123,9 @@ public class EmailOTPAuthenticatorConstants {
     public static final String SERVICE_PROVIDER_NAME = "serviceProviderName";
     public static final String IP_ADDRESS = "ipAddress";
 
-    // Account lock related constants
-    public static final String EMAIL_OTP_FAILED_ATTEMPTS_CLAIM = "http://wso2.org/claims/identity/failedEmailOtpAttempts";
+    // Account lock related constants.
+    public static final String EMAIL_OTP_FAILED_ATTEMPTS_CLAIM =
+            "http://wso2.org/claims/identity/failedEmailOtpAttempts";
     public static final String FAILED_LOGIN_LOCKOUT_COUNT_CLAIM = "http://wso2.org/claims/identity/" +
             "failedLoginLockoutCount";
     public static final String ACCOUNT_LOCKED_CLAIM = "http://wso2.org/claims/identity/accountLocked";

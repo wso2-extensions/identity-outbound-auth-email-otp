@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2019, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,10 +76,10 @@ public class EmailOTPUtils {
     }
 
     /**
-     * Check whether account locking is enabled for SMS OTP
+     * Check whether account locking is enabled for Email OTP.
      *
-     * @param context
-     * @return
+     * @param context Authentication context.
+     * @return Whether account locking is enabled for Email OTP.
      */
     public static boolean isAccountLockingEnabledForEmailOtp(AuthenticationContext context) {
 
@@ -88,11 +88,11 @@ public class EmailOTPUtils {
     }
 
     /**
-     * Get Account Lock Connector Configs
+     * Get Account Lock Connector Configs.
      *
-     * @param tenantDomain
-     * @return AccountLockConnectorConfigs
-     * @throws AuthenticationFailedException
+     * @param tenantDomain Tenant domain.
+     * @return AccountLockConnectorConfigs Account Lock Connector Configs.
+     * @throws AuthenticationFailedException Exception on authentication failure.
      */
     public static Property[] getAccountLockConnectorConfigs(String tenantDomain) throws AuthenticationFailedException {
 
@@ -108,19 +108,18 @@ public class EmailOTPUtils {
                                     EmailOTPAuthenticatorConstants.PROPERTY_LOGIN_FAIL_TIMEOUT_RATIO
                             }, tenantDomain);
         } catch (Exception e) {
-            throw new AuthenticationFailedException("Error occurred while retrieving account lock connector " +
-                    "configuration", e);
+            throw new AuthenticationFailedException(
+                    "Error occurred while retrieving account lock connector configuration", e);
         }
-
         return connectorConfigs;
     }
 
     /**
-     * Check whether a given user is locked
+     * Check whether a given user is locked.
      *
-     * @param authenticatedUser
-     * @return true or false
-     * @throws AuthenticationFailedException
+     * @param authenticatedUser Authenticated user.
+     * @return True if user account is locked.
+     * @throws AuthenticationFailedException Exception on authentication failure.
      */
     public static boolean isAccountLocked(AuthenticatedUser authenticatedUser) throws AuthenticationFailedException {
 
