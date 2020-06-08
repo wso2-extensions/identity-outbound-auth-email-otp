@@ -415,6 +415,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                             "backup codes.");
                 }
                 context.setProperty(EmailOTPAuthenticatorConstants.CODE_MISMATCH, true);
+                handleOtpVerificationFail(context);
                 throw new AuthenticationFailedException("Verification Error due to Code " + userToken + " mismatch.",
                         authenticatedUser);
             }
@@ -2319,12 +2320,14 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
     public static boolean isLocalUser(AuthenticationContext context) {
 
         Map<Integer, StepConfig> stepConfigMap = context.getSequenceConfig().getStepMap();
-        for (StepConfig stepConfig : stepConfigMap.values()) {
-            if (stepConfig.getAuthenticatedUser() != null && stepConfig.isSubjectAttributeStep()) {
-                if (stepConfig.getAuthenticatedIdP().equals(EmailOTPAuthenticatorConstants.LOCAL_AUTHENTICATOR)) {
-                    return true;
+        if (stepConfigMap != null) {
+            for (StepConfig stepConfig : stepConfigMap.values()) {
+                if (stepConfig.getAuthenticatedUser() != null && stepConfig.isSubjectAttributeStep()) {
+                    if (stepConfig.getAuthenticatedIdP().equals(EmailOTPAuthenticatorConstants.LOCAL_AUTHENTICATOR)) {
+                        return true;
+                    }
+                    break;
                 }
-                break;
             }
         }
         return false;
