@@ -927,6 +927,10 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             }
             String url = getRedirectURL(emailOTPLoginPage, queryParams);
             if (isShowEmailAddressInUIEnable(context, emailOTPParameters)) {
+                String emailAddressRegex = getEmailAddressRegex(context, emailOTPParameters);
+                if (StringUtils.isNotEmpty(emailAddressRegex)) {
+                    email = email.replaceAll(emailAddressRegex, "$1*");
+                }
                 url = url + EmailOTPAuthenticatorConstants.SCREEN_VALUE + email;
             }
             if (context.isRetrying()) {
@@ -1704,6 +1708,27 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                     (context.getProperty(EmailOTPAuthenticatorConstants.SHOW_EMAIL_ADDRESS_IN_UI)));
         }
         return isShowEmailAddressInUI;
+    }
+
+    /**
+     * Get the email address regex pattern when we show the email address in UI where the otp is sent.
+     *
+     * @param context       the AuthenticationContext
+     * @param parametersMap the parameter map
+     * @return emailAddressRegex
+     */
+    private String getEmailAddressRegex(AuthenticationContext context, Map<String, String> parametersMap) {
+
+        String emailAddressRegex = null;
+        String tenantDomain = context.getTenantDomain();
+        Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
+        if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
+                parametersMap.containsKey(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REGEX)) {
+            emailAddressRegex = parametersMap.get(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REGEX);
+        } else if ((context.getProperty(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REGEX)) != null) {
+            emailAddressRegex = String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REGEX));
+        }
+        return emailAddressRegex;
     }
 
     private String getAPI(Map<String, String> authenticatorProperties) {
