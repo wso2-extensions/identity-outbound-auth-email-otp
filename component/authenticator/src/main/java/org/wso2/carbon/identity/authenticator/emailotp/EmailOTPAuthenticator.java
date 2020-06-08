@@ -450,10 +450,8 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
      */
     private boolean isBackupCodeEnabled(AuthenticationContext context) {
 
-        boolean isLocalUser = isLocalUser(context);
-        boolean isBackupCodeEnabled = "true".equals(EmailOTPUtils.getConfiguration(context,
-                EmailOTPAuthenticatorConstants.BACKUP_CODE));
-        return isLocalUser && isBackupCodeEnabled;
+        return isLocalUser(context) && StringUtils
+                .equals("true", EmailOTPUtils.getConfiguration(context, EmailOTPAuthenticatorConstants.BACKUP_CODE));
     }
 
     /**
@@ -2223,47 +2221,42 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             return;
         }
 
-        Property[] connectorConfigs = EmailOTPUtils.getAccountLockConnectorConfigs(authenticatedUser.getTenantDomain());
-
         int maxAttempts = 0;
         long unlockTimePropertyValue = 0;
         double unlockTimeRatio = 1;
+
+        Property[] connectorConfigs = EmailOTPUtils.getAccountLockConnectorConfigs(authenticatedUser.getTenantDomain());
         for (Property connectorConfig : connectorConfigs) {
-            if ((EmailOTPAuthenticatorConstants.PROPERTY_ACCOUNT_LOCK_ON_FAILURE.equals(connectorConfig.getName())) &&
-                    !Boolean.parseBoolean(connectorConfig.getValue())) {
-                return;
-            } else if (EmailOTPAuthenticatorConstants.PROPERTY_ACCOUNT_LOCK_ON_FAILURE_MAX
-                    .equals(connectorConfig.getName()) && NumberUtils.isNumber(connectorConfig.getValue())) {
-                maxAttempts = Integer.parseInt(connectorConfig.getValue());
-            } else if (EmailOTPAuthenticatorConstants.PROPERTY_ACCOUNT_LOCK_TIME.equals(connectorConfig.getName()) &&
-                    NumberUtils.isNumber(connectorConfig.getValue())) {
-                unlockTimePropertyValue = Integer.parseInt(connectorConfig.getValue());
-            } else if (EmailOTPAuthenticatorConstants.PROPERTY_LOGIN_FAIL_TIMEOUT_RATIO
-                    .equals(connectorConfig.getName()) && NumberUtils.isNumber(connectorConfig.getValue())) {
-                double value = Double.parseDouble(connectorConfig.getValue());
-                if (value > 0) {
-                    unlockTimeRatio = value;
-                }
+            switch (connectorConfig.getName()) {
+                case EmailOTPAuthenticatorConstants.PROPERTY_ACCOUNT_LOCK_ON_FAILURE:
+                    if (!Boolean.parseBoolean(connectorConfig.getValue())) {
+                        return;
+                    }
+                case EmailOTPAuthenticatorConstants.PROPERTY_ACCOUNT_LOCK_ON_FAILURE_MAX:
+                    if (NumberUtils.isNumber(connectorConfig.getValue())) {
+                        maxAttempts = Integer.parseInt(connectorConfig.getValue());
+                    }
+                    break;
+                case EmailOTPAuthenticatorConstants.PROPERTY_ACCOUNT_LOCK_TIME:
+                    if (NumberUtils.isNumber(connectorConfig.getValue())) {
+                        unlockTimePropertyValue = Integer.parseInt(connectorConfig.getValue());
+                    }
+                    break;
+                case EmailOTPAuthenticatorConstants.PROPERTY_LOGIN_FAIL_TIMEOUT_RATIO:
+                    if (NumberUtils.isNumber(connectorConfig.getValue())) {
+                        double value = Double.parseDouble(connectorConfig.getValue());
+                        if (value > 0) {
+                            unlockTimeRatio = value;
+                        }
+                    }
+                    break;
             }
         }
 
-        UserStoreManager userStoreManager;
-        Map<String, String> claimValues;
-        try {
-            UserRealm userRealm = getUserRealm(authenticatedUser);
-            userStoreManager = userRealm.getUserStoreManager();
-            claimValues = userStoreManager.getUserClaimValues(IdentityUtil.addDomainToName(
-                    authenticatedUser.getUserName(), authenticatedUser.getUserStoreDomain()), new String[]{
-                            EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM,
-                            EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM},
-                    UserCoreConstants.DEFAULT_PROFILE);
-
-        } catch (UserStoreException e) {
-            log.error("Error while reading user claims.", e);
-            throw new AuthenticationFailedException(
-                    String.format("Failed to read user claims for user : %s.", authenticatedUser), e);
+        Map<String, String> claimValues = getUserClaimValues(authenticatedUser);
+        if (claimValues == null) {
+            claimValues = new HashMap<>();
         }
-
         int currentAttempts = 0;
         if (NumberUtils.isNumber(claimValues.get(EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM))) {
             currentAttempts =
@@ -2278,7 +2271,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         Map<String, String> updatedClaims = new HashMap<>();
         if ((currentAttempts + 1) >= maxAttempts) {
             // Calculate the incremental unlock-time-interval in milli seconds.
-            unlockTimePropertyValue = (long) (unlockTimePropertyValue * 1000 * 60 * Math.pow (unlockTimeRatio,
+            unlockTimePropertyValue = (long) (unlockTimePropertyValue * 1000 * 60 * Math.pow(unlockTimeRatio,
                     failedLoginLockoutCountValue));
             // Calculate unlock-time by adding current-time and unlock-time-interval in milli seconds.
             long unlockTime = System.currentTimeMillis() + unlockTimePropertyValue;
@@ -2287,27 +2280,13 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             updatedClaims.put(EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM, String.valueOf(unlockTime));
             updatedClaims.put(EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM,
                     String.valueOf(failedLoginLockoutCountValue + 1));
-            try {
-                IdentityUtil.threadLocalProperties.get().put(EmailOTPAuthenticatorConstants.ADMIN_INITIATED, false);
-                userStoreManager.setUserClaimValues(IdentityUtil.addDomainToName(authenticatedUser.getUserName(),
-                        authenticatedUser.getUserStoreDomain()), updatedClaims, UserCoreConstants.DEFAULT_PROFILE);
-                throw new AuthenticationFailedException("User account is locked " + authenticatedUser.getUserName());
-            } catch (UserStoreException e) {
-                log.error("Error while updating user claims", e);
-                throw new AuthenticationFailedException(
-                        String.format("Failed to update user claims for user : %s.", authenticatedUser), e);
-            }
+            IdentityUtil.threadLocalProperties.get().put(EmailOTPAuthenticatorConstants.ADMIN_INITIATED, false);
+            setUserClaimValues(authenticatedUser, updatedClaims);
+            throw new AuthenticationFailedException("User account is locked " + authenticatedUser.getUserName());
         } else {
             updatedClaims.put(EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM,
                     String.valueOf(currentAttempts + 1));
-            try {
-                userStoreManager.setUserClaimValues(IdentityUtil.addDomainToName(authenticatedUser.getUserName(),
-                        authenticatedUser.getUserStoreDomain()), updatedClaims, UserCoreConstants.DEFAULT_PROFILE);
-            } catch (UserStoreException e) {
-                log.error("Error while updating user claims", e);
-                throw new AuthenticationFailedException(
-                        String.format("Failed to update user claims for user : %s.", authenticatedUser), e);
-            }
+            setUserClaimValues(authenticatedUser, updatedClaims);
         }
     }
 
@@ -2317,7 +2296,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
      * @param context Authentication context.
      * @return Whether the user being authenticated via a local authenticator.
      */
-    public static boolean isLocalUser(AuthenticationContext context) {
+    private boolean isLocalUser(AuthenticationContext context) {
 
         Map<Integer, StepConfig> stepConfigMap = context.getSequenceConfig().getStepMap();
         if (stepConfigMap != null) {
@@ -2331,5 +2310,40 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             }
         }
         return false;
+    }
+
+    private Map<String, String> getUserClaimValues(AuthenticatedUser authenticatedUser)
+            throws AuthenticationFailedException {
+
+        Map<String, String> claimValues;
+        try {
+            UserRealm userRealm = getUserRealm(authenticatedUser);
+            UserStoreManager userStoreManager = userRealm.getUserStoreManager();
+            claimValues = userStoreManager.getUserClaimValues(IdentityUtil.addDomainToName(
+                    authenticatedUser.getUserName(), authenticatedUser.getUserStoreDomain()), new String[]{
+                            EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM,
+                            EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM},
+                    UserCoreConstants.DEFAULT_PROFILE);
+        } catch (UserStoreException e) {
+            log.error("Error while reading user claims.", e);
+            throw new AuthenticationFailedException(
+                    String.format("Failed to read user claims for user : %s.", authenticatedUser), e);
+        }
+        return claimValues;
+    }
+
+    private void setUserClaimValues(AuthenticatedUser authenticatedUser, Map<String, String> updatedClaims)
+            throws AuthenticationFailedException {
+
+        try {
+            UserRealm userRealm = getUserRealm(authenticatedUser);
+            UserStoreManager userStoreManager = userRealm.getUserStoreManager();
+            userStoreManager.setUserClaimValues(IdentityUtil.addDomainToName(authenticatedUser.getUserName(),
+                    authenticatedUser.getUserStoreDomain()), updatedClaims, UserCoreConstants.DEFAULT_PROFILE);
+        } catch (UserStoreException e) {
+            log.error("Error while updating user claims", e);
+            throw new AuthenticationFailedException(
+                    String.format("Failed to update user claims for user : %s.", authenticatedUser), e);
+        }
     }
 }
