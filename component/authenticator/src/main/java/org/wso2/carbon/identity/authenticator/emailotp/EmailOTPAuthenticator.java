@@ -929,7 +929,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             if (isShowEmailAddressInUIEnable(context, emailOTPParameters)) {
                 String emailAddressRegex = getEmailAddressRegex(context, emailOTPParameters);
                 if (StringUtils.isNotEmpty(emailAddressRegex)) {
-                    email = email.replaceAll(emailAddressRegex, "$1*");
+                    email = email.replaceAll(emailAddressRegex, "*");
                 }
                 url = url + EmailOTPAuthenticatorConstants.SCREEN_VALUE + email;
             }
