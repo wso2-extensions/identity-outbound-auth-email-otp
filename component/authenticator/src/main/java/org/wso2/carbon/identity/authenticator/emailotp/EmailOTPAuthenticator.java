@@ -910,7 +910,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             }
             if (context.isRetrying()
                     || StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))) {
-                redirectToEmailOTPLoginPage(response,context,emailOTPParameters,queryParams,email);
+                redirectToEmailOTPLoginPage(response,request,context,emailOTPParameters,queryParams,email);
             }
         } catch (AuthenticationFailedException e) {
             throw new AuthenticationFailedException("Authentication Failed: Authenticator Properties may be null ", e);
@@ -922,9 +922,9 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
      *
      * @throws AuthenticationFailedException
      */
-    private void redirectToEmailOTPLoginPage(HttpServletResponse response, AuthenticationContext context,
-                                             Map<String, String> emailOTPParameters, String queryParams,
-                                             String email) throws AuthenticationFailedException {
+    private void redirectToEmailOTPLoginPage(HttpServletResponse response, HttpServletRequest request,
+                                             AuthenticationContext context, Map<String, String> emailOTPParameters,
+                                             String queryParams, String email) throws AuthenticationFailedException {
         try {
             // Full url of the login page
             String emailOTPLoginPage = getEmailOTPLoginPage(context, emailOTPParameters);
@@ -948,7 +948,8 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             if (isShowEmailAddressInUIEnable(context, emailOTPParameters)) {
                 url = url + EmailOTPAuthenticatorConstants.SCREEN_VALUE + email;
             }
-            if (context.isRetrying()) {
+            if (context.isRetrying()
+                    && !Boolean.parseBoolean(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))) {
                 url = url + EmailOTPAuthenticatorConstants.RETRY_PARAMS;
             }
             response.sendRedirect(url);
