@@ -330,6 +330,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                 if (log.isDebugEnabled()) {
                     log.debug("Given otp code is expired.");
                 }
+                context.setProperty(EmailOTPAuthenticatorConstants.OTP_EXPIRED, "true");
                 handleOtpVerificationFail(context);
                 throw new AuthenticationFailedException("Code expired.");
             } else {
@@ -473,7 +474,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         }
         return authenticatedUser;
     }
-    
+
     /**
      * Checks whether email API or via SMTP protocol is used to send OTP to email
      *
@@ -887,10 +888,11 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         Map<String, String> authenticatorProperties = context.getAuthenticatorProperties();
         Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
         try {
-            if (!context.isRetrying() || (context.isRetrying()
-                    && StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.RESEND)))
+            if (!context.isRetrying()
                     || (context.isRetrying()
-                    && Boolean.parseBoolean(request.getParameter(EmailOTPAuthenticatorConstants.RESEND)))) {
+                    && Boolean.parseBoolean(request.getParameter(EmailOTPAuthenticatorConstants.RESEND)))
+                    || (context.isRetrying() &&
+                    Boolean.parseBoolean((String) context.getProperty(EmailOTPAuthenticatorConstants.OTP_EXPIRED)))) {
                 OneTimePassword token = new OneTimePassword();
                 String secret = OneTimePassword.getRandomNumber(EmailOTPAuthenticatorConstants.SECRET_KEY_LENGTH);
                 String myToken = token.generateToken(secret, "" + EmailOTPAuthenticatorConstants.NUMBER_BASE
@@ -898,6 +900,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                 String ipAddress = IdentityUtil.getClientIpAddress(request);
                 context.setProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN, myToken);
                 context.setProperty(EmailOTPAuthenticatorConstants.OTP_GENERATED_TIME, System.currentTimeMillis());
+                context.setProperty(EmailOTPAuthenticatorConstants.OTP_EXPIRED, "false");
                 if (authenticatorProperties != null) {
                     if (StringUtils.isNotEmpty(myToken)) {
                         checkEmailOTPBehaviour(context, emailOTPParameters, authenticatorProperties, email, username,
@@ -2211,8 +2214,8 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
     private void handleOtpVerificationFail(AuthenticationContext context) throws AuthenticationFailedException {
 
         AuthenticatedUser authenticatedUser = getAuthenticatedUser(context);
-        
-        /* 
+
+        /*
         Account locking is not done for federated flows.
         Check whether account locking enabled for Email OTP to keep backward compatibility.
         No need to continue if the account is already locked.
