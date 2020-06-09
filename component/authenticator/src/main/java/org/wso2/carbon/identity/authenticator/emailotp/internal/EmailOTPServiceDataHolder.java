@@ -19,6 +19,8 @@
 package org.wso2.carbon.identity.authenticator.emailotp.internal;
 
 import org.wso2.carbon.identity.event.services.IdentityEventService;
+import org.wso2.carbon.identity.governance.IdentityGovernanceService;
+import org.wso2.carbon.identity.handler.event.account.lock.service.AccountLockService;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -26,7 +28,9 @@ import org.wso2.carbon.user.core.service.RealmService;
  */
 public class EmailOTPServiceDataHolder {
     private static EmailOTPServiceDataHolder emailOTPServiceDataHolder;
+    private AccountLockService accountLockService;
     private IdentityEventService identityEventService;
+    private IdentityGovernanceService identityGovernanceService;
     private RealmService realmService;
 
     public static EmailOTPServiceDataHolder getInstance() {
@@ -54,5 +58,48 @@ public class EmailOTPServiceDataHolder {
 
     public void setRealmService(RealmService realmService) {
         this.realmService = realmService;
+    }
+
+    /**
+     * Get Identity Governance Service.
+     *
+     * @return Identity Governance Service.
+     */
+    public IdentityGovernanceService getIdentityGovernanceService() {
+
+        if (identityGovernanceService == null) {
+            throw new RuntimeException("IdentityGovernanceService not available. Component is not started properly.");
+        }
+        return identityGovernanceService;
+    }
+
+    /**
+     * Set Identity Governance Service.
+     *
+     * @param identityGovernanceService Identity Governance Service.
+     */
+    public void setIdentityGovernanceService(IdentityGovernanceService identityGovernanceService) {
+
+        this.identityGovernanceService = identityGovernanceService;
+    }
+
+    /**
+     * Get Account Lock service.
+     *
+     * @return Account Lock service.
+     */
+    public AccountLockService getAccountLockService() {
+
+        return accountLockService;
+    }
+
+    /**
+     * set Account Lock service.
+     *
+     * @param accountLockService Account Lock service.
+     */
+    public void setAccountLockService(AccountLockService accountLockService) {
+
+        this.accountLockService = accountLockService;
     }
 }
