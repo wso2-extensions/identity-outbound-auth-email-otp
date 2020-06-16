@@ -1731,7 +1731,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
                 parametersMap.containsKey(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REGEX)) {
             emailAddressRegex = parametersMap.get(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REGEX);
-            if(log.isDebugEnabled()){
+            if (log.isDebugEnabled()) {
                 log.debug("Getting the email address regex from parameters map: " + emailAddressRegex);
             }
         } else if ((context.getProperty(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REGEX)) != null) {
