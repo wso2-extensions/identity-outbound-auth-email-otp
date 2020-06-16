@@ -1736,7 +1736,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             }
         } else if ((context.getProperty(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REGEX)) != null) {
             emailAddressRegex = String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REGEX));
-            if(log.isDebugEnabled()){
+            if (log.isDebugEnabled()) {
                 log.debug("Getting the email address regex from the context: " + emailAddressRegex);
             }
         }
