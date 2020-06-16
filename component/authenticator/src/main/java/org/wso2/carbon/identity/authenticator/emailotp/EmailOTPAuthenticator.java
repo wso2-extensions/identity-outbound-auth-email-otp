@@ -934,7 +934,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                     }
                     email = email.replaceAll(emailAddressRegex, "*");
                 }
-                else if (log.isDebugEnabled()){
+                else if (log.isDebugEnabled()) {
                     log.debug("Email address regex not set. Showing the complete email address.");
                 }
                 url = url + EmailOTPAuthenticatorConstants.SCREEN_VALUE + email;
