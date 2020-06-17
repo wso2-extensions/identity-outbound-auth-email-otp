@@ -231,6 +231,11 @@
                 <version>${carbon.identity.event.version}</version>
                 <scope>provided</scope>
             </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.event.handler.accountlock</groupId>
+                <artifactId>org.wso2.carbon.identity.handler.event.account.lock</artifactId>
+                <version>${carbon.identity.account.lock.handler.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.apache.oltu.oauth2</groupId>
@@ -497,6 +502,9 @@
         <org.wso2.carbon.identity.association.account>5.1.5</org.wso2.carbon.identity.association.account>
         <org.wso2.carbon.identity.outbound.auth.oidc>5.1.20</org.wso2.carbon.identity.outbound.auth.oidc>
         <identity.outbound.auth.oidc.import.version.range>[5.1.20,6.0.0)</identity.outbound.auth.oidc.import.version.range>
+        <carbon.identity.account.lock.handler.version>1.1.12</carbon.identity.account.lock.handler.version>
+        <carbon.identity.account.lock.handler.imp.pkg.version.range>[1.1.12, 2.0.0)
+        </carbon.identity.account.lock.handler.imp.pkg.version.range>
         <!--Test Dependencies-->
         <junit.version>4.12</junit.version>
         <testng.version>6.9.10</testng.version>

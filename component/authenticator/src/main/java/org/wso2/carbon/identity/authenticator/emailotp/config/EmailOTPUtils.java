@@ -21,7 +21,14 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.authentication.framework.config.builder.FileBasedConfigurationBuilder;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.AuthenticatorConfig;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
+import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
+import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
+import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants;
+import org.wso2.carbon.identity.authenticator.emailotp.internal.EmailOTPServiceDataHolder;
+import org.wso2.carbon.identity.governance.IdentityGovernanceException;
+import org.wso2.carbon.identity.handler.event.account.lock.exception.AccountLockServiceException;
+
 import java.util.Collections;
 import java.util.Map;
 
@@ -68,5 +75,63 @@ public class EmailOTPUtils {
             log.debug("Config value for key " + configName + ": " + configValue);
         }
         return configValue;
+    }
+
+    /**
+     * Check whether account locking is enabled for Email OTP.
+     *
+     * @param context Authentication context.
+     * @return Whether account locking is enabled for Email OTP.
+     */
+    public static boolean isAccountLockingEnabledForEmailOtp(AuthenticationContext context) {
+
+        return Boolean.parseBoolean(getConfiguration(context,
+                EmailOTPAuthenticatorConstants.ENABLE_ACCOUNT_LOCKING_FOR_FAILED_ATTEMPTS));
+    }
+
+    /**
+     * Get Account Lock Connector Configs.
+     *
+     * @param tenantDomain Tenant domain.
+     * @return AccountLockConnectorConfigs Account Lock Connector Configs.
+     * @throws AuthenticationFailedException Exception on authentication failure.
+     */
+    public static Property[] getAccountLockConnectorConfigs(String tenantDomain) throws AuthenticationFailedException {
+
+        Property[] connectorConfigs;
+        try {
+            connectorConfigs = EmailOTPServiceDataHolder.getInstance()
+                    .getIdentityGovernanceService()
+                    .getConfiguration(
+                            new String[]{
+                                    EmailOTPAuthenticatorConstants.PROPERTY_ACCOUNT_LOCK_ON_FAILURE,
+                                    EmailOTPAuthenticatorConstants.PROPERTY_ACCOUNT_LOCK_ON_FAILURE_MAX,
+                                    EmailOTPAuthenticatorConstants.PROPERTY_ACCOUNT_LOCK_TIME,
+                                    EmailOTPAuthenticatorConstants.PROPERTY_LOGIN_FAIL_TIMEOUT_RATIO
+                            }, tenantDomain);
+        } catch (IdentityGovernanceException e) {
+            throw new AuthenticationFailedException(
+                    "Error occurred while retrieving account lock connector configuration", e);
+        }
+        return connectorConfigs;
+    }
+
+    /**
+     * Check whether a given user is locked.
+     *
+     * @param authenticatedUser Authenticated user.
+     * @return True if user account is locked.
+     * @throws AuthenticationFailedException Exception on authentication failure.
+     */
+    public static boolean isAccountLocked(AuthenticatedUser authenticatedUser) throws AuthenticationFailedException {
+
+        try {
+            return EmailOTPServiceDataHolder.getInstance().getAccountLockService()
+                    .isAccountLocked(authenticatedUser.getUserName(), authenticatedUser.getTenantDomain(),
+                            authenticatedUser.getUserStoreDomain());
+        } catch (AccountLockServiceException e) {
+            throw new AuthenticationFailedException("Error while validating account lock status of user: " +
+                    authenticatedUser.getUserName(), e);
+        }
     }
 }
