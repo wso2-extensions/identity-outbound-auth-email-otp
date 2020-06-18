@@ -287,7 +287,6 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
     protected void processAuthenticationResponse(HttpServletRequest request, HttpServletResponse response,
                                                  AuthenticationContext context) throws AuthenticationFailedException {
 
-
         AuthenticatedUser authenticatedUser = getAuthenticatedUser(context);
         if (authenticatedUser == null) {
             String errorMessage = "Could not find an Authenticated user in the context.";
@@ -321,25 +320,28 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         long generatedTime = (long) context.getProperty(EmailOTPAuthenticatorConstants.OTP_GENERATED_TIME);
         boolean isExpired = isExpired(generatedTime, context);
 
-        if (userToken.equals(contextToken) && !isExpired) {
-            processValidUserToken(context, authenticatedUser);
-        } else if (isBackupCodeEnabled(context)) {
-            validateWithBackUpCodes(context, userToken, authenticatedUser);
-        } else {
-            if (isExpired) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Given otp code is expired.");
-                }
-                context.setProperty(EmailOTPAuthenticatorConstants.OTP_EXPIRED, "true");
-                handleOtpVerificationFail(context);
-                throw new AuthenticationFailedException("Code expired.");
+        try {
+            if (userToken.equals(contextToken) && !isExpired) {
+                processValidUserToken(context, authenticatedUser);
+            } else if (isBackupCodeEnabled(context)) {
+                validateWithBackUpCodes(context, userToken, authenticatedUser);
             } else {
-                if (log.isDebugEnabled()) {
-                    log.debug("Given otp code is mismatch.");
+                if (isExpired) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Given otp code is expired.");
+                    }
+                    context.setProperty(EmailOTPAuthenticatorConstants.OTP_EXPIRED, "true");
+                    throw new AuthenticationFailedException("Code expired.");
+                } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Given otp code is mismatch.");
+                    }
+                    throw new AuthenticationFailedException("Code mismatch.");
                 }
-                handleOtpVerificationFail(context);
-                throw new AuthenticationFailedException("Code mismatch.");
             }
+        } catch (AuthenticationFailedException e) {
+            handleOtpVerificationFail(context);
+            throw e;
         }
         // It reached here means the authentication was successful.
         resetOtpFailedAttempts(context);
@@ -416,7 +418,6 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                             "backup codes.");
                 }
                 context.setProperty(EmailOTPAuthenticatorConstants.CODE_MISMATCH, true);
-                handleOtpVerificationFail(context);
                 throw new AuthenticationFailedException("Verification Error due to Code " + userToken + " mismatch.",
                         authenticatedUser);
             }
