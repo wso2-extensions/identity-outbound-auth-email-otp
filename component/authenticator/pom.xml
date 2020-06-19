@@ -64,6 +64,10 @@
                             javax.servlet,
                             javax.servlet.http,
                             org.apache.oltu.oauth2.*; version="${oltu.package.import.version.range}",
+                            org.wso2.carbon.identity.handler.event.account.lock.service;
+                            version="${carbon.identity.account.lock.handler.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.handler.event.account.lock.exception;
+                            version="${carbon.identity.account.lock.handler.imp.pkg.version.range}",
                             *;resolution:=optional
                         </Import-Package>
                         <Export-Package>
@@ -161,6 +165,11 @@
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.event</artifactId>
             <version>${carbon.identity.event.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.event.handler.accountlock</groupId>
+            <artifactId>org.wso2.carbon.identity.handler.event.account.lock</artifactId>
+            <version>${carbon.identity.account.lock.handler.version}</version>
         </dependency>
         <!--Test Dependencies-->
         <dependency>

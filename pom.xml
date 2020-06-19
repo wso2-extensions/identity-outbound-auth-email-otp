@@ -246,6 +246,11 @@
             <artifactId>encoder</artifactId>
             <version>${encoder.wso2.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.event.handler.accountlock</groupId>
+            <artifactId>org.wso2.carbon.identity.handler.event.account.lock</artifactId>
+            <version>${carbon.identity.account.lock.handler.version}</version>
+        </dependency>
     </dependencies>
     <scm>
         <connection>scm:git:https://github.com/wso2-extensions/identity-outbound-auth-email-otp.git</connection>
@@ -448,6 +453,9 @@
         <encoder.wso2.version>1.2.0.wso2v1</encoder.wso2.version>
         <identity.extension.utils>1.0.4</identity.extension.utils>
         <log4j.version>1.2.13</log4j.version>
+        <carbon.identity.account.lock.handler.version>1.1.12</carbon.identity.account.lock.handler.version>
+        <carbon.identity.account.lock.handler.imp.pkg.version.range>[1.1.12, 2.0.0)
+        </carbon.identity.account.lock.handler.imp.pkg.version.range>
         <!--Test Dependencies-->
         <junit.version>4.12</junit.version>
         <testng.version>6.9.10</testng.version>

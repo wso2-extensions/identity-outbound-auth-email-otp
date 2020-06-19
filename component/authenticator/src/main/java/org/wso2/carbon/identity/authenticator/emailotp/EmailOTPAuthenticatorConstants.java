@@ -88,6 +88,7 @@ public class EmailOTPAuthenticatorConstants {
     public static final String SUPER_TENANT = "carbon.super";
     public static final String USER_NAME = "username";
     public static final String AUTHENTICATED_USER = "authenticatedUser";
+    public static final String LOCAL_AUTHENTICATOR = "LOCAL";
 
     public static final String IS_EMAILOTP_MANDATORY = "EMAILOTPMandatory";
     public static final String EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL = "EmailOTPAuthenticationEndpointErrorPage";
@@ -109,4 +110,19 @@ public class EmailOTPAuthenticatorConstants {
     public static final String USE_EVENT_HANDLER_BASED_EMAIL_SENDER = "useEventHandlerBasedEmailSender";
     public static final String TEMPLATE_TYPE = "TEMPLATE_TYPE";
     public static final String EVENT_NAME = "EmailOTP";
+
+    // Account lock related constants.
+    public static final String EMAIL_OTP_FAILED_ATTEMPTS_CLAIM =
+            "http://wso2.org/claims/identity/failedEmailOtpAttempts";
+    public static final String FAILED_LOGIN_LOCKOUT_COUNT_CLAIM = "http://wso2.org/claims/identity/" +
+            "failedLoginLockoutCount";
+    public static final String ACCOUNT_LOCKED_CLAIM = "http://wso2.org/claims/identity/accountLocked";
+    public static final String ACCOUNT_UNLOCK_TIME_CLAIM = "http://wso2.org/claims/identity/unlockTime";
+    public static final String SHOW_AUTH_FAILURE_REASON = "ShowAuthFailureReason";
+    public static final String ENABLE_ACCOUNT_LOCKING_FOR_FAILED_ATTEMPTS = "EnableAccountLockingForFailedAttempts";
+    public static final String PROPERTY_LOGIN_FAIL_TIMEOUT_RATIO = "account.lock.handler.login.fail.timeout.ratio";
+    public static final String PROPERTY_ACCOUNT_LOCK_ON_FAILURE = "account.lock.handler.enable";
+    public static final String PROPERTY_ACCOUNT_LOCK_ON_FAILURE_MAX = "account.lock.handler.On.Failure.Max.Attempts";
+    public static final String PROPERTY_ACCOUNT_LOCK_TIME = "account.lock.handler.Time";
+    public static final String ADMIN_INITIATED = "AdminInitiated";
 }
