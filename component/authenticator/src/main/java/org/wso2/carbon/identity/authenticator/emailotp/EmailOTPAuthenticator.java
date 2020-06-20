@@ -320,26 +320,28 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         String contextToken = (String) context.getProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN);
         long generatedTime = (long) context.getProperty(EmailOTPAuthenticatorConstants.OTP_GENERATED_TIME);
         boolean isExpired = isExpired(generatedTime, context);
-
+        boolean succeededAttempt = false;
         if (userToken.equals(contextToken) && !isExpired) {
             processValidUserToken(context, authenticatedUser);
+            succeededAttempt = true;
         } else if (isBackupCodeEnabled(context)) {
-            validateWithBackUpCodes(context, userToken, authenticatedUser);
+            succeededAttempt = validateWithBackUpCodes(context, userToken, authenticatedUser);
         } else {
+            context.setProperty(EmailOTPAuthenticatorConstants.CODE_MISMATCH, true);
             if (isExpired) {
                 if (log.isDebugEnabled()) {
                     log.debug("Given otp code is expired.");
                 }
                 context.setProperty(EmailOTPAuthenticatorConstants.OTP_EXPIRED, "true");
-                handleOtpVerificationFail(context);
-                throw new AuthenticationFailedException("Code expired.");
             } else {
                 if (log.isDebugEnabled()) {
                     log.debug("Given otp code is mismatch.");
                 }
-                handleOtpVerificationFail(context);
-                throw new AuthenticationFailedException("Code mismatch.");
             }
+        }
+        if (!succeededAttempt) {
+            handleOtpVerificationFail(context);
+            throw new AuthenticationFailedException("Code mismatch.");
         }
         // It reached here means the authentication was successful.
         resetOtpFailedAttempts(context);
@@ -359,16 +361,18 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
     }
 
     /**
-     * Checks the backup codes for email otp.
+     * Check whether the entered code matches with a backup code.
      *
-     * @param context           AuthenticationContext.
-     * @param userToken         EmailOTP token.
-     * @param authenticatedUser AuthenticatedUser
-     * @throws AuthenticationFailedException
+     * @param context The AuthenticationContext.
+     * @param userToken The userToken.
+     * @param authenticatedUser The authenticatedUser.
+     * @return True if the user entered code matches with a backup code.
+     * @throws AuthenticationFailedException Authentication failure exception when retrieving user claim for OTP list.
      */
-    private void validateWithBackUpCodes(AuthenticationContext context, String userToken,
+    private boolean validateWithBackUpCodes(AuthenticationContext context, String userToken,
                                          AuthenticatedUser authenticatedUser) throws AuthenticationFailedException {
 
+        boolean isMatchedWithBackupCode = false;
         String[] savedOTPs = null;
         String username = authenticatedUser.toFullQualifiedUsername();
         String tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(username);
@@ -393,14 +397,13 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                     log.debug("The claim " + EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_CLAIM + " does " +
                             "not contain any values.");
                 }
-                throw new AuthenticationFailedException("The claim " +
-                        EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_CLAIM + " does not contain any values",
-                        authenticatedUser);
+                return false;
             }
             if (isBackUpCodeValid(savedOTPs, userToken)) {
                 if (log.isDebugEnabled()) {
                     log.debug("Found saved backup Email OTP for user :" + username);
                 }
+                isMatchedWithBackupCode = true;
                 context.setSubject(authenticatedUser);
                 savedOTPs = (String[]) ArrayUtils.removeElement(savedOTPs, userToken);
                 if (log.isDebugEnabled()) {
@@ -416,14 +419,12 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                             "backup codes.");
                 }
                 context.setProperty(EmailOTPAuthenticatorConstants.CODE_MISMATCH, true);
-                handleOtpVerificationFail(context);
-                throw new AuthenticationFailedException("Verification Error due to Code " + userToken + " mismatch.",
-                        authenticatedUser);
             }
         } catch (UserStoreException e) {
             throw new AuthenticationFailedException("Cannot find the user claim for OTP list for user : " +
                     username, e);
         }
+        return isMatchedWithBackupCode;
     }
 
     /**

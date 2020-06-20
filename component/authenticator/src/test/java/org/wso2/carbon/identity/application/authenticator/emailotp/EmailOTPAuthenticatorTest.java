@@ -65,6 +65,8 @@ import org.wso2.carbon.identity.mgt.config.StorageType;
 import org.wso2.carbon.identity.mgt.mail.Notification;
 import org.wso2.carbon.identity.mgt.mail.NotificationBuilder;
 import org.wso2.carbon.identity.mgt.mail.NotificationData;
+import org.wso2.carbon.user.api.Claim;
+import org.wso2.carbon.user.api.ClaimManager;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.api.UserStoreManager;
@@ -126,6 +128,8 @@ public class EmailOTPAuthenticatorTest {
     @Mock private Properties properties;
     @Mock private Notification notification;
     @Mock private LocalApplicationAuthenticator localApplicationAuthenticator;
+    @Mock private ClaimManager claimManager;
+    @Mock private Claim claim;
 
     @BeforeMethod
     public void setUp() {
@@ -955,6 +959,10 @@ public class EmailOTPAuthenticatorTest {
                 .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
         when(userStoreManager.getUserClaimValue(EmailOTPAuthenticatorTestConstants.USER_NAME,
                 EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_CLAIM, null)).thenReturn("123456,789123");
+        when(userStoreManager.getClaimManager()).thenReturn(claimManager);
+        when(userStoreManager.getClaimManager().getClaim(EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_CLAIM))
+                .thenReturn(claim);
+        when(context.getProperty(EmailOTPAuthenticatorConstants.CODE_MISMATCH)).thenReturn(false);
         Whitebox.invokeMethod(emailOTPAuthenticator, "processAuthenticationResponse",
                 httpServletRequest, httpServletResponse, context);
     }
