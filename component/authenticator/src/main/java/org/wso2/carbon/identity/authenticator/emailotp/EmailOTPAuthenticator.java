@@ -1667,7 +1667,8 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                 userRealm = realmService.getTenantUserRealm(tenantId);
             }
         } catch (UserStoreException e) {
-            throw new AuthenticationFailedException("Cannot find the user realm.", e);
+            throw new AuthenticationFailedException(
+                    "Cannot find the user realm of user: " + authenticatedUser.getUserName(), e);
         }
         return userRealm;
     }
@@ -1852,9 +1853,9 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                             EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM},
                     UserCoreConstants.DEFAULT_PROFILE);
         } catch (UserStoreException e) {
-            log.error("Error while reading user claims.", e);
+            log.error("Error while reading user claims of user: " + authenticatedUser.getUserName(), e);
             throw new AuthenticationFailedException(
-                    String.format("Failed to read user claims for user : %s.", authenticatedUser), e);
+                    String.format("Failed to read user claims for user : %s.", authenticatedUser.getUserName()), e);
         }
         return claimValues;
     }
@@ -1868,9 +1869,9 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             userStoreManager.setUserClaimValues(IdentityUtil.addDomainToName(authenticatedUser.getUserName(),
                     authenticatedUser.getUserStoreDomain()), updatedClaims, UserCoreConstants.DEFAULT_PROFILE);
         } catch (UserStoreException e) {
-            log.error("Error while updating user claims", e);
+            log.error("Error while updating user claims of user: " + authenticatedUser.getUserName(), e);
             throw new AuthenticationFailedException(
-                    String.format("Failed to update user claims for user : %s.", authenticatedUser), e);
+                    String.format("Failed to update user claims for user : %s.", authenticatedUser.getUserName()), e);
         }
     }
 }
