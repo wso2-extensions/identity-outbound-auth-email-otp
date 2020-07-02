@@ -29,6 +29,7 @@ import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.extension.identity.helper.FederatedAuthenticatorUtil;
 import org.wso2.carbon.extension.identity.helper.IdentityHelperConstants;
 import org.wso2.carbon.extension.identity.helper.util.IdentityHelperUtil;
@@ -151,13 +152,16 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             throws AuthenticationFailedException {
 
         try {
+            PrivilegedCarbonContext.startTenantFlow();
+            String tenantDomain = context.getTenantDomain();
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
             boolean isEmailOTPMandatory, sendOtpToFederatedEmail;
             String usecase;
             Object propertiesFromLocal = null;
             String email;
             AuthenticatedUser authenticatedUser = null;
             Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
-            String tenantDomain = context.getTenantDomain();
+
             context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATION,
                     EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME);
             if (!tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
@@ -277,6 +281,8 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             throw new AuthenticationFailedException("Failed to get the email claim when proceed the EmailOTP flow ", e);
         } catch (UserStoreException e) {
             throw new AuthenticationFailedException("Failed to get the user from user store ", e);
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
         }
     }
 
