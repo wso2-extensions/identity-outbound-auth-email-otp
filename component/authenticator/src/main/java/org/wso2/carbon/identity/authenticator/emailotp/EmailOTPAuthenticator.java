@@ -887,9 +887,30 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
     protected void processEmailOTPFlow(HttpServletRequest request, HttpServletResponse response, String email,
                                      String username, String queryParams,
                                      AuthenticationContext context) throws AuthenticationFailedException {
+
         Map<String, String> authenticatorProperties = context.getAuthenticatorProperties();
         Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
+        boolean showAuthFailureReason =
+                Boolean.parseBoolean(emailOTPParameters.get(EmailOTPAuthenticatorConstants.SHOW_AUTH_FAILURE_REASON));
         try {
+            if (isLocalUser(context) &&
+                    EmailOTPUtils.isAccountLocked(getAuthenticatedUser(context))) {
+                String retryParam;
+                if (showAuthFailureReason) {
+                    String unlockTime = getUnlockTime(getAuthenticatedUser(context));
+                    if (StringUtils.isNotBlank(unlockTime)) {
+                        long timeToUnlock = Long.parseLong(unlockTime) - System.currentTimeMillis();
+                        if (timeToUnlock > 0) {
+                            queryParams += "&unlockTime=" + Math.round((double) timeToUnlock / 1000 / 60);
+                        }
+                    }
+                    retryParam = EmailOTPAuthenticatorConstants.ERROR_USER_ACCOUNT_LOCKED;
+                } else {
+                    retryParam = EmailOTPAuthenticatorConstants.RETRY_PARAMS;
+                }
+                redirectToErrorPage(response, context, emailOTPParameters, queryParams, retryParam);
+                return;
+            }
             if (!context.isRetrying()
                     || (context.isRetrying()
                     && Boolean.parseBoolean(request.getParameter(EmailOTPAuthenticatorConstants.RESEND)))
@@ -2388,5 +2409,30 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             throw new AuthenticationFailedException(
                     String.format("Failed to update user claims for user : %s.", authenticatedUser), e);
         }
+    }
+
+    private String getUnlockTime(AuthenticatedUser authenticatedUser)
+            throws AuthenticationFailedException {
+
+        String username = authenticatedUser.toFullQualifiedUsername();
+        String tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(username);
+        String unlockTime = null;
+        try {
+            UserRealm userRealm = getUserRealm(username);
+            if (userRealm == null) {
+                throw new AuthenticationFailedException("UserRealm is null for user : " + username);
+            }
+            UserStoreManager userStoreManager = userRealm.getUserStoreManager();
+            if (userStoreManager != null) {
+                Map<String, String> claimValues = userStoreManager
+                        .getUserClaimValues(tenantAwareUsername,
+                                new String[]{EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM}, null);
+                unlockTime = claimValues.get(EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM);
+            }
+        } catch (UserStoreException e) {
+            throw new AuthenticationFailedException("Cannot find the user claim for unlock time for user : " +
+                    username, e);
+        }
+        return unlockTime;
     }
 }
