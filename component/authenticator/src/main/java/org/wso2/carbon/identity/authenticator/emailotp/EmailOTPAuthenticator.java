@@ -897,18 +897,10 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                     EmailOTPUtils.isAccountLocked(getAuthenticatedUser(context))) {
                 String retryParam;
                 if (showAuthFailureReason) {
-                    String unlockTime = getUnlockTimeInMilliSeconds(getAuthenticatedUser(context));
-                    if (unlockTime == null) {
-                        if (log.isDebugEnabled()) {
-                            log.debug("No value configured for claim: " +
-                                    EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM);
-                        }
-                    }
-                    if (StringUtils.isNotBlank(unlockTime)) {
-                        long timeToUnlock = Long.parseLong(unlockTime) - System.currentTimeMillis();
-                        if (timeToUnlock > 0) {
-                            queryParams += "&unlockTime=" + Math.round((double) timeToUnlock / 1000 / 60);
-                        }
+                    long unlockTime = getUnlockTimeInMilliSeconds(getAuthenticatedUser(context));
+                    long timeToUnlock = unlockTime - System.currentTimeMillis();
+                    if (timeToUnlock > 0) {
+                        queryParams += "&unlockTime=" + Math.round((double) timeToUnlock / 1000 / 60);
                     }
                     retryParam = EmailOTPAuthenticatorConstants.ERROR_USER_ACCOUNT_LOCKED;
                 } else {
@@ -2417,12 +2409,10 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         }
     }
 
-    private String getUnlockTimeInMilliSeconds(AuthenticatedUser authenticatedUser)
-            throws AuthenticationFailedException {
+    private long getUnlockTimeInMilliSeconds(AuthenticatedUser authenticatedUser) throws AuthenticationFailedException {
 
         String username = authenticatedUser.toFullQualifiedUsername();
         String tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(username);
-        String unlockTime;
         try {
             UserRealm userRealm = getUserRealm(username);
             if (userRealm == null) {
@@ -2438,11 +2428,17 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             Map<String, String> claimValues = userStoreManager
                     .getUserClaimValues(tenantAwareUsername,
                             new String[]{EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM}, null);
-            unlockTime = claimValues.get(EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM);
+            if (claimValues.get(EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM) == null) {
+                if (log.isDebugEnabled()) {
+                    log.debug("No value configured for claim: " +
+                            EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM);
+                }
+                return 0;
+            }
+            return Long.parseLong(claimValues.get(EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM));
         } catch (UserStoreException e) {
             throw new AuthenticationFailedException("Cannot find the user claim for unlock time for user : " +
                     username, e);
         }
-        return unlockTime;
     }
 }
