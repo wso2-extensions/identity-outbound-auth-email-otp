@@ -2409,6 +2409,13 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         }
     }
 
+    /**
+     * Get user account unlock time in milli seconds. If no value configured for unlock time user claim, return 0.
+     *
+     * @param authenticatedUser The authenticated user.
+     * @return User account unlock time in milli seconds. If no value is configured return 0.
+     * @throws AuthenticationFailedException If an error occurred while getting the user unlock time.
+     */
     private long getUnlockTimeInMilliSeconds(AuthenticatedUser authenticatedUser) throws AuthenticationFailedException {
 
         String username = authenticatedUser.toFullQualifiedUsername();
@@ -2430,8 +2437,8 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                             new String[]{EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM}, null);
             if (claimValues.get(EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM) == null) {
                 if (log.isDebugEnabled()) {
-                    log.debug("No value configured for claim: " +
-                            EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM);
+                    log.debug(String.format("No value configured for claim: %s, of user: %s",
+                            EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM, username));
                 }
                 return 0;
             }
