@@ -887,9 +887,27 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
     protected void processEmailOTPFlow(HttpServletRequest request, HttpServletResponse response, String email,
                                      String username, String queryParams,
                                      AuthenticationContext context) throws AuthenticationFailedException {
+
         Map<String, String> authenticatorProperties = context.getAuthenticatorProperties();
         Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
+        boolean showAuthFailureReason =
+                Boolean.parseBoolean(emailOTPParameters.get(EmailOTPAuthenticatorConstants.SHOW_AUTH_FAILURE_REASON));
         try {
+            if (isLocalUser(context) && EmailOTPUtils.isAccountLocked(getAuthenticatedUser(context))) {
+                String retryParam;
+                if (showAuthFailureReason) {
+                    long unlockTime = getUnlockTimeInMilliSeconds(getAuthenticatedUser(context));
+                    long timeToUnlock = unlockTime - System.currentTimeMillis();
+                    if (timeToUnlock > 0) {
+                        queryParams += "&unlockTime=" + Math.round((double) timeToUnlock / 1000 / 60);
+                    }
+                    retryParam = EmailOTPAuthenticatorConstants.ERROR_USER_ACCOUNT_LOCKED;
+                } else {
+                    retryParam = EmailOTPAuthenticatorConstants.RETRY_PARAMS;
+                }
+                redirectToErrorPage(response, context, emailOTPParameters, queryParams, retryParam);
+                return;
+            }
             if (!context.isRetrying()
                     || (context.isRetrying()
                     && Boolean.parseBoolean(request.getParameter(EmailOTPAuthenticatorConstants.RESEND)))
@@ -2387,6 +2405,45 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             log.error("Error while updating user claims", e);
             throw new AuthenticationFailedException(
                     String.format("Failed to update user claims for user : %s.", authenticatedUser), e);
+        }
+    }
+
+    /**
+     * Get user account unlock time in milli seconds. If no value configured for unlock time user claim, return 0.
+     *
+     * @param authenticatedUser The authenticated user.
+     * @return User account unlock time in milli seconds. If no value is configured return 0.
+     * @throws AuthenticationFailedException If an error occurred while getting the user unlock time.
+     */
+    private long getUnlockTimeInMilliSeconds(AuthenticatedUser authenticatedUser) throws AuthenticationFailedException {
+
+        String username = authenticatedUser.toFullQualifiedUsername();
+        String tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(username);
+        try {
+            UserRealm userRealm = getUserRealm(username);
+            if (userRealm == null) {
+                throw new AuthenticationFailedException("UserRealm is null for user : " + username);
+            }
+            UserStoreManager userStoreManager = userRealm.getUserStoreManager();
+            if (userStoreManager == null) {
+                if (log.isDebugEnabled()) {
+                    log.debug("userStoreManager is null for user realm: " + userRealm);
+                }
+                throw new AuthenticationFailedException("userStoreManager is null for user realm: " + userRealm);
+            }
+            Map<String, String> claimValues = userStoreManager.getUserClaimValues(tenantAwareUsername,
+                    new String[]{EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM}, null);
+            if (claimValues.get(EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM) == null) {
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("No value configured for claim: %s, of user: %s",
+                            EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM, username));
+                }
+                return 0;
+            }
+            return Long.parseLong(claimValues.get(EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM));
+        } catch (UserStoreException e) {
+            throw new AuthenticationFailedException("Cannot find the user claim for unlock time for user : " +
+                    username, e);
         }
     }
 }
