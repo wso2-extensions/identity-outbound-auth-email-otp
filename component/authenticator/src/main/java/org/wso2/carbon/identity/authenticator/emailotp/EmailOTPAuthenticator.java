@@ -893,8 +893,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         boolean showAuthFailureReason =
                 Boolean.parseBoolean(emailOTPParameters.get(EmailOTPAuthenticatorConstants.SHOW_AUTH_FAILURE_REASON));
         try {
-            if (isLocalUser(context) &&
-                    EmailOTPUtils.isAccountLocked(getAuthenticatedUser(context))) {
+            if (isLocalUser(context) && EmailOTPUtils.isAccountLocked(getAuthenticatedUser(context))) {
                 String retryParam;
                 if (showAuthFailureReason) {
                     long unlockTime = getUnlockTimeInMilliSeconds(getAuthenticatedUser(context));
@@ -2432,9 +2431,8 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                 }
                 throw new AuthenticationFailedException("userStoreManager is null for user realm: " + userRealm);
             }
-            Map<String, String> claimValues = userStoreManager
-                    .getUserClaimValues(tenantAwareUsername,
-                            new String[]{EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM}, null);
+            Map<String, String> claimValues = userStoreManager.getUserClaimValues(tenantAwareUsername,
+                    new String[]{EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM}, null);
             if (claimValues.get(EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM) == null) {
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("No value configured for claim: %s, of user: %s",
