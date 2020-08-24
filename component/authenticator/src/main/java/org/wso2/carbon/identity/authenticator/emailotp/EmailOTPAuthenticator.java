@@ -91,6 +91,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.DISABLE_OTP_RESEND_ON_FAILURE;
+
 /**
  * Authenticator of EmailOTP.
  */
@@ -910,9 +912,8 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             }
             if (!context.isRetrying()
                     || (context.isRetrying()
-                    && Boolean.parseBoolean(request.getParameter(EmailOTPAuthenticatorConstants.RESEND)))
-                    || (context.isRetrying() &&
-                    Boolean.parseBoolean((String) context.getProperty(EmailOTPAuthenticatorConstants.OTP_EXPIRED)))) {
+                        && Boolean.parseBoolean(request.getParameter(EmailOTPAuthenticatorConstants.RESEND)))
+                    || (context.isRetrying() && !isOTPResendingDisabledOnFailure(context) && isOTPExpired(context))) {
                 OneTimePassword token = new OneTimePassword();
                 String secret = OneTimePassword.getRandomNumber(EmailOTPAuthenticatorConstants.SECRET_KEY_LENGTH);
                 String myToken = token.generateToken(secret, "" + EmailOTPAuthenticatorConstants.NUMBER_BASE
@@ -2114,7 +2115,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
     }
 
     /**
-     * Method to GET Expire Time configuration from EmailOTPUTils.
+     * A method to get Expire Time configuration from EmailOTPUtils.
      *
      * @param context :  AuthenticationContext
      */
@@ -2129,6 +2130,30 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
             }
         }
         return expireTime;
+    }
+
+    /**
+     * A method to get disableOTPResendOnFailure configuration from EmailOTPUtils.
+     *
+     * @param context :  AuthenticationContext
+     */
+    private boolean isOTPResendingDisabledOnFailure(AuthenticationContext context) {
+
+        String disableOTPResendOnFailure = EmailOTPUtils.getConfiguration(context, DISABLE_OTP_RESEND_ON_FAILURE);
+        if (StringUtils.isEmpty(disableOTPResendOnFailure)) {
+            return false;
+        }
+        return Boolean.parseBoolean(disableOTPResendOnFailure);
+    }
+
+    /**
+     * A method to get isOTPExpired configuration from EmailOTPUtils.
+     *
+     * @param context :  AuthenticationContext
+     */
+    private boolean isOTPExpired(AuthenticationContext context) {
+
+        return Boolean.parseBoolean((String) context.getProperty(EmailOTPAuthenticatorConstants.OTP_EXPIRED));
     }
 
     /**
