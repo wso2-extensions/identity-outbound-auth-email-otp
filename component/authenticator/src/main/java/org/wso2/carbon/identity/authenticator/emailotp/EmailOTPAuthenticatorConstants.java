@@ -121,6 +121,7 @@ public class EmailOTPAuthenticatorConstants {
     public static final String TOKEN_EXPIRE_TIME_IN_MILIS = "tokenExpirationTime";
     public static final String OTP_EXPIRE_TIME_DEFAULT = "300000";
     public static final String OTP_EXPIRED = "isOTPExpired";
+    public static final String DISABLE_OTP_RESEND_ON_FAILURE = "disableOTPResendOnFailure";
 
     public static final String SERVICE_PROVIDER_NAME = "serviceProviderName";
     public static final String IP_ADDRESS = "ipAddress";
