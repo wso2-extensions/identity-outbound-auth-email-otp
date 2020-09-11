@@ -109,6 +109,7 @@ public class EmailOTPAuthenticatorConstants {
     public static final String EMAIL_ADDRESS_REQ_PAGE = "EmailAddressRequestPage";
     public static final String CODE_MISMATCH = "codeMismatch";
     public static final String BACKUP_CODE = "BackupCode";
+    public static final String PASS_SP_NAME_TO_EVENT = "passSPNameToEvent";
 
     public static final String SCREEN_VALUE = "&screenValue=";
     public static final String SHOW_EMAIL_ADDRESS_IN_UI = "showEmailAddressInUI";
