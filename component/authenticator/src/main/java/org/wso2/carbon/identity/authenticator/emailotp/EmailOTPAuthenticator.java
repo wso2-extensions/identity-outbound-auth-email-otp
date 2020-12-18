@@ -2550,7 +2550,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         eventProperties.put(IdentityEventConstants.EventProperty.APPLICATION_NAME, context.getServiceProviderName());
         eventProperties.put(IdentityEventConstants.EventProperty.USER_AGENT, request.getHeader(
                 EmailOTPAuthenticatorConstants.USER_AGENT));
-        if (request.getParameter(EmailOTPAuthenticatorConstants.RESEND) != null) {
+        if (StringUtils.isNotEmpty(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))) {
             if (log.isDebugEnabled()) {
                 log.debug("Setting true resend-code property in event since http request has resendCode parameter.");
             }
@@ -2565,8 +2565,6 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
 
         eventProperties.put(IdentityEventConstants.EventProperty.GENERATED_OTP, context.getProperty(
                 EmailOTPAuthenticatorConstants.OTP_TOKEN));
-
-
         long otpGeneratedTime = (long) context.getProperty(EmailOTPAuthenticatorConstants.OTP_GENERATED_TIME);
         eventProperties.put(IdentityEventConstants.EventProperty.OTP_GENERATED_TIME, otpGeneratedTime);
 
