@@ -129,7 +129,6 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         } else if (StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.CODE)) &&
                 StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))) {
             // if the request comes with code, it will go through this flow.
-            publishPreEmailOTPGeneratedEvent(request, context);
             initiateAuthenticationRequest(request, response, context);
             publishPostEmailOTPGeneratedEvent(request, context);
             if (context.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATION)
@@ -143,12 +142,10 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
                 return AuthenticatorFlowStatus.SUCCESS_COMPLETED;
             }
         } else if (Boolean.parseBoolean(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))) {
-            publishPreEmailOTPGeneratedEvent(request, context);
             AuthenticatorFlowStatus authenticatorFlowStatus = super.process(request, response, context);
             publishPostEmailOTPGeneratedEvent(request, context);
             return authenticatorFlowStatus;
         } else {
-            publishPreEmailOTPValidatedEvent(request, context);
             AuthenticatorFlowStatus authenticatorFlowStatus = super.process(request, response, context);
             publishPostEmailOTPValidatedEvent(request, context);
             return authenticatorFlowStatus;
@@ -335,6 +332,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         boolean isExpired = isExpired(generatedTime, context);
         boolean succeededAttempt = false;
         if (userToken.equals(contextToken) && !isExpired) {
+            context.setProperty(EmailOTPAuthenticatorConstants.CODE_MISMATCH, false);
             processValidUserToken(context, authenticatedUser);
             succeededAttempt = true;
         } else if (isBackupCodeEnabled(context)) {
@@ -2531,45 +2529,18 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         }
     }
 
-    private String formatTimeStamp(long timeStamp) {
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(timeStamp);
-        return calendar.getTime().toString();
-    }
-
-    private void publishPreEmailOTPGeneratedEvent(HttpServletRequest request,
-                                                  AuthenticationContext context) throws AuthenticationFailedException {
-
-        Map<String, Object> eventProperties = new HashMap<>();
-        eventProperties.put(IdentityEventConstants.EventProperty.USER_NAME, request.getParameter("username"));
-        eventProperties.put(IdentityEventConstants.EventProperty.TENANT_DOMAIN, context.getTenantDomain());
-        eventProperties.put(IdentityEventConstants.EventProperty.APPLICATION_NAME, context.getServiceProviderName());
-        eventProperties.put(IdentityEventConstants.EventProperty.USER_AGENT, request.getHeader(
-                EmailOTPAuthenticatorConstants.USER_AGENT));
-        if (request.getHeader(EmailOTPAuthenticatorConstants.X_FORWARDED_FOR) != null) {
-            eventProperties.put(IdentityEventConstants.EventProperty.CLIENT_IP, request.getHeader(
-                    EmailOTPAuthenticatorConstants.X_FORWARDED_FOR).split(",")[0]);
-        } else {
-            eventProperties.put(IdentityEventConstants.EventProperty.CLIENT_IP, request.getRemoteAddr());
-        }
-        if (request.getParameter(EmailOTPAuthenticatorConstants.RESEND) != null) {
-            eventProperties.put(IdentityEventConstants.EventProperty.RESEND_CODE,
-                    request.getParameter(EmailOTPAuthenticatorConstants.RESEND));
-        }
-        Event preOtpGenEvent = new Event(IdentityEventConstants.Event.PRE_GENERATE_EMAIL_OTP, eventProperties);
-        try {
-            EmailOTPServiceDataHolder.getInstance().getIdentityEventService().handleEvent(preOtpGenEvent);
-        } catch (IdentityEventException e) {
-            String errorMsg = "An error occurred while triggering the event. " + e.getMessage();
-            throw new AuthenticationFailedException(errorMsg, e);
-        }
-    }
-
-    private void publishPostEmailOTPGeneratedEvent(HttpServletRequest request,
-                                                   AuthenticationContext context) throws AuthenticationFailedException {
+    /**
+     * Trigger event after generating Email OTP.
+     *
+     * @param request HttpServletRequest.
+     * @param context Authentication context.
+     * @throws AuthenticationFailedException Exception on authentication failure.
+     */
+    private void publishPostEmailOTPGeneratedEvent(HttpServletRequest request, AuthenticationContext context)
+            throws AuthenticationFailedException {
 
         Map<String, Object> eventProperties = new HashMap<>();
+        eventProperties.put(IdentityEventConstants.EventProperty.CORRELATION_ID, context.getCallerSessionKey());
         AuthenticatedUser authenticatedUser = (AuthenticatedUser) context.getProperty(EmailOTPAuthenticatorConstants
                 .AUTHENTICATED_USER);
         eventProperties.put(IdentityEventConstants.EventProperty.USER_NAME, authenticatedUser.getUserName());
@@ -2580,85 +2551,58 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         eventProperties.put(IdentityEventConstants.EventProperty.USER_AGENT, request.getHeader(
                 EmailOTPAuthenticatorConstants.USER_AGENT));
         if (request.getParameter(EmailOTPAuthenticatorConstants.RESEND) != null) {
+            if (log.isDebugEnabled()) {
+                log.debug("Setting true resend-code property in event since http request has resendCode parameter.");
+            }
             eventProperties.put(IdentityEventConstants.EventProperty.RESEND_CODE,
                     request.getParameter(EmailOTPAuthenticatorConstants.RESEND));
+        } else {
+            if (log.isDebugEnabled()) {
+                log.debug("Setting false resend-code property in event since http request has not resendCode parameter.");
+            }
+            eventProperties.put(IdentityEventConstants.EventProperty.RESEND_CODE, false);
         }
 
-        eventProperties.put(IdentityEventConstants.EventProperty.EMAIL_OTP, context.getProperty(
+        eventProperties.put(IdentityEventConstants.EventProperty.GENERATED_OTP, context.getProperty(
                 EmailOTPAuthenticatorConstants.OTP_TOKEN));
 
+
         long otpGeneratedTime = (long) context.getProperty(EmailOTPAuthenticatorConstants.OTP_GENERATED_TIME);
-        eventProperties.put(IdentityEventConstants.EventProperty.OTP_GENERATED_TIME,
-                formatTimeStamp(otpGeneratedTime));
+        eventProperties.put(IdentityEventConstants.EventProperty.OTP_GENERATED_TIME, otpGeneratedTime);
 
         long expiryTime = otpGeneratedTime + Long.parseLong(getExpireTime(context));
-        eventProperties.put(IdentityEventConstants.EventProperty.OTP_EXPIRY_TIME, formatTimeStamp(expiryTime));
+        eventProperties.put(IdentityEventConstants.EventProperty.OTP_EXPIRY_TIME, expiryTime);
 
-
-        if (request.getHeader(EmailOTPAuthenticatorConstants.X_FORWARDED_FOR) != null) {
+        if (StringUtils.isNotEmpty(request.getHeader(EmailOTPAuthenticatorConstants.X_FORWARDED_FOR))) {
             eventProperties.put(IdentityEventConstants.EventProperty.CLIENT_IP, request.getHeader(
                     EmailOTPAuthenticatorConstants.X_FORWARDED_FOR).split(",")[0]);
         } else {
+            if (log.isDebugEnabled()) {
+                log.debug("Getting client-ip from remote address since x-forwarded-for is null.");
+            }
             eventProperties.put(IdentityEventConstants.EventProperty.CLIENT_IP, request.getRemoteAddr());
         }
         Event postOtpGenEvent = new Event(IdentityEventConstants.Event.POST_GENERATE_EMAIL_OTP, eventProperties);
         try {
             EmailOTPServiceDataHolder.getInstance().getIdentityEventService().handleEvent(postOtpGenEvent);
         } catch (IdentityEventException e) {
-            String errorMsg = "An error occurred while triggering the event. " + e.getMessage();
+            String errorMsg = "An error occurred while triggering post event in Email OTP generation flow. " + e.getMessage();
             throw new AuthenticationFailedException(errorMsg, e);
         }
     }
 
-    private void publishPreEmailOTPValidatedEvent(HttpServletRequest request,
-                                                  AuthenticationContext context) throws AuthenticationFailedException {
-
-        Map<String, Object> eventProperties = new HashMap<>();
-        AuthenticatedUser authenticatedUser = (AuthenticatedUser) context.getProperty(EmailOTPAuthenticatorConstants
-                .AUTHENTICATED_USER);
-        eventProperties.put(IdentityEventConstants.EventProperty.USER_NAME, authenticatedUser.getUserName());
-        eventProperties.put(IdentityEventConstants.EventProperty.TENANT_DOMAIN, context.getTenantDomain());
-        eventProperties.put(IdentityEventConstants.EventProperty.USER_STORE_DOMAIN, authenticatedUser
-                .getUserStoreDomain());
-        eventProperties.put(IdentityEventConstants.EventProperty.APPLICATION_NAME, context.getServiceProviderName());
-        eventProperties.put(IdentityEventConstants.EventProperty.USER_AGENT, request.getHeader(
-                EmailOTPAuthenticatorConstants.USER_AGENT));
-
-        if (request.getHeader(EmailOTPAuthenticatorConstants.X_FORWARDED_FOR) != null) {
-            eventProperties.put(IdentityEventConstants.EventProperty.CLIENT_IP, request.getHeader(
-                    EmailOTPAuthenticatorConstants.X_FORWARDED_FOR).split(",")[0]);
-        } else {
-            eventProperties.put(IdentityEventConstants.EventProperty.CLIENT_IP, request.getRemoteAddr());
-        }
-
-        if (request.getParameter(EmailOTPAuthenticatorConstants.RESEND) != null) {
-            eventProperties.put(IdentityEventConstants.EventProperty.RESEND_CODE,
-                    request.getParameter(EmailOTPAuthenticatorConstants.RESEND));
-        }
-        eventProperties.put(IdentityEventConstants.EventProperty.EMAIL_OTP, context.getProperty(
-                EmailOTPAuthenticatorConstants.OTP_TOKEN));
-        eventProperties.put(IdentityEventConstants.EventProperty.USER_OTP, request.getParameter(
-                EmailOTPAuthenticatorConstants.CODE));
-
-        long otpGeneratedTime = (long) context.getProperty(EmailOTPAuthenticatorConstants.OTP_GENERATED_TIME);
-        eventProperties.put(IdentityEventConstants.EventProperty.OTP_GENERATED_TIME,
-                formatTimeStamp(otpGeneratedTime));
-        long expiryTime = otpGeneratedTime + Long.parseLong(getExpireTime(context));
-        eventProperties.put(IdentityEventConstants.EventProperty.OTP_EXPIRY_TIME, formatTimeStamp(expiryTime));
-
-        Event preOtpValidateEvent = new Event(IdentityEventConstants.Event.PRE_VALIDATE_EMAIL_OTP, eventProperties);
-        try {
-            EmailOTPServiceDataHolder.getInstance().getIdentityEventService().handleEvent(preOtpValidateEvent);
-        } catch (IdentityEventException e) {
-            String errorMsg = "An error occurred while triggering the event. " + e.getMessage();
-            throw new AuthenticationFailedException(errorMsg, e.getCause());
-        }
-    }
-
+    /**
+     * Trigger event after validating Email OTP.
+     *
+     * @param request HttpServletRequest.
+     * @param context Authentication context.
+     * @throws AuthenticationFailedException Exception on authentication failure.
+     */
     private void publishPostEmailOTPValidatedEvent(HttpServletRequest request,
                                                    AuthenticationContext context) throws AuthenticationFailedException {
 
         Map<String, Object> eventProperties = new HashMap<>();
+        eventProperties.put(IdentityEventConstants.EventProperty.CORRELATION_ID , context.getCallerSessionKey());
         AuthenticatedUser authenticatedUser = (AuthenticatedUser) context.getProperty(EmailOTPAuthenticatorConstants
                 .AUTHENTICATED_USER);
         eventProperties.put(IdentityEventConstants.EventProperty.USER_NAME, authenticatedUser.getUserName());
@@ -2669,39 +2613,47 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         eventProperties.put(IdentityEventConstants.EventProperty.USER_AGENT, request.getHeader(
                 EmailOTPAuthenticatorConstants.USER_AGENT));
 
-        if (request.getHeader(EmailOTPAuthenticatorConstants.X_FORWARDED_FOR) != null) {
+        if (StringUtils.isNotEmpty(request.getHeader(EmailOTPAuthenticatorConstants.X_FORWARDED_FOR))) {
             eventProperties.put(IdentityEventConstants.EventProperty.CLIENT_IP, request.getHeader(
                     EmailOTPAuthenticatorConstants.X_FORWARDED_FOR).split(",")[0]);
         } else {
+            if (log.isDebugEnabled()) {
+                log.debug("Getting client-ip from remote address since x-forwarded-for is null.");
+            }
             eventProperties.put(IdentityEventConstants.EventProperty.CLIENT_IP, request.getRemoteAddr());
         }
 
-        eventProperties.put(IdentityEventConstants.EventProperty.EMAIL_OTP, context.getProperty(
+       eventProperties.put(IdentityEventConstants.EventProperty.GENERATED_OTP, context.getProperty(
                 EmailOTPAuthenticatorConstants.OTP_TOKEN));
-        eventProperties.put(IdentityEventConstants.EventProperty.USER_OTP, request.getParameter(
+        eventProperties.put(IdentityEventConstants.EventProperty.USER_INPUT_OTP, request.getParameter(
                 EmailOTPAuthenticatorConstants.CODE));
+        eventProperties.put(IdentityEventConstants.EventProperty.OTP_USED_TIME, System.currentTimeMillis());
 
         long otpGeneratedTime = (long) context.getProperty(EmailOTPAuthenticatorConstants.OTP_GENERATED_TIME);
-        eventProperties.put(IdentityEventConstants.EventProperty.OTP_GENERATED_TIME,
-                formatTimeStamp(otpGeneratedTime));
-        long expiryTime = otpGeneratedTime + new Long(getExpireTime(context));
-        eventProperties.put(IdentityEventConstants.EventProperty.OTP_EXPIRY_TIME, formatTimeStamp(expiryTime));
-        eventProperties.put(IdentityEventConstants.EventProperty.OTP_USED_TIME, formatTimeStamp(
-                System.currentTimeMillis()));
+        eventProperties.put(IdentityEventConstants.EventProperty.OTP_GENERATED_TIME, otpGeneratedTime);
 
-        if (context.getProperty(EmailOTPAuthenticatorConstants.CODE_MISMATCH) != null) {
-            eventProperties.put(IdentityEventConstants.EventProperty.CODE_MISMATCH, context.getProperty(
-                    EmailOTPAuthenticatorConstants.CODE_MISMATCH));
+        long expiryTime = otpGeneratedTime + Long.parseLong(getExpireTime(context));
+        eventProperties.put(IdentityEventConstants.EventProperty.OTP_EXPIRY_TIME, expiryTime);
+        Object codeMismatch = context.getProperty(EmailOTPAuthenticatorConstants.CODE_MISMATCH);
+        Object otpExpired = context.getProperty(EmailOTPAuthenticatorConstants.OTP_EXPIRED);
+
+        String status;
+        if (otpExpired != null && (String) otpExpired == EmailOTPAuthenticatorConstants.TRUE) {
+            status = EmailOTPAuthenticatorConstants.STATUS_OTP_EXPIRED;
+        } else if (codeMismatch != null && (Boolean) codeMismatch) {
+            status = EmailOTPAuthenticatorConstants.STATUS_CODE_MISMATCH;
+        } else {
+            status = EmailOTPAuthenticatorConstants.STATUS_SUCCESS;
+            eventProperties.put(IdentityEventConstants.EventProperty.GENERATED_OTP, request.getParameter(
+                    EmailOTPAuthenticatorConstants.CODE));
         }
-        if (context.getProperty(EmailOTPAuthenticatorConstants.OTP_EXPIRED) != null) {
-            eventProperties.put(IdentityEventConstants.EventProperty.OTP_EXPIRED, context.getProperty(
-                    EmailOTPAuthenticatorConstants.OTP_EXPIRED));
-        }
+
+        eventProperties.put(IdentityEventConstants.EventProperty.OTP_STATUS, status);
         Event postOtpValidateEvent = new Event(IdentityEventConstants.Event.POST_VALIDATE_EMAIL_OTP, eventProperties);
         try {
             EmailOTPServiceDataHolder.getInstance().getIdentityEventService().handleEvent(postOtpValidateEvent);
         } catch (IdentityEventException e) {
-            String errorMsg = "An error occurred while triggering the event. " + e.getMessage();
+            String errorMsg = "An error occurred while triggering post event in Email OTP validation flow. " + e.getMessage();
             throw new AuthenticationFailedException(errorMsg, e);
         }
     }

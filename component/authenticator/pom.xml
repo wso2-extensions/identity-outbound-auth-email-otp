@@ -65,6 +65,9 @@
                             javax.servlet.http,
                             org.wso2.carbon.extension.identity.helper.*;
                             version="${identity.extension.utils.import.version.range}",
+                            org.wso2.carbon.identity.event; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.event.event; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.event.services; version="${carbon.identity.package.import.version.range}",
                             org.apache.oltu.oauth2.*; version="${oltu.package.import.version.range}",
                             org.wso2.carbon.identity.application.authenticator.oidc; version="${identity.outbound.auth.oidc.import.version.range}",
                             org.wso2.carbon.identity.handler.event.account.lock.service;

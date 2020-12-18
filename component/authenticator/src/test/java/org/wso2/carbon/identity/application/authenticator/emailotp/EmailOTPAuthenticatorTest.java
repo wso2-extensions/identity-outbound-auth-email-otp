@@ -59,7 +59,6 @@ import org.wso2.carbon.identity.authenticator.emailotp.config.EmailOTPUtils;
 import org.wso2.carbon.identity.authenticator.emailotp.internal.EmailOTPServiceDataHolder;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.event.IdentityEventException;
-import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.mgt.IdentityMgtConfigException;
 import org.wso2.carbon.identity.mgt.IdentityMgtServiceException;

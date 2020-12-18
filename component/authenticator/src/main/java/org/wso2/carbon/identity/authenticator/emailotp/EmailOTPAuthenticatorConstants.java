@@ -127,8 +127,12 @@ public class EmailOTPAuthenticatorConstants {
     public static final String SERVICE_PROVIDER_NAME = "serviceProviderName";
     public static final String IP_ADDRESS = "ipAddress";
 
-    public static final String USER_AGENT = "user-agent";
+   public static final String USER_AGENT = "user-agent";
     public static final String X_FORWARDED_FOR = "x-forwarded-for";
+    public static final String STATUS_SUCCESS = "success";
+    public static final String STATUS_OTP_EXPIRED = "otp-expired";
+    public static final String STATUS_CODE_MISMATCH = "code-mismatch";
+    public static final String TRUE = "true";
 
     // Account lock related constants.
     public static final String EMAIL_OTP_FAILED_ATTEMPTS_CLAIM =
