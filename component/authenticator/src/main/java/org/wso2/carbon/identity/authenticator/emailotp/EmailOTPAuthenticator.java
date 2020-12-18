@@ -2573,15 +2573,7 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         long expiryTime = otpGeneratedTime + Long.parseLong(getExpireTime(context));
         eventProperties.put(IdentityEventConstants.EventProperty.OTP_EXPIRY_TIME, expiryTime);
 
-        if (StringUtils.isNotEmpty(request.getHeader(EmailOTPAuthenticatorConstants.X_FORWARDED_FOR))) {
-            eventProperties.put(IdentityEventConstants.EventProperty.CLIENT_IP, request.getHeader(
-                    EmailOTPAuthenticatorConstants.X_FORWARDED_FOR).split(",")[0]);
-        } else {
-            if (log.isDebugEnabled()) {
-                log.debug("Getting client-ip from remote address since x-forwarded-for is null.");
-            }
-            eventProperties.put(IdentityEventConstants.EventProperty.CLIENT_IP, request.getRemoteAddr());
-        }
+        eventProperties.put(IdentityEventConstants.EventProperty.CLIENT_IP, IdentityUtil.getClientIpAddress(request));
         Event postOtpGenEvent = new Event(IdentityEventConstants.Event.POST_GENERATE_EMAIL_OTP, eventProperties);
         try {
             EmailOTPServiceDataHolder.getInstance().getIdentityEventService().handleEvent(postOtpGenEvent);
@@ -2612,18 +2604,8 @@ public class EmailOTPAuthenticator extends OpenIDConnectAuthenticator implements
         eventProperties.put(IdentityEventConstants.EventProperty.APPLICATION_NAME, context.getServiceProviderName());
         eventProperties.put(IdentityEventConstants.EventProperty.USER_AGENT, request.getHeader(
                 EmailOTPAuthenticatorConstants.USER_AGENT));
-
-        if (StringUtils.isNotEmpty(request.getHeader(EmailOTPAuthenticatorConstants.X_FORWARDED_FOR))) {
-            eventProperties.put(IdentityEventConstants.EventProperty.CLIENT_IP, request.getHeader(
-                    EmailOTPAuthenticatorConstants.X_FORWARDED_FOR).split(",")[0]);
-        } else {
-            if (log.isDebugEnabled()) {
-                log.debug("Getting client-ip from remote address since x-forwarded-for is null.");
-            }
-            eventProperties.put(IdentityEventConstants.EventProperty.CLIENT_IP, request.getRemoteAddr());
-        }
-
-       eventProperties.put(IdentityEventConstants.EventProperty.GENERATED_OTP, context.getProperty(
+        eventProperties.put(IdentityEventConstants.EventProperty.CLIENT_IP, IdentityUtil.getClientIpAddress(request));
+        eventProperties.put(IdentityEventConstants.EventProperty.GENERATED_OTP, context.getProperty(
                 EmailOTPAuthenticatorConstants.OTP_TOKEN));
         eventProperties.put(IdentityEventConstants.EventProperty.USER_INPUT_OTP, request.getParameter(
                 EmailOTPAuthenticatorConstants.CODE));
