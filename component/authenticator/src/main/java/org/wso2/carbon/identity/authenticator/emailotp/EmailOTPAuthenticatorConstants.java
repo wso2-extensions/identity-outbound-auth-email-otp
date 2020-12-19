@@ -83,6 +83,8 @@ public class EmailOTPAuthenticatorConstants {
     public static final String REQUEST_FAILED = "Request to the API is failed";
     public static final String FAILED = "Failed: ";
     public static final String FAILURE = "Failure";
+    public static final String EMAIL_UPDATE_FAILURE = "emailUpdateFailed";
+    public static final String EMAIL_UPDATE_FAIL_RETRY_PARAMS = "&authFailure=true&authFailureMsg=email.duplicate.message";
 
     public static final String AUTHENTICATORS = "authenticators=";
     public static final String RESEND = "resendCode";
