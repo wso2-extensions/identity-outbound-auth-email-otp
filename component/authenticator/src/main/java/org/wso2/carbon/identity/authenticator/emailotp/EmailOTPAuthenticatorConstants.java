@@ -20,6 +20,8 @@
 package org.wso2.carbon.identity.authenticator.emailotp;
 
 public class EmailOTPAuthenticatorConstants {
+    public static final String CHAR_SET_UTF_8 = "UTF-8";
+
     public static final String AUTHENTICATOR_NAME = "EmailOTP";
     public static final String AUTHENTICATOR_FRIENDLY_NAME = "Email OTP";
 
@@ -84,7 +86,6 @@ public class EmailOTPAuthenticatorConstants {
     public static final String FAILED = "Failed: ";
     public static final String FAILURE = "Failure";
     public static final String EMAIL_UPDATE_FAILURE = "emailUpdateFailed";
-    public static final String EMAIL_UPDATE_FAIL_RETRY_PARAMS = "&authFailure=true&authFailureMsg=email.duplicate.message";
 
     public static final String AUTHENTICATORS = "authenticators=";
     public static final String RESEND = "resendCode";
@@ -94,6 +95,8 @@ public class EmailOTPAuthenticatorConstants {
     public static final String AUTHENTICATED_USER = "authenticatedUser";
     public static final String LOCAL_AUTHENTICATOR = "LOCAL";
     public static final String REQUESTED_USER_EMAIL = "requestedEmail";
+    public static final String PROFILE_UPDATE_FAILURE_REASON = "profileUpdateFailureReason";
+    public static final String ERROR_MESSAGE_DETAILS = "&authFailureInfo=";
 
     public static final String IS_EMAILOTP_MANDATORY = "EMAILOTPMandatory";
     public static final String EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL = "EmailOTPAuthenticationEndpointErrorPage";

@@ -72,6 +72,7 @@ import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.api.UserStoreManager;
 import org.wso2.carbon.user.core.UserCoreConstants;
+import org.wso2.carbon.user.core.UserStoreClientException;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
@@ -86,12 +87,14 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.CHAR_SET_UTF_8;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.DISABLE_OTP_RESEND_ON_FAILURE;
 
 /**
@@ -361,9 +364,16 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                 if (verifiedEmailObject != null) {
                     try {
                         updateEmailAddressForUsername(context, username);
-                    } catch (UserStoreException e) {
+                    } catch (UserStoreClientException e) {
                         context.setProperty(EmailOTPAuthenticatorConstants.EMAIL_UPDATE_FAILURE, "true");
-                        throw new AuthenticationFailedException("Email Claim Update Failed", e.getCause());
+                        throw new AuthenticationFailedException("Email Claim Update Failed for user " + username, e.getCause());
+                    } catch (UserStoreException e) {
+                        Throwable ex = e.getCause();
+                        if (ex instanceof UserStoreClientException) {
+                            context.setProperty(EmailOTPAuthenticatorConstants.EMAIL_UPDATE_FAILURE, "true");
+                            context.setProperty(EmailOTPAuthenticatorConstants.PROFILE_UPDATE_FAILURE_REASON, ex.getMessage());
+                        }
+                        throw new AuthenticationFailedException("Email Claim Update Failed for user " + username, e.getCause());
                     }
                 }
             }
@@ -781,7 +791,13 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             try {
                 String url = getRedirectURL(emailAddressReqPage, queryParams);
                 if (isEmailUpdateFailed(context)) {
-                    url = url + EmailOTPAuthenticatorConstants.EMAIL_UPDATE_FAIL_RETRY_PARAMS;
+                    url = url + EmailOTPAuthenticatorConstants.RETRY_PARAMS;
+                    if (context.getProperty(EmailOTPAuthenticatorConstants.PROFILE_UPDATE_FAILURE_REASON) != null) {
+                        String failureReason = String.valueOf(
+                                context.getProperty(EmailOTPAuthenticatorConstants.PROFILE_UPDATE_FAILURE_REASON));
+                        String urlEncodedFailureReason = URLEncoder.encode(failureReason, CHAR_SET_UTF_8);
+                        url = url + EmailOTPAuthenticatorConstants.ERROR_MESSAGE_DETAILS +  urlEncodedFailureReason;
+                    }
                 }
                 response.sendRedirect(url);
             } catch (IOException e) {
