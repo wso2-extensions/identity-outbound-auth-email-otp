@@ -335,14 +335,14 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             String username = authenticatedUser.toFullQualifiedUsername();
             try {
                 String userEmail = getEmailValueForUsername(username, context);
-                if (StringUtils.isEmpty(userEmail)) {
+                if (StringUtils.isBlank(userEmail)) {
                     Object verifiedEmailObject = context.getProperty(EmailOTPAuthenticatorConstants.REQUEST_USER_EMAIL);
                     if (verifiedEmailObject != null) {
                         updateEmailAddressForUsername(context, username);
                     }
                 }
             } catch (EmailOTPException e) {
-                throw new AuthenticationFailedException("Failed to get the email claim when proceed the EmailOTP flow ", e);
+                throw new AuthenticationFailedException("Failed to get the email claim", e);
             }
         }
 
