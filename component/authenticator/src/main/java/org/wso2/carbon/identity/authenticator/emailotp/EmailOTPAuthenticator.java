@@ -336,13 +336,13 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             try {
                 String userEmail = getEmailValueForUsername(username, context);
                 if (StringUtils.isBlank(userEmail)) {
-                    Object verifiedEmailObject = context.getProperty(EmailOTPAuthenticatorConstants.REQUEST_USER_EMAIL);
+                    Object verifiedEmailObject = context.getProperty(EmailOTPAuthenticatorConstants.REQUESTED_USER_EMAIL);
                     if (verifiedEmailObject != null) {
                         updateEmailAddressForUsername(context, username);
                     }
                 }
             } catch (EmailOTPException e) {
-                throw new AuthenticationFailedException("Failed to get the email claim", e);
+                throw new AuthenticationFailedException("Failed to get the email claim for user " + username, e);
             }
         }
 
@@ -644,7 +644,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                     if (StringUtils.isEmpty(requestEmail)) {
                         redirectToEmailAddressReqPage(response, context, emailOTPParameters, queryParams, username);
                     } else {
-                        context.setProperty(EmailOTPAuthenticatorConstants.REQUEST_USER_EMAIL, requestEmail);
+                        context.setProperty(EmailOTPAuthenticatorConstants.REQUESTED_USER_EMAIL, requestEmail);
                         email = requestEmail;
                     }
                 }
@@ -671,7 +671,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
         if (username != null && !context.isRetrying()) {
             Map<String, String> attributes = new HashMap<>();
             attributes.put(EmailOTPAuthenticatorConstants.EMAIL_CLAIM,
-                    String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.REQUEST_USER_EMAIL)));
+                    String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.REQUESTED_USER_EMAIL)));
             updateUserAttribute(MultitenantUtils.getTenantAwareUsername(username), attributes, tenantDomain);
         }
     }
@@ -1417,7 +1417,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                     redirectToEmailAddressReqPage(response, context, emailOTPParameters, queryParams,
                             username);
                 } else {
-                    context.setProperty(EmailOTPAuthenticatorConstants.REQUEST_USER_EMAIL, requestEmail);
+                    context.setProperty(EmailOTPAuthenticatorConstants.REQUESTED_USER_EMAIL, requestEmail);
                     email = requestEmail;
                 }
             }
