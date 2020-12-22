@@ -91,6 +91,7 @@ public class EmailOTPAuthenticatorConstants {
     public static final String USER_NAME = "username";
     public static final String AUTHENTICATED_USER = "authenticatedUser";
     public static final String LOCAL_AUTHENTICATOR = "LOCAL";
+    public static final String REQUESTED_USER_EMAIL = "requestedEmail";
 
     public static final String IS_EMAILOTP_MANDATORY = "EMAILOTPMandatory";
     public static final String EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL = "EmailOTPAuthenticationEndpointErrorPage";
