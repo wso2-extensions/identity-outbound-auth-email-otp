@@ -25,6 +25,7 @@ import org.apache.axis2.description.TransportOutDescription;
 import org.apache.axis2.engine.AxisConfiguration;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
@@ -55,7 +56,10 @@ import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticator;
 import org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants;
 import org.wso2.carbon.identity.authenticator.emailotp.config.EmailOTPUtils;
+import org.wso2.carbon.identity.authenticator.emailotp.internal.EmailOTPServiceDataHolder;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.event.IdentityEventException;
+import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.mgt.IdentityMgtConfigException;
 import org.wso2.carbon.identity.mgt.IdentityMgtServiceException;
 import org.wso2.carbon.identity.mgt.config.Config;
@@ -76,18 +80,9 @@ import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.doNothing;
@@ -97,7 +92,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({EmailOTPAuthenticator.class, FileBasedConfigurationBuilder.class, FederatedAuthenticatorUtil.class,
         FrameworkUtils.class, MultitenantUtils.class, IdentityTenantUtil.class, ConfigurationContextFactory.class,
-        ConfigBuilder.class, NotificationBuilder.class, EmailOTPUtils.class})
+        ConfigBuilder.class, NotificationBuilder.class, EmailOTPUtils.class, EmailOTPServiceDataHolder.class})
 @PowerMockIgnore({"javax.crypto.*" })
 public class EmailOTPAuthenticatorTest {
     private EmailOTPAuthenticator emailOTPAuthenticator;
@@ -106,6 +101,8 @@ public class EmailOTPAuthenticatorTest {
     @Mock private EmailOTPAuthenticator mockedEmailOTPAuthenticator;
     @Mock private HttpServletResponse httpServletResponse;
     @Mock private FileBasedConfigurationBuilder fileBasedConfigurationBuilder;
+    @Mock private EmailOTPServiceDataHolder emailOTPServiceDataHolder;
+    @Mock private IdentityEventService identityEventService;
     @Mock private SequenceConfig sequenceConfig;
     @Mock private Map<Integer, StepConfig> mockedMap;
     @Mock private StepConfig stepConfig;
@@ -130,12 +127,15 @@ public class EmailOTPAuthenticatorTest {
     @Mock private LocalApplicationAuthenticator localApplicationAuthenticator;
     @Mock private ClaimManager claimManager;
     @Mock private Claim claim;
+    @Mock private Enumeration<String> requestHeaders;
+    @Mock private AuthenticatedUser authenticatedUser;
 
     @BeforeMethod
-    public void setUp() {
+    public void setUp() throws IdentityEventException {
         emailOTPAuthenticator = new EmailOTPAuthenticator();
         initMocks(this);
         mockStatic(FileBasedConfigurationBuilder.class);
+        mockStatic(EmailOTPServiceDataHolder.class);
         mockStatic(FederatedAuthenticatorUtil.class);
         mockStatic(FrameworkUtils.class);
         mockStatic(MultitenantUtils.class);
@@ -144,6 +144,14 @@ public class EmailOTPAuthenticatorTest {
         mockStatic(ConfigBuilder.class);
         mockStatic(NotificationBuilder.class);
         mockStatic(EmailOTPUtils.class);
+        when(EmailOTPServiceDataHolder.getInstance()).thenReturn(emailOTPServiceDataHolder);
+        when(emailOTPServiceDataHolder.getIdentityEventService()).thenReturn(identityEventService);
+        Mockito.doNothing().when(identityEventService).handleEvent(anyObject());
+        when(httpServletRequest.getHeaderNames()).thenReturn(requestHeaders);
+        when(requestHeaders.hasMoreElements()).thenReturn(false);
+        when(authenticatedUser.getUserName()).thenReturn("testUser");
+        when(authenticatedUser.getUserStoreDomain()).thenReturn("secondary");
+        when(context.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER)).thenReturn(authenticatedUser);
     }
 
     @Test(description = "Test case for canHandle() method true case.")
