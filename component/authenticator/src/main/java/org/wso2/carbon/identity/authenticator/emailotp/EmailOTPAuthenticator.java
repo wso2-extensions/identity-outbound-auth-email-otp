@@ -732,8 +732,6 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             verifyUserExists(username, tenantDomain);
             UserStoreManager userStoreManager = userRealm.getUserStoreManager();
             userStoreManager.setUserClaimValues(username, attribute, null);
-        } catch (UserStoreException e) {
-            throw e;
         } catch (AuthenticationFailedException e) {
             throw new AuthenticationFailedException("Exception occurred while connecting to User Store:" +
                     " Authentication is failed. ", e);
@@ -2707,8 +2705,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
 
         boolean emailUpdateFailed = false;
 
-        if (context.getProperty(EmailOTPAuthenticatorConstants.EMAIL_UPDATE_FAILURE) != null
-                && Boolean.parseBoolean(String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.EMAIL_UPDATE_FAILURE)))) {
+        if (Boolean.parseBoolean(String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.EMAIL_UPDATE_FAILURE)))) {
             emailUpdateFailed = true;
         }
 
