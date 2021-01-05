@@ -361,14 +361,16 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             }
 
             if (StringUtils.isBlank(userEmail)) {
-                log.debug("User profile doesn't contain the email address. Updating the verified email address for user " + username);
+                if (log.isDebugEnabled()) {
+                    log.debug("User profile doesn't contain the email address. Updating the verified email address for user " + username);
+                }
                 Object verifiedEmailObject = context.getProperty(EmailOTPAuthenticatorConstants.REQUESTED_USER_EMAIL);
                 if (verifiedEmailObject != null) {
                     try {
                         updateEmailAddressForUsername(context, username);
                     } catch (UserStoreClientException e) {
                         context.setProperty(EmailOTPAuthenticatorConstants.EMAIL_UPDATE_FAILURE, "true");
-                        throw new AuthenticationFailedException("Email Claim Update Failed for user " + username, e.getCause());
+                        throw new AuthenticationFailedException("Email claim update failed for user " + username, e.getCause());
                     } catch (UserStoreException e) {
                         Throwable ex = e.getCause();
                         if (ex instanceof UserStoreClientException) {
@@ -678,8 +680,10 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                     String requestEmail = request.getParameter(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS);
                     if (StringUtils.isBlank(requestEmail) && (isOTPMismatched(context) || isOTPExpired(context))
                             && !isEmailUpdateFailed(context)) {
-                        log.debug("Retrieving user email address from message context due to OTP mismatch or OTP expire scenario " +
-                                "for user " + username);
+                        if (log.isDebugEnabled()) {
+                            log.debug("Retrieving user email address from message context due to OTP mismatch or OTP expire scenario " +
+                                    "for user " + username);
+                        }
                         email = String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.REQUESTED_USER_EMAIL));
                     } else if (StringUtils.isBlank(requestEmail)) {
                         redirectToEmailAddressReqPage(response, context, emailOTPParameters, queryParams, username);
@@ -793,8 +797,10 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             try {
                 String url = getRedirectURL(emailAddressReqPage, queryParams);
                 if (isEmailUpdateFailed(context)) {
-                    log.debug("Updating email address has failed for user " + username + ". Redirecting user to " +
-                            "email address capturing page");
+                    if (log.isDebugEnabled()) {
+                        log.debug("Updating email address has failed for user " + username + ". Redirecting user to " +
+                                "email address capturing page");
+                    }
                     url = FrameworkUtils.appendQueryParamsStringToUrl(url, EmailOTPAuthenticatorConstants.RETRY_PARAMS);
                     if (context.getProperty(EmailOTPAuthenticatorConstants.PROFILE_UPDATE_FAILURE_REASON) != null) {
                         String failureReason = String.valueOf(
@@ -1464,8 +1470,10 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                 String requestEmail = request.getParameter(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS);
                 if (StringUtils.isBlank(requestEmail) && (isOTPMismatched(context) || isOTPExpired(context))
                         && !isEmailUpdateFailed(context)) {
-                    log.debug("Retrieving user email address from message context due to OTP mismatch or OTP expire scenario " +
-                            "for user " + username);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Retrieving user email address from message context due to OTP mismatch or OTP expire scenario " +
+                                "for user " + username);
+                    }
                     email = String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.REQUESTED_USER_EMAIL));
                 } else if (StringUtils.isBlank(requestEmail)) {
                     if (log.isDebugEnabled()) {
