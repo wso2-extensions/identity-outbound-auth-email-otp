@@ -707,7 +707,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      */
     private void updateEmailAddressForUsername(AuthenticationContext context, String username)
             throws AuthenticationFailedException, UserStoreException {
-        String tenantDomain = context.getTenantDomain();
+        String tenantDomain = MultitenantUtils.getTenantDomain(username);
         Map<String, String> attributes = new HashMap<>();
         attributes.put(EmailOTPAuthenticatorConstants.EMAIL_CLAIM,
                 String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.REQUESTED_USER_EMAIL)));
