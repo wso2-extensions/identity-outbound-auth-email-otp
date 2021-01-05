@@ -88,13 +88,13 @@ import java.net.ProtocolException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.CHAR_SET_UTF_8;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.DISABLE_OTP_RESEND_ON_FAILURE;
 
 /**
@@ -334,7 +334,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
         String contextToken = (String) context.getProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN);
         long generatedTime = (long) context.getProperty(EmailOTPAuthenticatorConstants.OTP_GENERATED_TIME);
         boolean isExpired = isExpired(generatedTime, context);
-        /*Before proceeding further if the the email update is already failed in the last attempt it will be set to false*/
+        /* Before proceeding further if the the email update is already failed in the last attempt it will be set to false. */
         if (context.getProperty(EmailOTPAuthenticatorConstants.EMAIL_UPDATE_FAILURE) != null) {
             context.setProperty(EmailOTPAuthenticatorConstants.EMAIL_UPDATE_FAILURE, "false");
         }
@@ -347,19 +347,21 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             succeededAttempt = validateWithBackUpCodes(context, userToken, authenticatedUser);
         }
 
-        /*If the email address of the user is not saved in the user's profile below code will be extracting the validated
+        /* If the email address of the user is not saved in the user's profile below code will be extracting the validated
         email address from the context and save it in user's profile. If saving failed it will save a property in the
-        message context*/
+        message context. */
         if (succeededAttempt && isLocalUser) {
             String username = authenticatedUser.toFullQualifiedUsername();
             String userEmail;
             try {
                 userEmail = getEmailValueForUsername(username, context);
             } catch (EmailOTPException e) {
-                throw new AuthenticationFailedException("Failed to get the email claim when proceed the EmailOTP flow ", e);
+                throw new AuthenticationFailedException("Failed to get the email claim for user " + username + " for tenant "
+                        + context.getTenantDomain(), e);
             }
 
-            if (StringUtils.isEmpty(userEmail)) {
+            if (StringUtils.isBlank(userEmail)) {
+                log.debug("User profile doesn't contain the email address. Updating the verified email address for user " + username);
                 Object verifiedEmailObject = context.getProperty(EmailOTPAuthenticatorConstants.REQUESTED_USER_EMAIL);
                 if (verifiedEmailObject != null) {
                     try {
@@ -373,7 +375,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                             context.setProperty(EmailOTPAuthenticatorConstants.EMAIL_UPDATE_FAILURE, "true");
                             context.setProperty(EmailOTPAuthenticatorConstants.PROFILE_UPDATE_FAILURE_REASON, ex.getMessage());
                         }
-                        throw new AuthenticationFailedException("Email Claim Update Failed for user " + username, e.getCause());
+                        throw new AuthenticationFailedException("Email claim update failed for user " + username, e.getCause());
                     }
                 }
             }
@@ -674,10 +676,12 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                 email = getEmailValueForUsername(username, context);
                 if (StringUtils.isEmpty(email)) {
                     String requestEmail = request.getParameter(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS);
-                    if (StringUtils.isEmpty(requestEmail) && (isOTPMismatched(context) || isOTPExpired(context))
+                    if (StringUtils.isBlank(requestEmail) && (isOTPMismatched(context) || isOTPExpired(context))
                             && !isEmailUpdateFailed(context)) {
+                        log.debug("Retrieving user email address from message context due to OTP mismatch or OTP expire scenario " +
+                                "for user " + username);
                         email = String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.REQUESTED_USER_EMAIL));
-                    } else if (StringUtils.isEmpty(requestEmail)) {
+                    } else if (StringUtils.isBlank(requestEmail)) {
                         redirectToEmailAddressReqPage(response, context, emailOTPParameters, queryParams, username);
                     } else {
                         context.setProperty(EmailOTPAuthenticatorConstants.REQUESTED_USER_EMAIL, requestEmail);
@@ -789,12 +793,15 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             try {
                 String url = getRedirectURL(emailAddressReqPage, queryParams);
                 if (isEmailUpdateFailed(context)) {
-                    url = url + EmailOTPAuthenticatorConstants.RETRY_PARAMS;
+                    log.debug("Updating email address has failed for user " + username + ". Redirecting user to " +
+                            "email address capturing page");
+                    url = FrameworkUtils.appendQueryParamsStringToUrl(url, EmailOTPAuthenticatorConstants.RETRY_PARAMS);
                     if (context.getProperty(EmailOTPAuthenticatorConstants.PROFILE_UPDATE_FAILURE_REASON) != null) {
                         String failureReason = String.valueOf(
                                 context.getProperty(EmailOTPAuthenticatorConstants.PROFILE_UPDATE_FAILURE_REASON));
-                        String urlEncodedFailureReason = URLEncoder.encode(failureReason, CHAR_SET_UTF_8);
-                        url = url + EmailOTPAuthenticatorConstants.ERROR_MESSAGE_DETAILS +  urlEncodedFailureReason;
+                        String urlEncodedFailureReason = URLEncoder.encode(failureReason, StandardCharsets.UTF_8.name());
+                        String updateFailureReasonQueryParam = EmailOTPAuthenticatorConstants.ERROR_MESSAGE_DETAILS +  urlEncodedFailureReason;
+                        url = FrameworkUtils.appendQueryParamsStringToUrl(url, updateFailureReasonQueryParam);
                     }
                 }
                 response.sendRedirect(url);
@@ -1455,10 +1462,12 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             email = getEmailValueForUsername(username, context);
             if (StringUtils.isEmpty(email)) {
                 String requestEmail = request.getParameter(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS);
-                if (StringUtils.isEmpty(requestEmail) && (isOTPMismatched(context) || isOTPExpired(context))
+                if (StringUtils.isBlank(requestEmail) && (isOTPMismatched(context) || isOTPExpired(context))
                         && !isEmailUpdateFailed(context)) {
+                    log.debug("Retrieving user email address from message context due to OTP mismatch or OTP expire scenario " +
+                            "for user " + username);
                     email = String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.REQUESTED_USER_EMAIL));
-                } else if (StringUtils.isEmpty(requestEmail)) {
+                } else if (StringUtils.isBlank(requestEmail)) {
                     if (log.isDebugEnabled()) {
                         log.debug("email claim is not available for the user " + username);
                     }
@@ -2703,13 +2712,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      */
     private boolean isEmailUpdateFailed(AuthenticationContext context) {
 
-        boolean emailUpdateFailed = false;
+        return Boolean.parseBoolean(String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.EMAIL_UPDATE_FAILURE)));
 
-        if (Boolean.parseBoolean(String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.EMAIL_UPDATE_FAILURE)))) {
-            emailUpdateFailed = true;
-        }
-
-        return emailUpdateFailed;
     }
 
     /**

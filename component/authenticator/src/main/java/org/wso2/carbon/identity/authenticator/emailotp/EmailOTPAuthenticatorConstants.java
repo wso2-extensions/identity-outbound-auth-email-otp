@@ -20,7 +20,6 @@
 package org.wso2.carbon.identity.authenticator.emailotp;
 
 public class EmailOTPAuthenticatorConstants {
-    public static final String CHAR_SET_UTF_8 = "UTF-8";
 
     public static final String AUTHENTICATOR_NAME = "EmailOTP";
     public static final String AUTHENTICATOR_FRIENDLY_NAME = "Email OTP";
