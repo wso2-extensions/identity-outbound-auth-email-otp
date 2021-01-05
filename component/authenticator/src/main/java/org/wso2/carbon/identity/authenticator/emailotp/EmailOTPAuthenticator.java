@@ -2580,11 +2580,14 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
 
         eventProperties.put(IdentityEventConstants.EventProperty.GENERATED_OTP, context.getProperty(
                 EmailOTPAuthenticatorConstants.OTP_TOKEN));
-        long otpGeneratedTime = (long) context.getProperty(EmailOTPAuthenticatorConstants.OTP_GENERATED_TIME);
-        eventProperties.put(IdentityEventConstants.EventProperty.OTP_GENERATED_TIME, otpGeneratedTime);
+        Object otpGeneratedTimeProperty = context.getProperty(EmailOTPAuthenticatorConstants.OTP_GENERATED_TIME);
+        if (otpGeneratedTimeProperty != null) {
+            long otpGeneratedTime = (long) otpGeneratedTimeProperty;
+            eventProperties.put(IdentityEventConstants.EventProperty.OTP_GENERATED_TIME, otpGeneratedTime);
 
-        long expiryTime = otpGeneratedTime + Long.parseLong(getExpireTime(context));
-        eventProperties.put(IdentityEventConstants.EventProperty.OTP_EXPIRY_TIME, expiryTime);
+            long expiryTime = otpGeneratedTime + Long.parseLong(getExpireTime(context));
+            eventProperties.put(IdentityEventConstants.EventProperty.OTP_EXPIRY_TIME, expiryTime);
+        }
 
         eventProperties.put(IdentityEventConstants.EventProperty.CLIENT_IP, IdentityUtil.getClientIpAddress(request));
         Event postOtpGenEvent = new Event(IdentityEventConstants.Event.POST_GENERATE_EMAIL_OTP, eventProperties);
