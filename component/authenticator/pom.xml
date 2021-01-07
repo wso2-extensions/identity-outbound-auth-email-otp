@@ -66,10 +66,6 @@
                             org.wso2.carbon.extension.identity.helper.*;
                             version="${identity.extension.utils.import.version.range}",
                             org.apache.oltu.oauth2.*; version="${oltu.package.import.version.range}",
-                            org.wso2.carbon.identity.handler.event.account.lock.service;
-                            version="${carbon.identity.account.lock.handler.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.handler.event.account.lock.exception;
-                            version="${carbon.identity.account.lock.handler.imp.pkg.version.range}",
                             *;resolution:=optional
                         </Import-Package>
                         <Export-Package>

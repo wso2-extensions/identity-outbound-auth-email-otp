@@ -215,6 +215,7 @@
             <groupId>org.wso2.carbon.identity.event.handler.accountlock</groupId>
             <artifactId>org.wso2.carbon.identity.handler.event.account.lock</artifactId>
             <version>${carbon.identity.account.lock.handler.version}</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
     <scm>
