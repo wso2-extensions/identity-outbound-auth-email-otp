@@ -39,6 +39,8 @@ public class EmailOTPAuthenticatorConstants {
     public static final String API_GMAIL = "Gmail";
     public static final String API_SENDGRID = "Sendgrid";
 
+    public static final String CLIENT_ID = "ClientId";
+    public static final String CLIENT_SECRET = "ClientSecret";
     public static final String CODE = "OTPCode";
     public static final String EMAILOTP_TOKEN_ENDPOINT = "TokenEndpoint";
     public static final String REFRESH_TOKEN = "RefreshToken";
@@ -59,7 +61,10 @@ public class EmailOTPAuthenticatorConstants {
     public static final String MAIL_API_KEY = "<API_KEY>";
 
     public static final String LOGIN_PAGE = "authenticationendpoint/login.do";
+    public static final String EMAIL_CAPTURE_PAGE = "emailotpauthenticationendpoint/emailAddress.jsp";
     public static final String EMAILOTP_PAGE = "emailotpauthenticationendpoint/emailotp.jsp";
+    public static final String ERROR_PAGE = "emailotpauthenticationendpoint/emailotpError.jsp";
+
     public static final String EMAILOTP_AUTHENTICATION_ENDPOINT_URL = "EMAILOTPAuthenticationEndpointURL";
     public static final String RETRY_PARAMS = "&authFailure=true&authFailureMsg=authentication.fail.message";
     public static final String EMAIL_CLAIM = "http://wso2.org/claims/emailaddress";
@@ -101,7 +106,6 @@ public class EmailOTPAuthenticatorConstants {
     public static final String EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL = "EmailOTPAuthenticationEndpointErrorPage";
     public static final String ERROR_EMAILOTP_DISABLE = "&authFailure=true&authFailureMsg=emailotp.disable";
     public static final String SEND_OTP_DIRECTLY_DISABLE = "&authFailure=true&authFailureMsg=directly.send.otp.disable";
-    public static final String ERROR_PAGE = "emailotpauthenticationendpoint/emailotpError.jsp";
     public static final String BASIC = "basic";
     public static final String FEDERETOR = "federator";
     public static final String SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE = "sendOTPToFederatedEmailAttribute";

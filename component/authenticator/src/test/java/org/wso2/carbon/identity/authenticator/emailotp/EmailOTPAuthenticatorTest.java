@@ -16,21 +16,19 @@
  *  under the License.
  *
  */
-package org.wso2.carbon.identity.application.authenticator.emailotp;
+package org.wso2.carbon.identity.authenticator.emailotp;
 
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.context.ConfigurationContext;
 import org.apache.axis2.context.ConfigurationContextFactory;
 import org.apache.axis2.description.TransportOutDescription;
 import org.apache.axis2.engine.AxisConfiguration;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.testng.PowerMockObjectFactory;
 import org.powermock.reflect.Whitebox;
 import org.testng.Assert;
@@ -51,14 +49,13 @@ import org.wso2.carbon.identity.application.authentication.framework.exception.L
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedIdPData;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
-import org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
-import org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticator;
-import org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants;
 import org.wso2.carbon.identity.authenticator.emailotp.config.EmailOTPUtils;
 import org.wso2.carbon.identity.authenticator.emailotp.internal.EmailOTPServiceDataHolder;
+import org.wso2.carbon.identity.core.ServiceURL;
+import org.wso2.carbon.identity.core.ServiceURLBuilder;
+import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
-import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.mgt.IdentityMgtConfigException;
 import org.wso2.carbon.identity.mgt.IdentityMgtServiceException;
@@ -79,20 +76,31 @@ import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
-import java.util.*;
-
-import static org.mockito.Matchers.*;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.doNothing;
 import static org.powermock.api.mockito.PowerMockito.doReturn;
+import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
-@RunWith(PowerMockRunner.class)
 @PrepareForTest({EmailOTPAuthenticator.class, FileBasedConfigurationBuilder.class, FederatedAuthenticatorUtil.class,
         FrameworkUtils.class, MultitenantUtils.class, IdentityTenantUtil.class, ConfigurationContextFactory.class,
-        ConfigBuilder.class, NotificationBuilder.class, EmailOTPUtils.class, EmailOTPServiceDataHolder.class})
+        ConfigBuilder.class, NotificationBuilder.class, EmailOTPUtils.class, EmailOTPServiceDataHolder.class,
+        ServiceURLBuilder.class})
 @PowerMockIgnore({"javax.crypto.*" })
 public class EmailOTPAuthenticatorTest {
     private EmailOTPAuthenticator emailOTPAuthenticator;
@@ -131,7 +139,7 @@ public class EmailOTPAuthenticatorTest {
     @Mock private AuthenticatedUser authenticatedUser;
 
     @BeforeMethod
-    public void setUp() throws IdentityEventException {
+    public void setUp() throws Exception {
         emailOTPAuthenticator = new EmailOTPAuthenticator();
         initMocks(this);
         mockStatic(FileBasedConfigurationBuilder.class);
@@ -152,6 +160,7 @@ public class EmailOTPAuthenticatorTest {
         when(authenticatedUser.getUserName()).thenReturn("testUser");
         when(authenticatedUser.getUserStoreDomain()).thenReturn("secondary");
         when(context.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER)).thenReturn(authenticatedUser);
+        mockServiceURLBuilder();
     }
 
     @Test(description = "Test case for canHandle() method true case.")
@@ -704,22 +713,6 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test
-    public void testGetEmailAddressRequestPage() throws Exception {
-        String reqPage = "emailotpEndpoint/reqPage.jsp";
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REQ_PAGE, reqPage);
-        //get from context
-        context.setTenantDomain(EmailOTPAuthenticatorTestConstants.TENANT_DOMAIN);
-        context.setProperty(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REQ_PAGE, reqPage);
-        Assert.assertEquals(Whitebox.invokeMethod(emailOTPAuthenticator, "getEmailAddressRequestPage",
-                context, parameters), reqPage);
-        //get from parameters
-        context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
-        Assert.assertEquals(Whitebox.invokeMethod(emailOTPAuthenticator, "getEmailAddressRequestPage",
-                context, parameters), reqPage);
-    }
-
-    @Test
     public void testGetAPI() throws Exception {
         Map<String, String> authenticatorProperties = new HashMap<>();
         authenticatorProperties.put(EmailOTPAuthenticatorConstants.EMAIL_API, "EmailAPI" );
@@ -793,8 +786,8 @@ public class EmailOTPAuthenticatorTest {
         emailOTPParameters.put(api + EmailOTPAuthenticatorConstants.MAILING_ENDPOINT, mailingEndpoint);
         emailOTPParameters.put(api + EmailOTPAuthenticatorConstants.EMAILOTP_API_KEY, "apiKey");
         emailOTPParameters.put(api + EmailOTPAuthenticatorConstants.REFRESH_TOKEN, "refreshToken");
-        emailOTPParameters.put(api + OIDCAuthenticatorConstants.CLIENT_ID, "clientId");
-        emailOTPParameters.put(api + OIDCAuthenticatorConstants.CLIENT_SECRET, "clientSecret");
+        emailOTPParameters.put(api + EmailOTPAuthenticatorConstants.CLIENT_ID, "clientId");
+        emailOTPParameters.put(api + EmailOTPAuthenticatorConstants.CLIENT_SECRET, "clientSecret");
         authenticatorProperties.put(EmailOTPAuthenticatorConstants.EMAIL_API, api);
         authenticatorProperties.put(EmailOTPAuthenticatorConstants.EMAILOTP_EMAIL,
                 EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
@@ -882,7 +875,7 @@ public class EmailOTPAuthenticatorTest {
      */
     private void setStepConfigWithBasicAuthenticator(AuthenticatedUser authenticatedUser,
                                                      AuthenticatorConfig authenticatorConfig) {
-        
+
         Map<Integer, StepConfig> stepConfigMap = new HashMap<>();
         StepConfig stepConfig = new StepConfig();
         stepConfig.setAuthenticatedUser(authenticatedUser);
@@ -973,6 +966,54 @@ public class EmailOTPAuthenticatorTest {
         when(context.getProperty(EmailOTPAuthenticatorConstants.CODE_MISMATCH)).thenReturn(false);
         Whitebox.invokeMethod(emailOTPAuthenticator, "processAuthenticationResponse",
                 httpServletRequest, httpServletResponse, context);
+    }
+
+    private void mockServiceURLBuilder() throws URLBuilderException {
+
+        ServiceURLBuilder builder = new ServiceURLBuilder() {
+
+            String path = "";
+
+            @Override
+            public ServiceURLBuilder addPath(String... strings) {
+
+                Arrays.stream(strings).forEach(x -> {
+                    path += "/" + x;
+                });
+                return this;
+            }
+
+            @Override
+            public ServiceURLBuilder addParameter(String s, String s1) {
+
+                return this;
+            }
+
+            @Override
+            public ServiceURLBuilder setFragment(String s) {
+
+                return this;
+            }
+
+            @Override
+            public ServiceURLBuilder addFragmentParameter(String s, String s1) {
+
+                return this;
+            }
+
+            @Override
+            public ServiceURL build() throws URLBuilderException {
+
+                ServiceURL serviceURL = mock(ServiceURL.class);
+                PowerMockito.when(serviceURL.getAbsolutePublicURL()).thenReturn("https://localhost:9443" + path);
+                PowerMockito.when(serviceURL.getRelativePublicURL()).thenReturn(path);
+                PowerMockito.when(serviceURL.getRelativeInternalURL()).thenReturn(path);
+                return serviceURL;
+            }
+        };
+
+        mockStatic(ServiceURLBuilder.class);
+        PowerMockito.when(ServiceURLBuilder.create()).thenReturn(builder);
     }
 
     @ObjectFactory
