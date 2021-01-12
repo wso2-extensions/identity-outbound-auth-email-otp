@@ -61,7 +61,7 @@ public class EmailOTPAuthenticatorConstants {
     public static final String MAIL_API_KEY = "<API_KEY>";
 
     public static final String LOGIN_PAGE = "authenticationendpoint/login.do";
-    public static final String EMAIL_CAPTURE_PAGE = "emailotpauthenticationendpoint/emailAddress.jsp";
+    public static final String EMAIL_ADDRESS_CAPTURE_PAGE = "emailotpauthenticationendpoint/emailAddress.jsp";
     public static final String EMAILOTP_PAGE = "emailotpauthenticationendpoint/emailotp.jsp";
     public static final String ERROR_PAGE = "emailotpauthenticationendpoint/emailotpError.jsp";
 

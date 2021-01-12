@@ -28,7 +28,7 @@ import java.util.Map;
 
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.EMAILOTP_PAGE;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REQ_PAGE;
-import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.EMAIL_CAPTURE_PAGE;
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_CAPTURE_PAGE;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.ERROR_PAGE;
 
 /**
@@ -47,7 +47,7 @@ public class EmailOTPUrlUtil {
 
         try {
             if (IdentityTenantUtil.isTenantQualifiedUrlsEnabled()) {
-                return ServiceURLBuilder.create().addPath(EMAIL_CAPTURE_PAGE).build().getAbsolutePublicURL();
+                return ServiceURLBuilder.create().addPath(EMAIL_ADDRESS_CAPTURE_PAGE).build().getAbsolutePublicURL();
             } else {
                 return getEmailAddressRequestPage(context, authenticationConfigs);
             }
@@ -101,7 +101,7 @@ public class EmailOTPUrlUtil {
         } else if ((context.getProperty(EMAIL_ADDRESS_REQ_PAGE)) != null) {
             emailAddressReqPage = String.valueOf(context.getProperty(EMAIL_ADDRESS_REQ_PAGE));
         } else {
-            emailAddressReqPage = ServiceURLBuilder.create().addPath(EMAIL_CAPTURE_PAGE).build().getAbsolutePublicURL();
+            emailAddressReqPage = ServiceURLBuilder.create().addPath(EMAIL_ADDRESS_CAPTURE_PAGE).build().getAbsolutePublicURL();
         }
         return emailAddressReqPage;
     }
