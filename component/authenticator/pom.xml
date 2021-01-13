@@ -69,7 +69,6 @@
                             org.wso2.carbon.identity.event.event; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.event.services; version="${carbon.identity.package.import.version.range}",
                             org.apache.oltu.oauth2.*; version="${oltu.package.import.version.range}",
-                            org.wso2.carbon.identity.application.authenticator.oidc; version="${identity.outbound.auth.oidc.import.version.range}",
                             org.wso2.carbon.identity.handler.event.account.lock.service;
                             version="${carbon.identity.account.lock.handler.imp.pkg.version.range}",
                             org.wso2.carbon.identity.handler.event.account.lock.exception;
@@ -158,10 +157,6 @@
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
-            <artifactId>org.wso2.carbon.identity.event</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.application.authentication.framework</artifactId>
         </dependency>
         <dependency>
@@ -212,11 +207,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.powermock</groupId>
             <artifactId>powermock-core</artifactId>
             <scope>test</scope>
@@ -227,8 +217,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.wso2.carbon.identity.outbound.auth.oidc</groupId>
-            <artifactId>org.wso2.carbon.identity.application.authenticator.oidc</artifactId>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.felix</groupId>

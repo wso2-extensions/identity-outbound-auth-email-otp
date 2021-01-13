@@ -16,7 +16,7 @@
  *  under the License.
  *
  */
-package org.wso2.carbon.identity.application.authenticator.emailotp;
+package org.wso2.carbon.identity.authenticator.emailotp;
 
 public class EmailOTPAuthenticatorTestConstants {
     public static String EMAIL_ADDRESS = "abc@gmail.com";

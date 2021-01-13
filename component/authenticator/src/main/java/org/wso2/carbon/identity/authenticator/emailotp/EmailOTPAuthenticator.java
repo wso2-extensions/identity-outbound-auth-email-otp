@@ -36,7 +36,6 @@ import org.wso2.carbon.identity.application.authentication.framework.AbstractApp
 import org.wso2.carbon.identity.application.authentication.framework.AuthenticatorFlowStatus;
 import org.wso2.carbon.identity.application.authentication.framework.FederatedApplicationAuthenticator;
 import org.wso2.carbon.identity.application.authentication.framework.LocalApplicationAuthenticator;
-import org.wso2.carbon.identity.application.authentication.framework.config.ConfigurationFacade;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.StepConfig;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
@@ -44,7 +43,6 @@ import org.wso2.carbon.identity.application.authentication.framework.exception.I
 import org.wso2.carbon.identity.application.authentication.framework.exception.LogoutFailedException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
-import org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.authenticator.emailotp.config.EmailOTPUtils;
@@ -90,12 +88,14 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.DISABLE_OTP_RESEND_ON_FAILURE;
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPUrlUtil.getEmailOTPErrorPageUrl;
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPUrlUtil.getEmailOTPLoginPageUrl;
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPUrlUtil.getRequestEmailPageUrl;
 
 /**
  * Authenticator of EmailOTP.
@@ -793,7 +793,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             throws AuthenticationFailedException {
         boolean isEmailAddressUpdateEnable = isEmailAddressUpdateEnable(context, emailOTPParameters);
         if (isEmailAddressUpdateEnable) {
-            String emailAddressReqPage = getEmailAddressRequestPage(context, emailOTPParameters);
+            String emailAddressReqPage = getRequestEmailPageUrl(context, emailOTPParameters);
             try {
                 String url = getRedirectURL(emailAddressReqPage, queryParams);
                 if (isEmailUpdateFailed(context)) {
@@ -930,23 +930,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             throws AuthenticationFailedException {
         try {
             // Full url of the error page
-            String errorPage = getEmailOTPErrorPage(context, emailOTPParameters);
-            if (log.isDebugEnabled()) {
-                log.debug("The EmailOTP error page url is " + errorPage);
-            }
-            if (StringUtils.isEmpty(errorPage)) {
-                String authenticationEndpointURL = ConfigurationFacade.getInstance().getAuthenticationEndpointURL();
-                errorPage = authenticationEndpointURL.replace(EmailOTPAuthenticatorConstants.LOGIN_PAGE,
-                        EmailOTPAuthenticatorConstants.ERROR_PAGE);
-                if (log.isDebugEnabled()) {
-                    log.debug("The default authentication endpoint URL " + authenticationEndpointURL +
-                            "is replaced by default email otp error page " + errorPage);
-                }
-                if (!errorPage.contains(EmailOTPAuthenticatorConstants.ERROR_PAGE)) {
-                    throw new AuthenticationFailedException("The default authentication page is not replaced by default"
-                            + " email otp error page");
-                }
-            }
+            String errorPage = getEmailOTPErrorPageUrl(context, emailOTPParameters);
             String url = getRedirectURL(errorPage, queryParams);
             response.sendRedirect(url + retryParam);
         } catch (IOException e) {
@@ -1032,23 +1016,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                                              String queryParams, String email) throws AuthenticationFailedException {
         try {
             // Full url of the login page
-            String emailOTPLoginPage = getEmailOTPLoginPage(context, emailOTPParameters);
-            if (log.isDebugEnabled()) {
-                log.debug("The EmailOTP login page url is " + emailOTPLoginPage);
-            }
-            if (StringUtils.isEmpty(emailOTPLoginPage)) {
-                String authenticationEndpointURL = ConfigurationFacade.getInstance().getAuthenticationEndpointURL();
-                emailOTPLoginPage = authenticationEndpointURL.replace(EmailOTPAuthenticatorConstants.LOGIN_PAGE,
-                        EmailOTPAuthenticatorConstants.EMAILOTP_PAGE);
-                if (log.isDebugEnabled()) {
-                    log.debug("The default authentication endpoint URL " + authenticationEndpointURL +
-                            "is replaced by default email otp login page " + emailOTPLoginPage);
-                }
-                if (!emailOTPLoginPage.contains(EmailOTPAuthenticatorConstants.EMAILOTP_PAGE)) {
-                    throw new AuthenticationFailedException("The default authentication page is not replaced by default"
-                            + " email otp page");
-                }
-            }
+            String emailOTPLoginPage = getEmailOTPLoginPageUrl(context, emailOTPParameters);
             String url = getRedirectURL(emailOTPLoginPage, queryParams);
             if (isShowEmailAddressInUIEnable(context, emailOTPParameters)) {
                 String emailAddressRegex = getEmailAddressRegex(context, emailOTPParameters);
@@ -1577,10 +1545,10 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
         String tenantDomain = context.getTenantDomain();
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
-                parametersMap.containsKey(api + OIDCAuthenticatorConstants.CLIENT_ID)) {
-            clientId = parametersMap.get(api + OIDCAuthenticatorConstants.CLIENT_ID);
-        } else if ((context.getProperty(api + OIDCAuthenticatorConstants.CLIENT_ID)) != null) {
-            clientId = String.valueOf(context.getProperty(api + OIDCAuthenticatorConstants.CLIENT_ID));
+                parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.CLIENT_ID)) {
+            clientId = parametersMap.get(api + EmailOTPAuthenticatorConstants.CLIENT_ID);
+        } else if ((context.getProperty(api + EmailOTPAuthenticatorConstants.CLIENT_ID)) != null) {
+            clientId = String.valueOf(context.getProperty(api + EmailOTPAuthenticatorConstants.CLIENT_ID));
         }
         return clientId;
     }
@@ -1593,10 +1561,10 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
         String tenantDomain = context.getTenantDomain();
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
-                parametersMap.containsKey(api + OIDCAuthenticatorConstants.CLIENT_SECRET)) {
-            clientSecret = parametersMap.get(api + OIDCAuthenticatorConstants.CLIENT_SECRET);
-        } else if ((context.getProperty(api + OIDCAuthenticatorConstants.CLIENT_SECRET)) != null) {
-            clientSecret = String.valueOf(context.getProperty(api + OIDCAuthenticatorConstants.CLIENT_SECRET));
+                parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.CLIENT_SECRET)) {
+            clientSecret = parametersMap.get(api + EmailOTPAuthenticatorConstants.CLIENT_SECRET);
+        } else if ((context.getProperty(api + EmailOTPAuthenticatorConstants.CLIENT_SECRET)) != null) {
+            clientSecret = String.valueOf(context.getProperty(api + EmailOTPAuthenticatorConstants.CLIENT_SECRET));
         }
         return clientSecret;
     }
@@ -1754,40 +1722,6 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
     }
 
     /**
-     * Get ErrorPage for Gmail APIs
-     */
-    private String getEmailOTPErrorPage(AuthenticationContext context, Map<String, String> parametersMap) {
-        String errorPage = null;
-        String tenantDomain = context.getTenantDomain();
-        Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
-        if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
-                parametersMap.containsKey(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL)) {
-            errorPage = parametersMap.get(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL);
-        } else if ((context.getProperty(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL)) != null) {
-            errorPage = String.valueOf(context.getProperty
-                    (EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL));
-        }
-        return errorPage;
-    }
-
-    /**
-     * Get LoginPage for Gmail APIs
-     */
-    private String getEmailOTPLoginPage(AuthenticationContext context, Map<String, String> parametersMap) {
-        String loginPage = null;
-        String tenantDomain = context.getTenantDomain();
-        Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
-        if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
-                parametersMap.containsKey(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ENDPOINT_URL)) {
-            loginPage = parametersMap.get(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ENDPOINT_URL);
-        } else if ((context.getProperty(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ENDPOINT_URL)) != null) {
-            loginPage = String.valueOf(context.getProperty
-                    (EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ENDPOINT_URL));
-        }
-        return loginPage;
-    }
-
-    /**
      * Check whether admin enable to enter and update a email address in user profile when user forgets to register
      * the email claim value.
      *
@@ -1807,25 +1741,6 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                     (context.getProperty(EmailOTPAuthenticatorConstants.IS_ENABLE_EMAIL_VALUE_UPDATE)));
         }
         return enableEmailAddressUpdate;
-    }
-
-    /**
-     * Get the email address request page url from the application-authentication.xml file.
-     *
-     * @param context the AuthenticationContext
-     * @return email address request page
-     */
-    private String getEmailAddressRequestPage(AuthenticationContext context, Map<String, String> parametersMap) {
-        String emailAddressReqPage = null;
-        String tenantDomain = context.getTenantDomain();
-        Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
-        if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
-                parametersMap.containsKey(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REQ_PAGE)) {
-            emailAddressReqPage = parametersMap.get(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REQ_PAGE);
-        } else if ((context.getProperty(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REQ_PAGE)) != null) {
-            emailAddressReqPage = String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REQ_PAGE));
-        }
-        return emailAddressReqPage;
     }
 
     /**

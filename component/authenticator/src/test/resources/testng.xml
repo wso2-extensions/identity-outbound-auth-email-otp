@@ -21,7 +21,8 @@
 
     <test name="EmailOTP-Authenticator-Unit-Tests">
         <classes>
-            <class name="org.wso2.carbon.identity.application.authenticator.emailotp.EmailOTPAuthenticatorTest" />
+            <class name="org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorTest" />
+            <class name="org.wso2.carbon.identity.authenticator.emailotp.EmailOtpURLUtilTest" />
         </classes>
     </test>
 </suite>
