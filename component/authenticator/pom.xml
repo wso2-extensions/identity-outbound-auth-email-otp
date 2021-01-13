@@ -69,7 +69,6 @@
                             org.wso2.carbon.identity.event.event; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.event.services; version="${carbon.identity.package.import.version.range}",
                             org.apache.oltu.oauth2.*; version="${oltu.package.import.version.range}",
-                            org.wso2.carbon.identity.application.authenticator.oidc; version="${identity.outbound.auth.oidc.import.version.range}",
                             org.wso2.carbon.identity.handler.event.account.lock.service;
                             version="${carbon.identity.account.lock.handler.imp.pkg.version.range}",
                             org.wso2.carbon.identity.handler.event.account.lock.exception;
