@@ -454,6 +454,8 @@ public class EmailOTPAuthenticatorTest {
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
         context.setAuthenticatorProperties(parameters);
+        when(IdentityTenantUtil.getRealmService()).thenReturn(realmService);
+        when(realmService.getTenantUserRealm(anyInt())).thenReturn(userRealm);
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
         when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
         when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(), anyString()))
@@ -485,6 +487,8 @@ public class EmailOTPAuthenticatorTest {
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
         context.setAuthenticatorProperties(parameters);
+        when(IdentityTenantUtil.getRealmService()).thenReturn(realmService);
+        when(realmService.getTenantUserRealm(anyInt())).thenReturn(userRealm);
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
         when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
         when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(), anyString()))
@@ -530,7 +534,7 @@ public class EmailOTPAuthenticatorTest {
     @Test(description = "Test case for process() method when email OTP is optional and federated email attribute is " +
             "not available.")
     public void testProcessWhenEmailOTPIsOptionalWithoutFederatedEmail() throws AuthenticationFailedException,
-            LogoutFailedException {
+            LogoutFailedException, UserStoreException {
 
         when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_ID);
@@ -546,6 +550,8 @@ public class EmailOTPAuthenticatorTest {
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
         context.setAuthenticatorProperties(parameters);
+        when(IdentityTenantUtil.getRealmService()).thenReturn(realmService);
+        when(realmService.getTenantUserRealm(anyInt())).thenReturn(userRealm);
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
         when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
         when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(), anyString()))
@@ -590,7 +596,7 @@ public class EmailOTPAuthenticatorTest {
     @Test(description = "Test case for process() method when email OTP is Optional and send OTP to federated " +
             "email attribute is diabled.")
     public void testProcessWhenEmailOTPIsOptionalWithoutSendOTPToFederatedEmail() throws AuthenticationFailedException,
-            LogoutFailedException {
+            LogoutFailedException, UserStoreException {
 
         when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_ID);
@@ -607,6 +613,8 @@ public class EmailOTPAuthenticatorTest {
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
         context.setAuthenticatorProperties(parameters);
+        when(IdentityTenantUtil.getRealmService()).thenReturn(realmService);
+        when(realmService.getTenantUserRealm(anyInt())).thenReturn(userRealm);
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
         when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
         when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(), anyString()))
