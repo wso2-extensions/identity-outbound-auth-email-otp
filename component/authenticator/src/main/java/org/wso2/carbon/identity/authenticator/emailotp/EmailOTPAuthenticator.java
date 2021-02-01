@@ -2525,10 +2525,16 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
     private void publishPostEmailOTPGeneratedEvent(HttpServletRequest request, AuthenticationContext context)
             throws AuthenticationFailedException {
 
-        Map<String, Object> eventProperties = new HashMap<>();
-        eventProperties.put(IdentityEventConstants.EventProperty.CORRELATION_ID, context.getCallerSessionKey());
         AuthenticatedUser authenticatedUser = (AuthenticatedUser) context.getProperty(EmailOTPAuthenticatorConstants
                 .AUTHENTICATED_USER);
+        Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
+        if (isEmailOTPDisableForUser(authenticatedUser.getAuthenticatedSubjectIdentifier(),
+                context, emailOTPParameters)) {
+            // Email OTP is disabled for the user. Hence not going to trigger the event.
+            return;
+        }
+        Map<String, Object> eventProperties = new HashMap<>();
+        eventProperties.put(IdentityEventConstants.EventProperty.CORRELATION_ID, context.getCallerSessionKey());
         eventProperties.put(IdentityEventConstants.EventProperty.USER_NAME, authenticatedUser.getUserName());
         eventProperties.put(IdentityEventConstants.EventProperty.TENANT_DOMAIN, context.getTenantDomain());
         eventProperties.put(IdentityEventConstants.EventProperty.USER_STORE_DOMAIN, authenticatedUser
