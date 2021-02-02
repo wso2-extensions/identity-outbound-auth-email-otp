@@ -2613,7 +2613,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
         AuthenticatedUser authenticatedUser = (AuthenticatedUser) context.getProperty(EmailOTPAuthenticatorConstants
                 .AUTHENTICATED_USER);
         Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
-        if (isEmailOTPDisableForUser(authenticatedUser.getUserName(), context, emailOTPParameters)) {
+        if (isEmailOTPDisableForUser(authenticatedUser.getAuthenticatedSubjectIdentifier(),
+                context, emailOTPParameters)) {
             // Email OTP is disabled for the user. Hence not going to trigger the event.
             return;
         }
