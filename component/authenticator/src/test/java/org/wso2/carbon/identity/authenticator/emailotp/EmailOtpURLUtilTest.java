@@ -181,7 +181,7 @@ public class EmailOtpURLUtilTest extends PowerMockTestCase {
                         "https://localhost:9443/t/wso2.org/myemailotp/capture.do"},
                 {TENANT_DOMAIN,
                         null,
-                        "https://localhost:9443/t/wso2.org/emailotpauthenticationendpoint/emailAddress.jsp"},
+                        "https://localhost:9443/t/wso2.org/authenticationendpoint/email_capture.do"},
                 {SUPER_TENANT_DOMAIN_NAME,
                         "https://localhost:9443/myemailotp/capture.do",
                         "https://localhost:9443/myemailotp/capture.do"},
@@ -190,7 +190,7 @@ public class EmailOtpURLUtilTest extends PowerMockTestCase {
                         "https://localhost:9443/myemailotp/capture.do"},
                 {SUPER_TENANT_DOMAIN_NAME,
                         null,
-                        "https://localhost:9443/emailotpauthenticationendpoint/emailAddress.jsp"}
+                        "https://localhost:9443/authenticationendpoint/email_capture.do"}
         };
     }
 
@@ -231,7 +231,7 @@ public class EmailOtpURLUtilTest extends PowerMockTestCase {
                         "https://localhost:9443/t/wso2.org/myemailotp/login.do"},
                 {TENANT_DOMAIN,
                         null,
-                        "https://localhost:9443/t/wso2.org/emailotpauthenticationendpoint/emailotp.jsp"},
+                        "https://localhost:9443/t/wso2.org/authenticationendpoint/email_otp.do"},
                 {SUPER_TENANT_DOMAIN_NAME,
                         "https://localhost:9443/myemailotp/login.do",
                         "https://localhost:9443/myemailotp/login.do"},
@@ -240,7 +240,7 @@ public class EmailOtpURLUtilTest extends PowerMockTestCase {
                         "https://localhost:9443/myemailotp/login.do"},
                 {SUPER_TENANT_DOMAIN_NAME,
                         null,
-                        "https://localhost:9443/emailotpauthenticationendpoint/emailotp.jsp"}
+                        "https://localhost:9443/authenticationendpoint/email_otp.do"}
         };
     }
 
@@ -281,7 +281,7 @@ public class EmailOtpURLUtilTest extends PowerMockTestCase {
                         "https://localhost:9443/t/wso2.org/myemailotp/error.do"},
                 {TENANT_DOMAIN,
                         null,
-                        "https://localhost:9443/t/wso2.org/emailotpauthenticationendpoint/emailotpError.jsp"},
+                        "https://localhost:9443/t/wso2.org/authenticationendpoint/email_otp_error.do"},
                 {SUPER_TENANT_DOMAIN_NAME,
                         "https://localhost:9443/myemailotp/error.do",
                         "https://localhost:9443/myemailotp/error.do"},
@@ -290,7 +290,7 @@ public class EmailOtpURLUtilTest extends PowerMockTestCase {
                         "https://localhost:9443/myemailotp/error.do"},
                 {SUPER_TENANT_DOMAIN_NAME,
                         null,
-                        "https://localhost:9443/emailotpauthenticationendpoint/emailotpError.jsp"}
+                        "https://localhost:9443/authenticationendpoint/email_otp_error.do"}
         };
     }
 
