@@ -149,14 +149,14 @@ public class EmailOTPUrlUtil {
 
         try {
             if (isURLRelative(contextToBuildURL)) {
-                // When tenant qualified URL feature is enabled, this will generate a tenant qualified URL
+                // When tenant qualified URL feature is enabled, this will generate a tenant qualified URL.
                 return ServiceURLBuilder.create().addPath(contextToBuildURL).build().getAbsolutePublicURL();
             }
         } catch (URISyntaxException e) {
             throw new URLBuilderException("Error while building public absolute URL for context: " + defaultContext, e);
         }
 
-        // URL from the configuration was an absolute one. We return it as is.
+        // URL from the configuration was an absolute one. We return the same without any modification.
         return contextToBuildURL;
     }
 
