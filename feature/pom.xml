@@ -51,7 +51,7 @@
                             <goal>p2-feature-gen</goal>
                         </goals>
                         <configuration>
-                            <id>org.wso2.carbon.identity.authenticator.emailotp.connector</id>
+                            <id>org.wso2.carbon.identity.authenticator.emailotp</id>
                             <propertiesFile>feature.properties</propertiesFile>
                             <adviceFile>
                                 <properties>
