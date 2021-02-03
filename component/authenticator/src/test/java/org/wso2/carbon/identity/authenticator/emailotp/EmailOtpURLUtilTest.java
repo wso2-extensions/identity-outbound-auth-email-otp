@@ -28,6 +28,7 @@ import org.wso2.carbon.identity.core.ServiceURL;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -37,6 +38,10 @@ import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ENDPOINT_URL;
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL;
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REQ_PAGE;
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorTestConstants.TENANT_DOMAIN;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
 
 @PrepareForTest({IdentityTenantUtil.class, ServiceURLBuilder.class})
@@ -142,24 +147,179 @@ public class EmailOtpURLUtilTest extends PowerMockTestCase {
     public void testGetEmailAddressRequestPage() throws Exception {
 
         String reqPage = "emailotpEndpoint/reqPage.jsp";
+        String expectedURL = "https://localhost:9443/emailotpEndpoint/reqPage.jsp";
 
         mockStatic(IdentityTenantUtil.class);
         when(IdentityTenantUtil.isTenantQualifiedUrlsEnabled()).thenReturn(false);
 
         Map<String, String> parameters = new HashMap<>();
-        parameters.put(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REQ_PAGE, reqPage);
+        parameters.put(EMAIL_ADDRESS_REQ_PAGE, reqPage);
 
         AuthenticationContext context = new AuthenticationContext();
-        context.setTenantDomain(EmailOTPAuthenticatorTestConstants.TENANT_DOMAIN);
-        context.setProperty(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REQ_PAGE, reqPage);
-        Assert.assertEquals(EmailOTPUrlUtil.getRequestEmailPageUrl(context, parameters), reqPage);
+        context.setTenantDomain(TENANT_DOMAIN);
+        context.setProperty(EMAIL_ADDRESS_REQ_PAGE, reqPage);
+        Assert.assertEquals(EmailOTPUrlUtil.getRequestEmailPageUrl(context, parameters), expectedURL);
 
-        //get from parameters
-        context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
-        Assert.assertEquals(EmailOTPUrlUtil.getRequestEmailPageUrl(context, parameters), reqPage);
+        // Super tenant test.
+        mockServiceURLBuilder();
+        AuthenticationContext superTenantAuthContext = new AuthenticationContext();
+        superTenantAuthContext.setTenantDomain(TENANT_DOMAIN);
+        superTenantAuthContext.setProperty(EMAIL_ADDRESS_REQ_PAGE, reqPage);
+        superTenantAuthContext.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
+        Assert.assertEquals(EmailOTPUrlUtil.getRequestEmailPageUrl(superTenantAuthContext, parameters), expectedURL);
     }
 
-    private void mockServiceURLBuilder() throws URLBuilderException {
+    @DataProvider(name = "EmailCapturePageFromConfigData")
+    public static Object[][] getEmailCapturePageFromConfigData() {
+
+        return new Object[][]{
+                {TENANT_DOMAIN,
+                        "https://localhost:9443/myemailotp/capture.do",
+                        "https://localhost:9443/myemailotp/capture.do"},
+                {TENANT_DOMAIN,
+                        "myemailotp/capture.do",
+                        "https://localhost:9443/t/wso2.org/myemailotp/capture.do"},
+                {TENANT_DOMAIN,
+                        null,
+                        "https://localhost:9443/t/wso2.org/emailotpauthenticationendpoint/emailAddress.jsp"},
+                {SUPER_TENANT_DOMAIN_NAME,
+                        "https://localhost:9443/myemailotp/capture.do",
+                        "https://localhost:9443/myemailotp/capture.do"},
+                {SUPER_TENANT_DOMAIN_NAME,
+                        "myemailotp/capture.do",
+                        "https://localhost:9443/myemailotp/capture.do"},
+                {SUPER_TENANT_DOMAIN_NAME,
+                        null,
+                        "https://localhost:9443/emailotpauthenticationendpoint/emailAddress.jsp"}
+        };
+    }
+
+    @Test(description = "Tests email capture page URL building logic when tenant qualified URL mode is enabled and " +
+            "URL are externalized through config.", dataProvider = "EmailCapturePageFromConfigData")
+    public void testBuildEmailCaptureURLWithExternalizedURLs(String tenantDomain, String valueFromConfig,
+                                                             String expectedURL) throws Exception {
+
+        mockStatic(IdentityTenantUtil.class);
+        when(IdentityTenantUtil.isTenantQualifiedUrlsEnabled()).thenReturn(true);
+        when(IdentityTenantUtil.getTenantDomainFromContext()).thenReturn(tenantDomain);
+
+        AuthenticationContext context = new AuthenticationContext();
+        context.setTenantDomain(tenantDomain);
+
+        Map<String, String> parameters = new HashMap<>();
+
+        if (SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
+            // For super tenant externalized URLs are read from parameter map.
+            parameters.put(EMAIL_ADDRESS_REQ_PAGE, valueFromConfig);
+        } else {
+            // For tenants externalized URLs are read from context.
+            context.setProperty(EMAIL_ADDRESS_REQ_PAGE, valueFromConfig);
+        }
+
+        Assert.assertEquals(EmailOTPUrlUtil.getRequestEmailPageUrl(context, parameters), expectedURL);
+    }
+
+    @DataProvider(name = "EmailOTPLoginPageFromConfigData")
+    public static Object[][] getEmailOTPLoginPageFromConfigData() {
+
+        return new Object[][]{
+                {TENANT_DOMAIN,
+                        "https://localhost:9443/myemailotp/login.do",
+                        "https://localhost:9443/myemailotp/login.do"},
+                {TENANT_DOMAIN,
+                        "myemailotp/login.do",
+                        "https://localhost:9443/t/wso2.org/myemailotp/login.do"},
+                {TENANT_DOMAIN,
+                        null,
+                        "https://localhost:9443/t/wso2.org/emailotpauthenticationendpoint/emailotp.jsp"},
+                {SUPER_TENANT_DOMAIN_NAME,
+                        "https://localhost:9443/myemailotp/login.do",
+                        "https://localhost:9443/myemailotp/login.do"},
+                {SUPER_TENANT_DOMAIN_NAME,
+                        "myemailotp/login.do",
+                        "https://localhost:9443/myemailotp/login.do"},
+                {SUPER_TENANT_DOMAIN_NAME,
+                        null,
+                        "https://localhost:9443/emailotpauthenticationendpoint/emailotp.jsp"}
+        };
+    }
+
+    @Test(description = "Tests email OTP login URL building logic when tenant qualified URL mode is enabled and " +
+            "URL are externalized through config.", dataProvider = "EmailOTPLoginPageFromConfigData")
+    public void testBuildEmailOtpLoginURLWithExternalizedURLs(String tenantDomain, String valueFromConfig,
+                                                             String expectedURL) throws Exception {
+
+        mockStatic(IdentityTenantUtil.class);
+        when(IdentityTenantUtil.isTenantQualifiedUrlsEnabled()).thenReturn(true);
+        when(IdentityTenantUtil.getTenantDomainFromContext()).thenReturn(tenantDomain);
+
+        AuthenticationContext context = new AuthenticationContext();
+        context.setTenantDomain(tenantDomain);
+
+        Map<String, String> parameters = new HashMap<>();
+
+        if (SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
+            // For super tenant externalized URLs are read from parameter map.
+            parameters.put(EMAILOTP_AUTHENTICATION_ENDPOINT_URL, valueFromConfig);
+        } else {
+            // For tenants externalized URLs are read from context.
+            context.setProperty(EMAILOTP_AUTHENTICATION_ENDPOINT_URL, valueFromConfig);
+        }
+
+        Assert.assertEquals(EmailOTPUrlUtil.getEmailOTPLoginPageUrl(context, parameters), expectedURL);
+    }
+
+    @DataProvider(name = "EmailOTPErrorPageFromConfigData")
+    public static Object[][] getEmailOTPErrorPageFromConfigData() {
+
+        return new Object[][]{
+                {TENANT_DOMAIN,
+                        "https://localhost:9443/myemailotp/error.do",
+                        "https://localhost:9443/myemailotp/error.do"},
+                {TENANT_DOMAIN,
+                        "myemailotp/error.do",
+                        "https://localhost:9443/t/wso2.org/myemailotp/error.do"},
+                {TENANT_DOMAIN,
+                        null,
+                        "https://localhost:9443/t/wso2.org/emailotpauthenticationendpoint/emailotpError.jsp"},
+                {SUPER_TENANT_DOMAIN_NAME,
+                        "https://localhost:9443/myemailotp/error.do",
+                        "https://localhost:9443/myemailotp/error.do"},
+                {SUPER_TENANT_DOMAIN_NAME,
+                        "myemailotp/error.do",
+                        "https://localhost:9443/myemailotp/error.do"},
+                {SUPER_TENANT_DOMAIN_NAME,
+                        null,
+                        "https://localhost:9443/emailotpauthenticationendpoint/emailotpError.jsp"}
+        };
+    }
+
+    @Test(description = "Tests email OTP login URL building logic when tenant qualified URL mode is enabled and " +
+            "URL are externalized through config.", dataProvider = "EmailOTPErrorPageFromConfigData")
+    public void testBuildEmailOtpErrorPageURLWithExternalizedURLs(String tenantDomain, String valueFromConfig,
+                                                              String expectedURL) throws Exception {
+
+        mockStatic(IdentityTenantUtil.class);
+        when(IdentityTenantUtil.isTenantQualifiedUrlsEnabled()).thenReturn(true);
+        when(IdentityTenantUtil.getTenantDomainFromContext()).thenReturn(tenantDomain);
+
+        AuthenticationContext context = new AuthenticationContext();
+        context.setTenantDomain(tenantDomain);
+
+        Map<String, String> parameters = new HashMap<>();
+
+        if (SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
+            // For super tenant externalized URLs are read from parameter map.
+            parameters.put(EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL, valueFromConfig);
+        } else {
+            // For tenants externalized URLs are read from context.
+            context.setProperty(EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL, valueFromConfig);
+        }
+
+        Assert.assertEquals(EmailOTPUrlUtil.getEmailOTPErrorPageUrl(context, parameters), expectedURL);
+    }
+
+    private void mockServiceURLBuilder() {
 
         ServiceURLBuilder builder = new ServiceURLBuilder() {
 
@@ -168,9 +328,7 @@ public class EmailOtpURLUtilTest extends PowerMockTestCase {
             @Override
             public ServiceURLBuilder addPath(String... strings) {
 
-                Arrays.stream(strings).forEach(x -> {
-                    path += "/" + x;
-                });
+                Arrays.stream(strings).forEach(x -> path += "/" + x);
                 return this;
             }
 
@@ -193,7 +351,7 @@ public class EmailOtpURLUtilTest extends PowerMockTestCase {
             }
 
             @Override
-            public ServiceURL build() throws URLBuilderException {
+            public ServiceURL build() {
 
                 ServiceURL serviceURL = mock(ServiceURL.class);
                 when(serviceURL.getRelativePublicURL()).thenReturn(path);

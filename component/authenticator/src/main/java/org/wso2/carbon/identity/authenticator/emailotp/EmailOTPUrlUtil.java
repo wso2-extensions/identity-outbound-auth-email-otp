@@ -15,6 +15,7 @@
  */
 package org.wso2.carbon.identity.authenticator.emailotp;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.extension.identity.helper.IdentityHelperConstants;
@@ -22,13 +23,14 @@ import org.wso2.carbon.identity.application.authentication.framework.context.Aut
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
-import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.EMAILOTP_PAGE;
-import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REQ_PAGE;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_CAPTURE_PAGE;
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REQ_PAGE;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.ERROR_PAGE;
 
 /**
@@ -46,11 +48,8 @@ public class EmailOTPUrlUtil {
             throws AuthenticationFailedException {
 
         try {
-            if (IdentityTenantUtil.isTenantQualifiedUrlsEnabled()) {
-                return ServiceURLBuilder.create().addPath(EMAIL_ADDRESS_CAPTURE_PAGE).build().getAbsolutePublicURL();
-            } else {
-                return getEmailAddressRequestPage(context, authenticationConfigs);
-            }
+            String requestEmailPage = getEmailAddressRequestPage(context, authenticationConfigs);
+            return buildURL(requestEmailPage, EMAIL_ADDRESS_CAPTURE_PAGE);
         } catch (URLBuilderException e) {
             throw new AuthenticationFailedException("Error building email request page URL.", e);
         }
@@ -60,11 +59,8 @@ public class EmailOTPUrlUtil {
             throws AuthenticationFailedException {
 
         try {
-            if (IdentityTenantUtil.isTenantQualifiedUrlsEnabled()) {
-                return ServiceURLBuilder.create().addPath(EMAILOTP_PAGE).build().getAbsolutePublicURL();
-            } else {
-                return getEmailOTPLoginPage(context, authenticationConfigs);
-            }
+            String emailOTPLoginPage = getEmailOTPLoginPage(context, authenticationConfigs);
+            return buildURL(emailOTPLoginPage, EMAILOTP_PAGE);
         } catch (URLBuilderException e) {
             throw new AuthenticationFailedException("Error building email OTP login page URL.", e);
         }
@@ -73,11 +69,8 @@ public class EmailOTPUrlUtil {
     public static String getEmailOTPErrorPageUrl(AuthenticationContext context, Map<String, String> authenticationConfigs)
             throws AuthenticationFailedException {
         try {
-            if (IdentityTenantUtil.isTenantQualifiedUrlsEnabled()) {
-                return ServiceURLBuilder.create().addPath(ERROR_PAGE).build().getAbsolutePublicURL();
-            } else {
-                return getEmailOTPErrorPage(context, authenticationConfigs);
-            }
+            String emailOTPErrorPage = getEmailOTPErrorPage(context, authenticationConfigs);
+            return buildURL(emailOTPErrorPage, ERROR_PAGE);
         } catch (URLBuilderException e) {
             throw new AuthenticationFailedException("Error building email OTP error page URL.", e);
         }
@@ -145,5 +138,30 @@ public class EmailOTPUrlUtil {
             loginPage = ServiceURLBuilder.create().addPath(EMAILOTP_PAGE).build().getAbsolutePublicURL();
         }
         return loginPage;
+    }
+
+    private static String buildURL(String urlFromConfig, String defaultContext) throws URLBuilderException {
+
+        String contextToBuildURL = defaultContext;
+        if (StringUtils.isNotBlank(urlFromConfig)) {
+            contextToBuildURL = urlFromConfig;
+        }
+
+        try {
+            if (isURLRelative(contextToBuildURL)) {
+                // When tenant qualified URL feature is enabled, this will generate a tenant qualified URL.
+                return ServiceURLBuilder.create().addPath(contextToBuildURL).build().getAbsolutePublicURL();
+            }
+        } catch (URISyntaxException e) {
+            throw new URLBuilderException("Error while building public absolute URL for context: " + defaultContext, e);
+        }
+
+        // URL from the configuration was an absolute one. We return the same without any modification.
+        return contextToBuildURL;
+    }
+
+    private static boolean isURLRelative(String contextFromConfig) throws URISyntaxException {
+
+        return !new URI(contextFromConfig).isAbsolute();
     }
 }
