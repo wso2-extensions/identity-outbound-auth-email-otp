@@ -90,7 +90,6 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -525,7 +524,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
         for (StepConfig stepConfig : stepConfigMap.values()) {
             AuthenticatedUser authenticatedUserInStepConfig = stepConfig.getAuthenticatedUser();
             if (stepConfig.isSubjectAttributeStep() && authenticatedUserInStepConfig != null) {
-                authenticatedUser = stepConfig.getAuthenticatedUser();
+                // Make a copy of the user from the subject attribute step as we might modify this within
+                // the authenticator.
+                authenticatedUser = new AuthenticatedUser(authenticatedUserInStepConfig);
                 break;
             }
         }
