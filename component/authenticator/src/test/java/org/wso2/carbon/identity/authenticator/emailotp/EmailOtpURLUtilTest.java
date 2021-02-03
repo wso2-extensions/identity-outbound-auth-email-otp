@@ -18,6 +18,7 @@ package org.wso2.carbon.identity.authenticator.emailotp;
 import org.apache.commons.lang.StringUtils;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
+import org.powermock.reflect.Whitebox;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -33,10 +34,13 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.mockito.Matchers.any;
+import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorTestConstants.TENANT_DOMAIN;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
 
 @PrepareForTest({IdentityTenantUtil.class, ServiceURLBuilder.class})
@@ -142,6 +146,7 @@ public class EmailOtpURLUtilTest extends PowerMockTestCase {
     public void testGetEmailAddressRequestPage() throws Exception {
 
         String reqPage = "emailotpEndpoint/reqPage.jsp";
+        String expectedURL = "https://localhost:9443/emailotpEndpoint/reqPage.jsp";
 
         mockStatic(IdentityTenantUtil.class);
         when(IdentityTenantUtil.isTenantQualifiedUrlsEnabled()).thenReturn(false);
@@ -150,20 +155,59 @@ public class EmailOtpURLUtilTest extends PowerMockTestCase {
         parameters.put(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REQ_PAGE, reqPage);
 
         AuthenticationContext context = new AuthenticationContext();
-        context.setTenantDomain(EmailOTPAuthenticatorTestConstants.TENANT_DOMAIN);
+        context.setTenantDomain(TENANT_DOMAIN);
         context.setProperty(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REQ_PAGE, reqPage);
-        Assert.assertEquals(EmailOTPUrlUtil.getRequestEmailPageUrl(context, parameters), reqPage);
+        Assert.assertEquals(EmailOTPUrlUtil.getRequestEmailPageUrl(context, parameters), expectedURL);
 
-        //get from parameters
-        context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
-        Assert.assertEquals(EmailOTPUrlUtil.getRequestEmailPageUrl(context, parameters), reqPage);
+        // Super tenant test
+        mockServiceURLBuilder();
+        AuthenticationContext superTenantAuthContext = new AuthenticationContext();
+        superTenantAuthContext.setTenantDomain(TENANT_DOMAIN);
+        superTenantAuthContext.setProperty(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REQ_PAGE, reqPage);
+        superTenantAuthContext.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
+        Assert.assertEquals(EmailOTPUrlUtil.getRequestEmailPageUrl(superTenantAuthContext, parameters), expectedURL);
+    }
+
+
+    @DataProvider(name = "x")
+    public static Object[][] getEmailRequestPageFromConfig() {
+
+        return new Object[][]{
+                // Tenant null is thread local context
+                {"carbon.super", "https://localhost:9443/emailotpauthenticationendpoint/emailotpError.jsp"},
+                {"carbon.super", "https://localhost:9443/emailotpauthenticationendpoint/emailotpError.jsp"},
+
+                {TENANT_DOMAIN, "https://localhost:9443/t/null/emailotpauthenticationendpoint/emailotpError.jsp"},
+                {TENANT_DOMAIN, "https://localhost:9443/t/null/emailotpauthenticationendpoint/emailotpError.jsp"},
+
+        };
+    }
+
+    @Test(description = "Tests getting email request page URL from config in tenant qualified URL mode.")
+    public void testGetEmailAddressRequestPageFromConfig() throws Exception {
+
+        mockStatic(IdentityTenantUtil.class);
+        when(IdentityTenantUtil.isTenantQualifiedUrlsEnabled()).thenReturn(true);
+        when(IdentityTenantUtil.getTenantDomainFromContext()).thenReturn(TENANT_DOMAIN);
+
+        String reqPageFromConfig = "emailotpEndpoint/reqPage.jsp";
+
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REQ_PAGE, reqPageFromConfig);
+
+        AuthenticationContext context = new AuthenticationContext();
+        context.setTenantDomain(TENANT_DOMAIN);
+        context.setProperty(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REQ_PAGE, reqPageFromConfig);
+
+        String expectedURL = "https://localhost:9443/t/wso2.org/emailotpEndpoint/reqPage.jsp";
+        Assert.assertEquals(EmailOTPUrlUtil.getRequestEmailPageUrl(context, parameters), expectedURL);
     }
 
     private void mockServiceURLBuilder() throws URLBuilderException {
 
         ServiceURLBuilder builder = new ServiceURLBuilder() {
 
-            String path = "";
+            private String path = "";
 
             @Override
             public ServiceURLBuilder addPath(String... strings) {

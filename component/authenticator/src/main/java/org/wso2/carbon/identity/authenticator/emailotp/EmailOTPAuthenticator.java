@@ -525,7 +525,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
         for (StepConfig stepConfig : stepConfigMap.values()) {
             AuthenticatedUser authenticatedUserInStepConfig = stepConfig.getAuthenticatedUser();
             if (stepConfig.isSubjectAttributeStep() && authenticatedUserInStepConfig != null) {
-                authenticatedUser = stepConfig.getAuthenticatedUser();
+                authenticatedUser = new AuthenticatedUser(stepConfig.getAuthenticatedUser());
                 break;
             }
         }
