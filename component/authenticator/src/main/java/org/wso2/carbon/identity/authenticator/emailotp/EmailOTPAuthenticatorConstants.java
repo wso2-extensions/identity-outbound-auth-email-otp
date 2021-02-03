@@ -21,6 +21,10 @@ package org.wso2.carbon.identity.authenticator.emailotp;
 
 public class EmailOTPAuthenticatorConstants {
 
+    private EmailOTPAuthenticatorConstants() {
+
+    }
+
     public static final String AUTHENTICATOR_NAME = "EmailOTP";
     public static final String AUTHENTICATOR_FRIENDLY_NAME = "Email OTP";
 

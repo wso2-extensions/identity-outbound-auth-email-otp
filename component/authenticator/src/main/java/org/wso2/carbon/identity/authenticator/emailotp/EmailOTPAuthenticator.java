@@ -164,7 +164,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             throws AuthenticationFailedException {
 
         try {
-            boolean isEmailOTPMandatory, sendOtpToFederatedEmail;
+            boolean isEmailOTPMandatory;
+            boolean sendOtpToFederatedEmail;
             String usecase;
             Object propertiesFromLocal = null;
             String email;
@@ -557,17 +558,14 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                     throw new AuthenticationFailedException("Error occurred while triggering notification." +
                             " Unable to find authenticated user.");
                 }
+
                 // Check whether the authenticator is configured to pass the service provider name to event framework.
+                Map<String, String> metaProperties = new HashMap<>();
                 if (Boolean.parseBoolean(emailOTPParameters.get(EmailOTPAuthenticatorConstants.PASS_SP_NAME_TO_EVENT))) {
-                    Map<String, String> metaProperties = new HashMap<>();
                     metaProperties.put(EmailOTPAuthenticatorConstants.SERVICE_PROVIDER_NAME,
                             context.getServiceProviderName());
-                    triggerEvent(authenticatedUser, myToken, email, metaProperties);
-                } else {
-                    triggerEvent(authenticatedUser.getUserName(), authenticatedUser.getTenantDomain(),
-                            authenticatedUser.getUserStoreDomain(), EmailOTPAuthenticatorConstants.EVENT_NAME, myToken,
-                            email);
                 }
+                triggerEvent(authenticatedUser, myToken, email, metaProperties);
             } else {
                 sendOTP(username, myToken, email, context, ipAddress);
             }
@@ -2001,14 +1999,6 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
     }
 
     /**
-     * @deprecated Since EmailOTPAuthenticator not extending OpenIDConnectAuthenticator.
-     * Check ID token in EmailOTP OAuth.
-     */
-    protected boolean requiredIDToken(Map<String, String> authenticatorProperties) {
-        return false;
-    }
-
-    /**
      * Get the friendly name of the Authenticator
      */
     @Override
@@ -2051,74 +2041,6 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
         configProperties.add(email);
 
         return configProperties;
-    }
-
-    /**
-     * @deprecated this method and replaced by triggerEvent(String userName, String tenantDomain,
-        String userStoreDomainName, String notificationEvent, String otpCode, String sendToAddress).
-     * Method to Trigger the Email otp event.
-     *
-     * @param userName : Identity user name
-     * @param tenantDomain : Tenant domain of the user.
-     * @param userStoreDomainName : User store domain name of the user.
-     * @param notificationEvent : The name of the event.
-     * @param otpCode : The OTP code returned for the authentication request.
-     * @throws AuthenticationFailedException : In occasions of failing sending the email to the user.
-     */
-
-    @Deprecated
-    protected void triggerEvent(String userName, String tenantDomain, String userStoreDomainName,
-                                String notificationEvent, String otpCode) throws AuthenticationFailedException {
-
-        String eventName = IdentityEventConstants.Event.TRIGGER_NOTIFICATION;
-        HashMap<String, Object> properties = new HashMap<>();
-        properties.put(IdentityEventConstants.EventProperty.USER_NAME, userName);
-        properties.put(IdentityEventConstants.EventProperty.USER_STORE_DOMAIN, userStoreDomainName);
-        properties.put(IdentityEventConstants.EventProperty.TENANT_DOMAIN, tenantDomain);
-        properties.put(EmailOTPAuthenticatorConstants.CODE, otpCode);
-        properties.put(EmailOTPAuthenticatorConstants.TEMPLATE_TYPE, notificationEvent);
-        Event identityMgtEvent = new Event(eventName, properties);
-        try {
-            EmailOTPServiceDataHolder.getInstance().getIdentityEventService().handleEvent(identityMgtEvent);
-        } catch (IdentityEventException e) {
-            String errorMsg = "Error occurred while calling triggerNotification. " + e.getMessage();
-            throw new AuthenticationFailedException(errorMsg, e.getCause());
-        }
-    }
-
-    /**
-     * @deprecated From version 3.0.8 onwards this method is deprecated and should be replaced by
-     * {@link #triggerEvent(AuthenticatedUser, String, String, Map)}.
-     * Method to Trigger the Email otp event.
-     *
-     * @param userName : Identity user name
-     * @param tenantDomain : Tenant domain of the user.
-     * @param userStoreDomainName : User store domain name of the user.
-     * @param notificationEvent : The name of the event.
-     * @param otpCode : The OTP code returned for the authentication request.
-     * @param sendToAddress : The email address to send the otp.
-     * @throws AuthenticationFailedException : In occasions of failing sending the email to the user.
-     */
-    @Deprecated
-    protected void triggerEvent(String userName, String tenantDomain, String userStoreDomainName,
-                                String notificationEvent, String otpCode, String sendToAddress)
-            throws AuthenticationFailedException {
-
-        String eventName = IdentityEventConstants.Event.TRIGGER_NOTIFICATION;
-        HashMap<String, Object> properties = new HashMap<>();
-        properties.put(IdentityEventConstants.EventProperty.USER_NAME, userName);
-        properties.put(IdentityEventConstants.EventProperty.USER_STORE_DOMAIN, userStoreDomainName);
-        properties.put(IdentityEventConstants.EventProperty.TENANT_DOMAIN, tenantDomain);
-        properties.put(EmailOTPAuthenticatorConstants.CODE, otpCode);
-        properties.put(EmailOTPAuthenticatorConstants.TEMPLATE_TYPE, notificationEvent);
-        properties.put(EmailOTPAuthenticatorConstants.ATTRIBUTE_EMAIL_SENT_TO, sendToAddress);
-        Event identityMgtEvent = new Event(eventName, properties);
-        try {
-            EmailOTPServiceDataHolder.getInstance().getIdentityEventService().handleEvent(identityMgtEvent);
-        } catch (IdentityEventException e) {
-            String errorMsg = "Error occurred while calling triggerNotification. " + e.getMessage();
-            throw new AuthenticationFailedException(errorMsg, e.getCause());
-        }
     }
 
     /**
@@ -2613,7 +2535,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
         Object otpExpired = context.getProperty(EmailOTPAuthenticatorConstants.OTP_EXPIRED);
 
         String status;
-        if (otpExpired != null && (String) otpExpired == EmailOTPAuthenticatorConstants.TRUE) {
+        if (EmailOTPAuthenticatorConstants.TRUE.equals(otpExpired)) {
             status = EmailOTPAuthenticatorConstants.STATUS_OTP_EXPIRED;
         } else if (codeMismatch != null && (Boolean) codeMismatch) {
             status = EmailOTPAuthenticatorConstants.STATUS_CODE_MISMATCH;

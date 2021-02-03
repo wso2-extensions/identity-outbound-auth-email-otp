@@ -202,12 +202,6 @@ public class EmailOTPAuthenticatorTest {
         Assert.assertTrue(Whitebox.invokeMethod(emailOTPAuthenticator, "retryAuthenticationEnabled"));
     }
 
-    @Test(description = "Test case for retryAuthenticationEnabled() method.")
-    public void testRequiredIDToken() throws Exception {
-        Assert.assertFalse(Whitebox.invokeMethod(emailOTPAuthenticator, "requiredIDToken",
-                new HashMap<String, String>()));
-    }
-
     @Test(description = "Test case for successful logout request.")
     public void testProcessLogoutRequest() throws Exception {
         when(context.isLogoutRequest()).thenReturn(true);
