@@ -58,16 +58,16 @@ public class EmailOtpURLUtilTest extends PowerMockTestCase {
 
         return new Object[][]{
                 // Tenant null is thread local context
-                {false, null, "https://localhost:9443/emailotpauthenticationendpoint/emailAddress.jsp"},
-                {true, null, "https://localhost:9443/t/null/emailotpauthenticationendpoint/emailAddress.jsp"},
+                {false, null, "https://localhost:9443/authenticationendpoint/email_capture.do"},
+                {true, null, "https://localhost:9443/t/null/authenticationendpoint/email_capture.do"},
 
                 // Super tenant
-                {false, "carbon.super", "https://localhost:9443/emailotpauthenticationendpoint/emailAddress.jsp"},
-                {true, "carbon.super", "https://localhost:9443/emailotpauthenticationendpoint/emailAddress.jsp"},
+                {false, "carbon.super", "https://localhost:9443/authenticationendpoint/email_capture.do"},
+                {true, "carbon.super", "https://localhost:9443/authenticationendpoint/email_capture.do"},
 
                 // Tenant
-                {false, "wso2.com", "https://localhost:9443/emailotpauthenticationendpoint/emailAddress.jsp"},
-                {true, "wso2.com", "https://localhost:9443/t/wso2.com/emailotpauthenticationendpoint/emailAddress.jsp"},
+                {false, "wso2.com", "https://localhost:9443/authenticationendpoint/email_capture.do"},
+                {true, "wso2.com", "https://localhost:9443/t/wso2.com/authenticationendpoint/email_capture.do"},
         };
     }
 
@@ -88,16 +88,16 @@ public class EmailOtpURLUtilTest extends PowerMockTestCase {
 
         return new Object[][]{
                 // Tenant null is thread local context
-                {false, null, "https://localhost:9443/emailotpauthenticationendpoint/emailotp.jsp"},
-                {true, null, "https://localhost:9443/t/null/emailotpauthenticationendpoint/emailotp.jsp"},
+                {false, null, "https://localhost:9443/authenticationendpoint/email_otp.do"},
+                {true, null, "https://localhost:9443/t/null/authenticationendpoint/email_otp.do"},
 
                 // Super tenant
-                {false, "carbon.super", "https://localhost:9443/emailotpauthenticationendpoint/emailotp.jsp"},
-                {true, "carbon.super", "https://localhost:9443/emailotpauthenticationendpoint/emailotp.jsp"},
+                {false, "carbon.super", "https://localhost:9443/authenticationendpoint/email_otp.do"},
+                {true, "carbon.super", "https://localhost:9443/authenticationendpoint/email_otp.do"},
 
                 // Tenant
-                {false, "wso2.com", "https://localhost:9443/emailotpauthenticationendpoint/emailotp.jsp"},
-                {true, "wso2.com", "https://localhost:9443/t/wso2.com/emailotpauthenticationendpoint/emailotp.jsp"},
+                {false, "wso2.com", "https://localhost:9443/authenticationendpoint/email_otp.do"},
+                {true, "wso2.com", "https://localhost:9443/t/wso2.com/authenticationendpoint/email_otp.do"},
         };
     }
 
@@ -118,16 +118,16 @@ public class EmailOtpURLUtilTest extends PowerMockTestCase {
 
         return new Object[][]{
                 // Tenant null is thread local context
-                {false, null, "https://localhost:9443/emailotpauthenticationendpoint/emailotpError.jsp"},
-                {true, null, "https://localhost:9443/t/null/emailotpauthenticationendpoint/emailotpError.jsp"},
+                {false, null, "https://localhost:9443/authenticationendpoint/email_otp_error.do"},
+                {true, null, "https://localhost:9443/t/null/authenticationendpoint/email_otp_error.do"},
 
                 // Super tenant
-                {false, "carbon.super", "https://localhost:9443/emailotpauthenticationendpoint/emailotpError.jsp"},
-                {true, "carbon.super", "https://localhost:9443/emailotpauthenticationendpoint/emailotpError.jsp"},
+                {false, "carbon.super", "https://localhost:9443/authenticationendpoint/email_otp_error.do"},
+                {true, "carbon.super", "https://localhost:9443/authenticationendpoint/email_otp_error.do"},
 
                 // Tenant
-                {false, "wso2.com", "https://localhost:9443/emailotpauthenticationendpoint/emailotpError.jsp"},
-                {true, "wso2.com", "https://localhost:9443/t/wso2.com/emailotpauthenticationendpoint/emailotpError.jsp"},
+                {false, "wso2.com", "https://localhost:9443/authenticationendpoint/email_otp_error.do"},
+                {true, "wso2.com", "https://localhost:9443/t/wso2.com/authenticationendpoint/email_otp_error.do"},
         };
     }
 
