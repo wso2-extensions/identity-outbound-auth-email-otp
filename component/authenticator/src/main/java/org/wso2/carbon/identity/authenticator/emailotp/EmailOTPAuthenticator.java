@@ -814,8 +814,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                         "redirecting to email address request page. ", e);
             }
         } else {
-            throw new AuthenticationFailedException("Authentication failed!. Update email address for the user : "
-                    + username);
+            String msg = "Authentication failed!. Email address unavailable for user and option to update email " +
+                    "address during login is not enabled. Update email address for the user : " + username;
+            throw new AuthenticationFailedException(msg);
         }
     }
 
