@@ -96,5 +96,10 @@
             <artifactId>org.wso2.carbon.extension.identity.helper</artifactId>
             <version>${identity.extension.utils}</version>
         </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity</groupId>
+            <artifactId>org.wso2.carbon.identity.mgt</artifactId>
+            <version>${carbon.identity.version}</version>
+        </dependency>
     </dependencies>
 </project>

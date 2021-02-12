@@ -24,11 +24,15 @@ import org.apache.commons.logging.LogFactory;
 import org.osgi.service.component.ComponentContext;
 import org.wso2.carbon.identity.application.authentication.framework.ApplicationAuthenticator;
 import org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticator;
+import org.wso2.carbon.identity.mgt.account.lock.AccountLockService;
 
 import java.util.Hashtable;
 
 /**
  * @scr.component name="identity.application.authenticator.emailotp.component" immediate="true"
+ * @scr.reference name="org.wso2.carbon.identity.mgt.account.lock.AccountLockService"
+ * interface="org.wso2.carbon.identity.mgt.account.lock.AccountLockService"
+ * cardinality="1..1" policy="dynamic" bind="setAccountLockService" unbind="unsetAccountLockService"
  */
 public class EmailOTPAuthenticatorServiceComponent {
 
@@ -52,5 +56,15 @@ public class EmailOTPAuthenticatorServiceComponent {
         if (log.isDebugEnabled()) {
             log.debug("EmailOTP authenticator is deactivated");
         }
+    }
+
+    protected void setAccountLockService(AccountLockService accountLockService) {
+
+        EmailOTPServiceDataHolder.getInstance().setAccountLockService(accountLockService);
+    }
+
+    protected void unsetAccountLockService(AccountLockService accountLockService) {
+
+        EmailOTPServiceDataHolder.getInstance().setAccountLockService(null);
     }
 }
