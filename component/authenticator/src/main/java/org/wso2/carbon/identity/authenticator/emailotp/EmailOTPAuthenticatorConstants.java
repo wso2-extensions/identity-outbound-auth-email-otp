@@ -21,6 +21,10 @@ package org.wso2.carbon.identity.authenticator.emailotp;
 
 public class EmailOTPAuthenticatorConstants {
 
+    private EmailOTPAuthenticatorConstants() {
+
+    }
+
     public static final String AUTHENTICATOR_NAME = "EmailOTP";
     public static final String AUTHENTICATOR_FRIENDLY_NAME = "Email OTP";
 
@@ -61,9 +65,9 @@ public class EmailOTPAuthenticatorConstants {
     public static final String MAIL_API_KEY = "<API_KEY>";
 
     public static final String LOGIN_PAGE = "authenticationendpoint/login.do";
-    public static final String EMAIL_ADDRESS_CAPTURE_PAGE = "emailotpauthenticationendpoint/emailAddress.jsp";
-    public static final String EMAILOTP_PAGE = "emailotpauthenticationendpoint/emailotp.jsp";
-    public static final String ERROR_PAGE = "emailotpauthenticationendpoint/emailotpError.jsp";
+    public static final String EMAIL_ADDRESS_CAPTURE_PAGE = "authenticationendpoint/email_capture.do";
+    public static final String EMAILOTP_PAGE = "authenticationendpoint/email_otp.do";
+    public static final String ERROR_PAGE = "authenticationendpoint/email_otp_error.do";
 
     public static final String EMAILOTP_AUTHENTICATION_ENDPOINT_URL = "EMAILOTPAuthenticationEndpointURL";
     public static final String RETRY_PARAMS = "&authFailure=true&authFailureMsg=authentication.fail.message";

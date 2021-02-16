@@ -38,8 +38,6 @@ import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthentica
  */
 public class EmailOTPUrlUtil {
 
-    private static final Log log = LogFactory.getLog(EmailOTPUrlUtil.class);
-
     private EmailOTPUrlUtil() {
 
     }
