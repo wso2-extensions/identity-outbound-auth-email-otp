@@ -171,7 +171,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             String email;
             AuthenticatedUser authenticatedUser = null;
             Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
-            String tenantDomain = context.getTenantDomain();
+            String tenantDomain = getTenantDomainFromContext(context);
             context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATION,
                     EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME);
             if (!tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
@@ -358,7 +358,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                 userEmail = getEmailValueForUsername(username, context);
             } catch (EmailOTPException e) {
                 throw new AuthenticationFailedException("Failed to get the email claim for user " + username + " for tenant "
-                        + context.getTenantDomain(), e);
+                        + getTenantDomainFromContext(context), e);
             }
 
             if (StringUtils.isBlank(userEmail)) {
@@ -630,7 +630,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             throws AuthenticationFailedException {
         String federatedEmailAttributeKey = null;
         Map<String, String> parametersMap;
-        String tenantDomain = context.getTenantDomain();
+        String tenantDomain = getTenantDomainFromContext(context);
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         if (propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
             parametersMap = FederatedAuthenticatorUtil.getAuthenticatorConfig(authenticatorName);
@@ -709,7 +709,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      */
     private void updateEmailAddressForUsername(AuthenticationContext context, String username)
             throws AuthenticationFailedException, UserStoreException {
-        String tenantDomain = MultitenantUtils.getTenantDomain(username);
+        String tenantDomain = getTenantDomainFromUserName(username);
         Map<String, String> attributes = new HashMap<>();
         attributes.put(EmailOTPAuthenticatorConstants.EMAIL_CLAIM,
                 String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.REQUESTED_USER_EMAIL)));
@@ -1209,7 +1209,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             throws AuthenticationFailedException {
         boolean isRequired = false;
         String api = getAPI(authenticatorProperties);
-        String tenantDomain = context.getTenantDomain();
+        String tenantDomain = getTenantDomainFromContext(context);
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         if (propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
             if (StringUtils.isNotEmpty(api)
@@ -1241,7 +1241,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             throws AuthenticationFailedException {
         boolean isRequired = false;
         String api = getAPI(authenticatorProperties);
-        String tenantDomain = context.getTenantDomain();
+        String tenantDomain = getTenantDomainFromContext(context);
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         if (propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
             if (StringUtils.isNotEmpty(api)
@@ -1271,7 +1271,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             throws AuthenticationFailedException {
         UserRealm userRealm;
         try {
-            String tenantDomain = MultitenantUtils.getTenantDomain(username);
+            String tenantDomain = getTenantDomainFromUserName(username);
             int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
             RealmService realmService = IdentityTenantUtil.getRealmService();
             userRealm = realmService.getTenantUserRealm(tenantId);
@@ -1489,17 +1489,17 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      * @return true or false
      */
     private boolean isAdminMakeUserToEnableOrDisableEmailOTP(AuthenticationContext context,
-                                                                   Map<String, String> parametersMap) {
+                                                             Map<String, String> parametersMap) {
+
         boolean isAdminMakeUserToEnableEmailOTP = false;
-        String tenantDomain = context.getTenantDomain();
+        String tenantDomain = getTenantDomainFromContext(context);
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
-        if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
-                parametersMap.containsKey(EmailOTPAuthenticatorConstants.IS_EMAILOTP_ENABLE_BY_USER)) {
-            isAdminMakeUserToEnableEmailOTP = Boolean.parseBoolean(parametersMap.get
-                    (EmailOTPAuthenticatorConstants.IS_EMAILOTP_ENABLE_BY_USER));
+        if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) && parametersMap.containsKey(EmailOTPAuthenticatorConstants.IS_EMAILOTP_ENABLE_BY_USER)) {
+            isAdminMakeUserToEnableEmailOTP =
+                    Boolean.parseBoolean(parametersMap.get(EmailOTPAuthenticatorConstants.IS_EMAILOTP_ENABLE_BY_USER));
         } else if ((context.getProperty(EmailOTPAuthenticatorConstants.IS_EMAILOTP_ENABLE_BY_USER)) != null) {
-            isAdminMakeUserToEnableEmailOTP = Boolean.parseBoolean(String.valueOf(context.getProperty
-                    (EmailOTPAuthenticatorConstants.IS_EMAILOTP_ENABLE_BY_USER)));
+            isAdminMakeUserToEnableEmailOTP =
+             Boolean.parseBoolean(String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.IS_EMAILOTP_ENABLE_BY_USER)));
         }
         return isAdminMakeUserToEnableEmailOTP;
     }
@@ -1512,13 +1512,13 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      * @return email
      * @throws EmailOTPException
      */
-    private String getEmailValueForUsername(String username, AuthenticationContext context)
-            throws EmailOTPException {
+    private String getEmailValueForUsername(String username, AuthenticationContext context) throws EmailOTPException {
+
         UserRealm userRealm;
         String tenantAwareUsername;
         String email;
         try {
-            String tenantDomain = MultitenantUtils.getTenantDomain(username);
+            String tenantDomain = getTenantDomainFromUserName(username);
             int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
             RealmService realmService = IdentityTenantUtil.getRealmService();
             userRealm = realmService.getTenantUserRealm(tenantId);
@@ -1540,8 +1540,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      * Get clientId for Gmail APIs
      */
     private String getClientId(AuthenticationContext context, Map<String, String> parametersMap, String api) {
+
         String clientId = null;
-        String tenantDomain = context.getTenantDomain();
+        String tenantDomain = getTenantDomainFromContext(context);
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
                 parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.CLIENT_ID)) {
@@ -1556,8 +1557,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      * Get clientSecret for Gmail APIs
      */
     private String getClientSecret(AuthenticationContext context, Map<String, String> parametersMap, String api) {
+
         String clientSecret = null;
-        String tenantDomain = context.getTenantDomain();
+        String tenantDomain = getTenantDomainFromContext(context);
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
                 parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.CLIENT_SECRET)) {
@@ -1572,8 +1574,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      * Get RefreshToken for Gmail APIs
      */
     private String getRefreshToken(AuthenticationContext context, Map<String, String> parametersMap, String api) {
+
         String refreshToken = null;
-        String tenantDomain = context.getTenantDomain();
+        String tenantDomain = getTenantDomainFromContext(context);
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
                 parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.REFRESH_TOKEN)) {
@@ -1588,8 +1591,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      * Get ApiKey for Gmail APIs
      */
     private String getApiKey(AuthenticationContext context, Map<String, String> parametersMap, String api) {
+
         String apiKey = null;
-        String tenantDomain = context.getTenantDomain();
+        String tenantDomain = getTenantDomainFromContext(context);
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
                 parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.EMAILOTP_API_KEY)) {
@@ -1606,7 +1610,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
     private String getMailingEndpoint(AuthenticationContext context, Map<String, String> parametersMap,
                                             String api) {
         String mailingEndpoint = null;
-        String tenantDomain = context.getTenantDomain();
+        String tenantDomain = getTenantDomainFromContext(context);
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
                 parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.MAILING_ENDPOINT)) {
@@ -1621,10 +1625,10 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
     /**
      * Get required payload for Gmail APIs
      */
-    private String getPreparePayload(AuthenticationContext context, Map<String, String> parametersMap,
-                                           String api) {
+    private String getPreparePayload(AuthenticationContext context, Map<String, String> parametersMap, String api) {
+
         String payload = null;
-        String tenantDomain = context.getTenantDomain();
+        String tenantDomain = getTenantDomainFromContext(context);
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
                 parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.PAYLOAD)) {
@@ -1638,10 +1642,10 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
     /**
      * Get required FormData for Gmail APIs
      */
-    private String getPrepareFormData(AuthenticationContext context, Map<String, String> parametersMap,
-                                            String api) {
+    private String getPrepareFormData(AuthenticationContext context, Map<String, String> parametersMap, String api) {
+
         String prepareFormData = null;
-        String tenantDomain = context.getTenantDomain();
+        String tenantDomain = getTenantDomainFromContext(context);
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
                 parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.FORM_DATA)) {
@@ -1655,10 +1659,10 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
     /**
      * Get required URL params for Gmail APIs
      */
-    private String getPrepareURLParams(AuthenticationContext context, Map<String, String> parametersMap,
-                                             String api) {
+    private String getPrepareURLParams(AuthenticationContext context, Map<String, String> parametersMap, String api) {
+
         String prepareUrlParams = null;
-        String tenantDomain = context.getTenantDomain();
+        String tenantDomain = getTenantDomainFromContext(context);
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
                 parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.URL_PARAMS)) {
@@ -1673,8 +1677,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      * Get failureString for Gmail APIs
      */
     private String getFailureString(AuthenticationContext context, Map<String, String> parametersMap, String api) {
+
         String failureString = null;
-        String tenantDomain = context.getTenantDomain();
+        String tenantDomain = getTenantDomainFromContext(context);
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
                 parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.FAILURE)) {
@@ -1689,8 +1694,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      * Get AuthToken type for Gmail APIs
      */
     private String getAuthTokenType(AuthenticationContext context, Map<String, String> parametersMap, String api) {
+
         String authTokenType = null;
-        String tenantDomain = context.getTenantDomain();
+        String tenantDomain = getTenantDomainFromContext(context);
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
                 parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.HTTP_AUTH_TOKEN_TYPE)) {
@@ -1708,7 +1714,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
     private String getAccessTokenEndpoint(AuthenticationContext context, Map<String, String> parametersMap,
                                                 String api) {
         String tokenEndpoint = null;
-        String tenantDomain = context.getTenantDomain();
+        String tenantDomain = getTenantDomainFromContext(context);
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
                 parametersMap.containsKey(api + EmailOTPAuthenticatorConstants.EMAILOTP_TOKEN_ENDPOINT)) {
@@ -1728,8 +1734,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      * @return true or false
      */
     private boolean isEmailAddressUpdateEnable(AuthenticationContext context, Map<String, String> parametersMap) {
+
         boolean enableEmailAddressUpdate = false;
-        String tenantDomain = context.getTenantDomain();
+        String tenantDomain = getTenantDomainFromContext(context);
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
                 parametersMap.containsKey(EmailOTPAuthenticatorConstants.IS_ENABLE_EMAIL_VALUE_UPDATE)) {
@@ -1749,8 +1756,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      * @return screenUserAttribute
      */
     private boolean isShowEmailAddressInUIEnable(AuthenticationContext context, Map<String, String> parametersMap) {
+
         boolean isShowEmailAddressInUI = false;
-        String tenantDomain = context.getTenantDomain();
+        String tenantDomain = getTenantDomainFromContext(context);
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
                 parametersMap.containsKey(EmailOTPAuthenticatorConstants.SHOW_EMAIL_ADDRESS_IN_UI)) {
@@ -1773,7 +1781,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
     private String getEmailAddressRegex(AuthenticationContext context, Map<String, String> parametersMap) {
 
         String emailAddressRegex = null;
-        String tenantDomain = context.getTenantDomain();
+        String tenantDomain = getTenantDomainFromContext(context);
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
         if ((propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) &&
                 parametersMap.containsKey(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REGEX)) {
@@ -1920,7 +1928,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                 Notification emailNotification = null;
                 NotificationData emailNotificationData = new NotificationData();
                 ConfigBuilder configBuilder = ConfigBuilder.getInstance();
-                String tenantDomain = MultitenantUtils.getTenantDomain(username);
+                String tenantDomain = getTenantDomainFromUserName(username);
                 int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
                 String emailTemplate;
                 Config config;
@@ -2161,7 +2169,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
         UserRealm userRealm = null;
         try {
             if (StringUtils.isNotEmpty(username)) {
-                String tenantDomain = MultitenantUtils.getTenantDomain(username);
+                String tenantDomain = getTenantDomainFromUserName(username);
                 int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
                 RealmService realmService = IdentityTenantUtil.getRealmService();
                 userRealm = realmService.getTenantUserRealm(tenantId);
@@ -2184,7 +2192,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
         UserRealm userRealm = null;
         try {
             if (authenticatedUser != null) {
-                String tenantDomain = authenticatedUser.getTenantDomain();
+                String tenantDomain = getTenantDomainFromAuthenticatedUser(authenticatedUser);
                 int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
                 RealmService realmService = IdentityTenantUtil.getRealmService();
                 userRealm = realmService.getTenantUserRealm(tenantId);
@@ -2211,7 +2219,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             return;
         }
         AuthenticatedUser authenticatedUser = getAuthenticatedUser(context);
-        Property[] connectorConfigs = EmailOTPUtils.getAccountLockConnectorConfigs(authenticatedUser.getTenantDomain());
+        Property[] connectorConfigs =
+                EmailOTPUtils.getAccountLockConnectorConfigs(getTenantDomainFromAuthenticatedUser(authenticatedUser));
 
         // Return if account lock handler is not enabled.
         for (Property connectorConfig : connectorConfigs) {
@@ -2277,7 +2286,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
         long unlockTimePropertyValue = 0;
         double unlockTimeRatio = 1;
 
-        Property[] connectorConfigs = EmailOTPUtils.getAccountLockConnectorConfigs(authenticatedUser.getTenantDomain());
+        Property[] connectorConfigs =
+                EmailOTPUtils.getAccountLockConnectorConfigs(getTenantDomainFromAuthenticatedUser(authenticatedUser));
         for (Property connectorConfig : connectorConfigs) {
             switch (connectorConfig.getName()) {
                 case EmailOTPAuthenticatorConstants.PROPERTY_ACCOUNT_LOCK_ON_FAILURE:
@@ -2459,7 +2469,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
         Map<String, Object> eventProperties = new HashMap<>();
         eventProperties.put(IdentityEventConstants.EventProperty.CORRELATION_ID, context.getCallerSessionKey());
         eventProperties.put(IdentityEventConstants.EventProperty.USER_NAME, authenticatedUser.getUserName());
-        eventProperties.put(IdentityEventConstants.EventProperty.TENANT_DOMAIN, context.getTenantDomain());
+        eventProperties.put(IdentityEventConstants.EventProperty.TENANT_DOMAIN, getTenantDomainFromContext(context));
         eventProperties.put(IdentityEventConstants.EventProperty.USER_STORE_DOMAIN, authenticatedUser
                 .getUserStoreDomain());
         eventProperties.put(IdentityEventConstants.EventProperty.APPLICATION_NAME, context.getServiceProviderName());
@@ -2514,7 +2524,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
         AuthenticatedUser authenticatedUser = (AuthenticatedUser) context.getProperty(EmailOTPAuthenticatorConstants
                 .AUTHENTICATED_USER);
         eventProperties.put(IdentityEventConstants.EventProperty.USER_NAME, authenticatedUser.getUserName());
-        eventProperties.put(IdentityEventConstants.EventProperty.TENANT_DOMAIN, context.getTenantDomain());
+        eventProperties.put(IdentityEventConstants.EventProperty.TENANT_DOMAIN, getTenantDomainFromContext(context));
         eventProperties.put(IdentityEventConstants.EventProperty.USER_STORE_DOMAIN, authenticatedUser
                 .getUserStoreDomain());
         eventProperties.put(IdentityEventConstants.EventProperty.APPLICATION_NAME, context.getServiceProviderName());
@@ -2577,5 +2587,29 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
     private boolean isOTPMismatched(AuthenticationContext context) {
 
         return Boolean.parseBoolean(String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.CODE_MISMATCH)));
+    }
+
+    private String getTenantDomainFromAuthenticatedUser(AuthenticatedUser authenticatedUser) {
+
+        if (IdentityTenantUtil.isTenantQualifiedUrlsEnabled()) {
+            return IdentityTenantUtil.getTenantDomainFromContext();
+        }
+        return authenticatedUser.getTenantDomain();
+    }
+
+    private String getTenantDomainFromUserName(String username) {
+
+        if (IdentityTenantUtil.isTenantQualifiedUrlsEnabled()) {
+            return IdentityTenantUtil.getTenantDomainFromContext();
+        }
+        return MultitenantUtils.getTenantDomain(username);
+    }
+
+    private String getTenantDomainFromContext(AuthenticationContext context) {
+
+        if (IdentityTenantUtil.isTenantQualifiedUrlsEnabled()) {
+            return IdentityTenantUtil.getTenantDomainFromContext();
+        }
+        return context.getTenantDomain();
     }
 }

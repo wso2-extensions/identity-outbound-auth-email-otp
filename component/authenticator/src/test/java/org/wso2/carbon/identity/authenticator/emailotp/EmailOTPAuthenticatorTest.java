@@ -418,8 +418,8 @@ public class EmailOTPAuthenticatorTest {
         when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_ID);
         when(IdentityTenantUtil.getRealmService()).thenReturn(realmService);
         when(realmService.getTenantUserRealm(anyInt())).thenReturn(null);
-        Whitebox.invokeMethod(emailOTPAuthenticator, "isEmailOTPDisableForUser", anyString(), context,
-                new HashMap<>());
+        Whitebox.invokeMethod(emailOTPAuthenticator, "isEmailOTPDisableForUser",
+                EmailOTPAuthenticatorTestConstants.USER_NAME, context, new HashMap<>());
     }
 
     @Test
@@ -435,8 +435,8 @@ public class EmailOTPAuthenticatorTest {
                 EmailOTPAuthenticatorConstants.USER_EMAILOTP_DISABLED_CLAIM_URI, null)).thenReturn("true");
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
 
-        Whitebox.invokeMethod(emailOTPAuthenticator, "isEmailOTPDisableForUser", anyString(), context,
-                parameters);
+        Whitebox.invokeMethod(emailOTPAuthenticator, "isEmailOTPDisableForUser",
+                EmailOTPAuthenticatorTestConstants.USER_NAME, context, parameters);
     }
 
     @Test(description = "Test case for process() method when email OTP is mandatory for federated user.")
