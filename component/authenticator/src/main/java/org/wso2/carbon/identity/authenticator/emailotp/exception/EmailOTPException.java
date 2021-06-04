@@ -16,15 +16,20 @@
  * under the License.
  */
 
-
 package org.wso2.carbon.identity.authenticator.emailotp.exception;
+
+/**
+ * Exception class for email OTP.
+ */
 public class EmailOTPException extends Exception {
 
     public EmailOTPException(String msg) {
+
         super(msg);
     }
 
     public EmailOTPException(String msg, Throwable cause) {
+
         super(msg, cause);
     }
 }

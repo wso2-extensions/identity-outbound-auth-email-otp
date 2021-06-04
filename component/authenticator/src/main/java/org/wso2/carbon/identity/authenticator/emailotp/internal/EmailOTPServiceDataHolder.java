@@ -24,9 +24,10 @@ import org.wso2.carbon.identity.handler.event.account.lock.service.AccountLockSe
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
- *  Encapsulates the data of EmailOTP authenticator.
+ * Encapsulates the data of EmailOTP authenticator.
  */
 public class EmailOTPServiceDataHolder {
+
     private static EmailOTPServiceDataHolder emailOTPServiceDataHolder;
     private AccountLockService accountLockService;
     private IdentityEventService identityEventService;
@@ -34,6 +35,7 @@ public class EmailOTPServiceDataHolder {
     private RealmService realmService;
 
     public static EmailOTPServiceDataHolder getInstance() {
+
         if (emailOTPServiceDataHolder == null) {
             emailOTPServiceDataHolder = new EmailOTPServiceDataHolder();
         }
@@ -45,18 +47,22 @@ public class EmailOTPServiceDataHolder {
     }
 
     public IdentityEventService getIdentityEventService() {
+
         return identityEventService;
     }
 
     public void setIdentityEventService(IdentityEventService identityEventService) {
+
         this.identityEventService = identityEventService;
     }
 
     public RealmService getRealmService() {
+
         return realmService;
     }
 
     public void setRealmService(RealmService realmService) {
+
         this.realmService = realmService;
     }
 
@@ -94,7 +100,7 @@ public class EmailOTPServiceDataHolder {
     }
 
     /**
-     * set Account Lock service.
+     * Set Account Lock service.
      *
      * @param accountLockService Account Lock service.
      */
