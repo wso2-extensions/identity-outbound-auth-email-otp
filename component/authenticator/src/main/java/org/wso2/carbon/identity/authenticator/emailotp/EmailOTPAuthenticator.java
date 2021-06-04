@@ -742,8 +742,10 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
             throws AuthenticationFailedException, UserStoreException {
 
         try {
-            // updating user attributes is independent from tenant association.not tenant association check needed here.
-            // user is always in the super tenant.
+            /*
+            Updating user attributes is independent from tenant association.not tenant association check needed here.
+            User is always in the super tenant.
+             */
             int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
             RealmService realmService = IdentityTenantUtil.getRealmService();
             UserRealm userRealm = realmService.getTenantUserRealm(tenantId);
@@ -751,7 +753,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                 throw new AuthenticationFailedException("The specified tenant domain " + tenantDomain
                         + " does not exist.");
             }
-            // check whether user already exists in the system.
+            // Check whether user already exists in the system.
             verifyUserExists(username, tenantDomain);
             UserStoreManager userStoreManager = userRealm.getUserStoreManager();
             userStoreManager.setUserClaimValues(username, attribute, null);
@@ -946,14 +948,14 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
      * @param emailOTPParameters the emailotp parameters
      * @param queryParams        the query params
      * @param retryParam         the retry param
-     * @throws AuthenticationFailedException
+     * @throws AuthenticationFailedException If an error occurred.
      */
     private void redirectToErrorPage(HttpServletResponse response, AuthenticationContext context,
                                      Map<String, String> emailOTPParameters, String queryParams, String retryParam)
             throws AuthenticationFailedException {
 
         try {
-            // Full url of the error page
+            // Full url of the error page.
             String errorPage = getEmailOTPErrorPageUrl(context, emailOTPParameters);
             String url = getRedirectURL(errorPage, queryParams);
             response.sendRedirect(url + retryParam);
@@ -972,7 +974,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
      * @param username    the username
      * @param queryParams the queryParams
      * @param context     the authentication context
-     * @throws AuthenticationFailedException
+     * @throws AuthenticationFailedException If an error occurred.
      */
     protected void processEmailOTPFlow(HttpServletRequest request, HttpServletResponse response, String email,
                                        String username, String queryParams,
@@ -1154,7 +1156,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
     private String preparePayload(AuthenticationContext context, Map<String, String> authenticatorProperties,
                                   Map<String, String> emailOTPParameters, String email, String otp) {
 
-        String payload = null;
+        String payload;
         String api = getAPI(authenticatorProperties);
         if (api.equals(EmailOTPAuthenticatorConstants.API_GMAIL)) {
             payload = "to:" + email + "\n" +
@@ -1533,7 +1535,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
      * @param username the user name
      * @param context  the authentication context
      * @return email
-     * @throws EmailOTPException
+     * @throws EmailOTPException If an error occurred.
      */
     private String getEmailValueForUsername(String username, AuthenticationContext context)
             throws EmailOTPException {
@@ -1842,11 +1844,10 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
      * @param payload                 the required payload
      * @param formData                the formData
      * @return the response
-     * @throws AuthenticationFailedException If an error occurred.
      */
     private String sendMailUsingAPIs(AuthenticationContext context, Map<String, String> authenticatorProperties,
                                      Map<String, String> emailOTPParameters, String urlParams,
-                                     String payload, String formData) throws AuthenticationFailedException {
+                                     String payload, String formData) {
 
         String response;
         String api = getAPI(authenticatorProperties);
@@ -2022,10 +2023,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
      * @param emailOTPParameters      the emailOTPParameters
      * @param context                 the AuthenticationContext
      * @return true or false
-     * @throws AuthenticationFailedException If an error occurred.
      */
     private boolean isSMTP(Map<String, String> authenticatorProperties, Map<String, String> emailOTPParameters,
-                           AuthenticationContext context) throws AuthenticationFailedException {
+                           AuthenticationContext context) {
 
         String api = getAPI(authenticatorProperties);
         String mailingEndpoint = getMailingEndpoint(context, emailOTPParameters, api);
@@ -2185,9 +2185,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
     protected boolean isExpired(long generatedTime, AuthenticationContext context)
             throws AuthenticationFailedException {
 
-        Long expireTime;
+        long expireTime;
         try {
-            expireTime = new Long(getExpireTime(context));
+            expireTime = Long.parseLong(getExpireTime(context));
         } catch (NumberFormatException e) {
             throw new AuthenticationFailedException("Invalid Email OTP expiration time configured.");
         }
