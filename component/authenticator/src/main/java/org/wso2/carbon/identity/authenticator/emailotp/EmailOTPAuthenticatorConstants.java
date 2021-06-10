@@ -19,6 +19,9 @@
 
 package org.wso2.carbon.identity.authenticator.emailotp;
 
+/**
+ * Class with the email authenticator constants.
+ */
 public class EmailOTPAuthenticatorConstants {
 
     private EmailOTPAuthenticatorConstants() {

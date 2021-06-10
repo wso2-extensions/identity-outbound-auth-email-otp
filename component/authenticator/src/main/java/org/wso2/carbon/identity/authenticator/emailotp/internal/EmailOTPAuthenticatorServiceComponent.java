@@ -36,6 +36,9 @@ import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.Hashtable;
 
+/**
+ * Email OTP service component.
+ */
 @Component(
         name = "identity.application.authenticator.emailotp.component",
         immediate = true
@@ -45,9 +48,10 @@ public class EmailOTPAuthenticatorServiceComponent {
     private static final Log log = LogFactory.getLog(EmailOTPAuthenticatorServiceComponent.class);
 
     protected void activate(ComponentContext ctxt) {
+
         try {
             EmailOTPAuthenticator authenticator = new EmailOTPAuthenticator();
-            Hashtable<String, String> props = new Hashtable<String, String>();
+            Hashtable<String, String> props = new Hashtable<>();
             ctxt.getBundleContext().registerService(ApplicationAuthenticator.class.getName(),
                     authenticator, props);
             if (log.isDebugEnabled()) {
@@ -60,6 +64,7 @@ public class EmailOTPAuthenticatorServiceComponent {
 
     @Deactivate
     protected void deactivate(ComponentContext ctxt) {
+
         if (log.isDebugEnabled()) {
             log.debug("EmailOTP authenticator is deactivated");
         }
@@ -72,10 +77,12 @@ public class EmailOTPAuthenticatorServiceComponent {
             policy = ReferencePolicy.DYNAMIC,
             unbind = "unsetIdentityEventService")
     protected void setIdentityEventService(IdentityEventService eventService) {
+
         EmailOTPServiceDataHolder.getInstance().setIdentityEventService(eventService);
     }
 
     protected void unsetIdentityEventService(IdentityEventService eventService) {
+
         EmailOTPServiceDataHolder.getInstance().setIdentityEventService(null);
     }
 
@@ -86,10 +93,12 @@ public class EmailOTPAuthenticatorServiceComponent {
             policy = ReferencePolicy.DYNAMIC,
             unbind = "unsetRealmService")
     protected void setRealmService(RealmService realmService) {
-         EmailOTPServiceDataHolder.getInstance().setRealmService(realmService);
+
+        EmailOTPServiceDataHolder.getInstance().setRealmService(realmService);
     }
 
     protected void unsetRealmService(RealmService realmService) {
+
         EmailOTPServiceDataHolder.getInstance().setRealmService(null);
     }
 

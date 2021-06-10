@@ -16,8 +16,6 @@
 package org.wso2.carbon.identity.authenticator.emailotp;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.extension.identity.helper.IdentityHelperConstants;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
@@ -42,7 +40,8 @@ public class EmailOTPUrlUtil {
 
     }
 
-    public static String getRequestEmailPageUrl(AuthenticationContext context, Map<String, String> authenticationConfigs)
+    public static String getRequestEmailPageUrl(AuthenticationContext context,
+                                                Map<String, String> authenticationConfigs)
             throws AuthenticationFailedException {
 
         try {
@@ -53,7 +52,8 @@ public class EmailOTPUrlUtil {
         }
     }
 
-    public static String getEmailOTPLoginPageUrl(AuthenticationContext context, Map<String, String> authenticationConfigs)
+    public static String getEmailOTPLoginPageUrl(AuthenticationContext context,
+                                                 Map<String, String> authenticationConfigs)
             throws AuthenticationFailedException {
 
         try {
@@ -64,8 +64,10 @@ public class EmailOTPUrlUtil {
         }
     }
 
-    public static String getEmailOTPErrorPageUrl(AuthenticationContext context, Map<String, String> authenticationConfigs)
+    public static String getEmailOTPErrorPageUrl(AuthenticationContext context,
+                                                 Map<String, String> authenticationConfigs)
             throws AuthenticationFailedException {
+
         try {
             String emailOTPErrorPage = getEmailOTPErrorPage(context, authenticationConfigs);
             return buildURL(emailOTPErrorPage, ERROR_PAGE);
@@ -77,8 +79,8 @@ public class EmailOTPUrlUtil {
     /**
      * Get the email address request page url from the application-authentication.xml file.
      *
-     * @param context the AuthenticationContext
-     * @return email address request page
+     * @param context The AuthenticationContext.
+     * @return Email address request page.
      */
     private static String getEmailAddressRequestPage(AuthenticationContext context,
                                                      Map<String, String> parametersMap) throws URLBuilderException {
@@ -92,13 +94,19 @@ public class EmailOTPUrlUtil {
         } else if ((context.getProperty(EMAIL_ADDRESS_REQ_PAGE)) != null) {
             emailAddressReqPage = String.valueOf(context.getProperty(EMAIL_ADDRESS_REQ_PAGE));
         } else {
-            emailAddressReqPage = ServiceURLBuilder.create().addPath(EMAIL_ADDRESS_CAPTURE_PAGE).build().getAbsolutePublicURL();
+            emailAddressReqPage =
+                    ServiceURLBuilder.create().addPath(EMAIL_ADDRESS_CAPTURE_PAGE).build().getAbsolutePublicURL();
         }
         return emailAddressReqPage;
     }
 
     /**
-     * Get ErrorPage for Gmail APIs
+     * Get ErrorPage for Gmail APIs.
+     *
+     * @param context       Authentication Context.
+     * @param parametersMap Parameter map.
+     * @return ErrorPage for Gmail APIs.
+     * @throws URLBuilderException If an error occurred while getting the ErrorPage for Gmail APIs.
      */
     private static String getEmailOTPErrorPage(AuthenticationContext context,
                                                Map<String, String> parametersMap) throws URLBuilderException {
@@ -109,7 +117,8 @@ public class EmailOTPUrlUtil {
         if ((propertiesFromLocal != null || EmailOTPAuthenticatorConstants.SUPER_TENANT.equals(tenantDomain)) &&
                 parametersMap.containsKey(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL)) {
             errorPage = parametersMap.get(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL);
-        } else if ((context.getProperty(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL)) != null) {
+        } else if ((context.getProperty(EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL))
+                != null) {
             errorPage = String.valueOf(context.getProperty
                     (EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL));
         } else {
@@ -119,10 +128,16 @@ public class EmailOTPUrlUtil {
     }
 
     /**
-     * Get LoginPage for Gmail APIs
+     * Get LoginPage for Gmail APIs.
+     *
+     * @param context       Authentication Context.
+     * @param parametersMap Parameter map.
+     * @return ErrorPage for Gmail APIs.
+     * @throws URLBuilderException If an error occurred while getting the LoginPage for Gmail APIs.
      */
     private static String getEmailOTPLoginPage(AuthenticationContext context,
                                                Map<String, String> parametersMap) throws URLBuilderException {
+
         String loginPage;
         String tenantDomain = context.getTenantDomain();
         Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
@@ -144,7 +159,6 @@ public class EmailOTPUrlUtil {
         if (StringUtils.isNotBlank(urlFromConfig)) {
             contextToBuildURL = urlFromConfig;
         }
-
         try {
             if (isURLRelative(contextToBuildURL)) {
                 // When tenant qualified URL feature is enabled, this will generate a tenant qualified URL.
