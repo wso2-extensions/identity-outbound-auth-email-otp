@@ -36,13 +36,18 @@ public class Constants {
     public static final int DEFAULT_OTP_LENGTH = 6;
 
     public static final int DEFAULT_EMAIL_OTP_EXPIRY_TIME = 120000;
+    public static final int DEFAULT_EMAIL_RESEND_THROTTLE_INTERVAL = 30000;
 
     public static final String EMAIL_OTP_IDENTITY_EVENT_MODULE_NAME = "emailOtp";
-    public static final String OTP_LENGTH_PROPERTY = "emailOtp.tokenLength";
-    public static final String OTP_EXPIRY_TIME_PROPERTY = "emailOtp.tokenExpiryTime";
-    public static final String ALPHA_NUMERIC_OTP_PROPERTY = "emailOtp.isEnableAlphanumericToken";
-    public static final String TRIGGER_OTP_NOTIFICATION_PROPERTY = "emailOtp.triggerNotification";
-    public static final String OTP_RENEWAL_INTERVAL = "emailOtp.tokenRenewInterval";
+    public static final String EMAIL_OTP_ENABLED = "email.enabled";
+    public static final String EMAIL_OTP_LENGTH = "emailOtp.tokenLength";
+    public static final String EMAIL_OTP_EXPIRY_TIME = "emailOtp.tokenExpiryTime";
+    public static final String EMAIL_OTP_TOKEN_VALIDITY_PERIOD = "smsOtp.tokenValidityPeriod";
+    public static final String EMAIL_OTP_ALPHA_NUMERIC_OTP = "emailOtp.isEnableAlphanumericToken";
+    public static final String EMAIL_OTP_TRIGGER_OTP_NOTIFICATION = "emailOtp.triggerNotification";
+    public static final String EMAIL_OTP_RENEWAL_INTERVAL = "emailOtp.tokenRenewInterval";;
+    public static final String EMAIL_OTP_RESEND_THROTTLE_INTERVAL = "email.resendThrottleInterval";
+    public static final String EMAIL_OTP_SHOW_FAILURE_REASON = "email.showValidationFailureReason";
 
     /**
      * EMAIL OTP service error codes.
@@ -65,6 +70,10 @@ public class Constants {
                 "Provided OTP doesn't belong to the mentioned user : %s."),
         CLIENT_OTP_VALIDATION_FAILED("EMAIL-60008", "Provided OTP is invalid.",
                 "Provided OTP is invalid."),
+        CLIENT_SLOW_DOWN_RESEND("EMAIL-60009", "Slow down.",
+                "Please wait %s seconds before retrying."),
+        CLIENT_NO_OTP_FOR_USER("EMAIL-60010", "No OTP fround for the user.",
+                "No OTP found for the user Id : %s."),
 
         // Server error codes.
         SERVER_USER_STORE_MANAGER_ERROR("EMAIL-65001", "User store manager error.",
@@ -85,7 +94,9 @@ public class Constants {
                 "Error while loading EMAIL OTP event configs : %s"),
         SERVER_INCOMPATIBLE_USER_STORE_MANAGER_ERROR("EMAIL-65009", "Incompatible user store manager.",
                 "user store manager doesn't support unique Ids."),
-        SERVER_UNEXPECTED_ERROR("EMAIL-65010", "An unexpected server error occurred.",
+        SERVER_INVALID_RENEWAL_INTERVAL_ERROR("EMAIL-65010", "Invalid renewal interval value.",
+                "Renewal interval should be smaller than the OTP validity period. Renewal interval: %s."),
+        SERVER_UNEXPECTED_ERROR("EMAIL-65011", "An unexpected server error occurred.",
                 "An unexpected server error occurred.");
 
         private final String code;

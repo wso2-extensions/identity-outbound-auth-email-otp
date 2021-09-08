@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.extension.identity.emailotp.common.internal;
 
+import org.wso2.carbon.extension.identity.emailotp.common.dto.ConfigsDTO;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -27,11 +28,13 @@ public class EmailOtpServiceDataHolder {
 
     private static final EmailOtpServiceDataHolder dataHolder = new EmailOtpServiceDataHolder();
     private RealmService realmService;
+    private static final ConfigsDTO configs = new ConfigsDTO();
 
     public static EmailOtpServiceDataHolder getInstance() {
 
         return dataHolder;
     }
+
     public RealmService getRealmService() {
 
         return realmService;
@@ -40,5 +43,10 @@ public class EmailOtpServiceDataHolder {
     public void setRealmService(RealmService realmService) {
 
         this.realmService = realmService;
+    }
+
+    public static ConfigsDTO getConfigs() {
+
+        return configs;
     }
 }

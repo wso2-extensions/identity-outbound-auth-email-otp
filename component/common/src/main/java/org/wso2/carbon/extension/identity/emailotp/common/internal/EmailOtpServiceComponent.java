@@ -27,13 +27,14 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.extension.identity.emailotp.common.EmailOtpService;
 import org.wso2.carbon.extension.identity.emailotp.common.EmailOtpServiceImpl;
+import org.wso2.carbon.extension.identity.emailotp.common.util.Utils;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
  * OSGI service component of the EMAIL OTP service.
  */
 @Component(name = "org.wso2.carbon.extension.identity.emailotp.common",
-           immediate = true
+        immediate = true
 )
 public class EmailOtpServiceComponent {
 
@@ -43,9 +44,11 @@ public class EmailOtpServiceComponent {
     protected void activate(ComponentContext componentContext) {
 
         try {
-            BundleContext bundleContext = componentContext.getBundleContext();
-            bundleContext.registerService(EmailOtpService.class.getName(), new EmailOtpServiceImpl(), null);
-            if (log.isDebugEnabled()) {
+            Utils.readConfigurations();
+            boolean isEnabled = EmailOtpServiceDataHolder.getConfigs().isEnabled();
+            if (isEnabled) {
+                BundleContext bundleContext = componentContext.getBundleContext();
+                bundleContext.registerService(EmailOtpService.class.getName(), new EmailOtpServiceImpl(), null);
                 log.debug("EMAIL OTP Service component activated successfully.");
             }
         } catch (Throwable e) {
@@ -54,10 +57,10 @@ public class EmailOtpServiceComponent {
     }
 
     @Reference(name = "realm.service",
-               service = RealmService.class,
-               cardinality = ReferenceCardinality.MANDATORY,
-               policy = ReferencePolicy.DYNAMIC,
-               unbind = "unsetRealmService")
+            service = RealmService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetRealmService")
     protected void setRealmService(RealmService realmService) {
 
         if (log.isDebugEnabled()) {
