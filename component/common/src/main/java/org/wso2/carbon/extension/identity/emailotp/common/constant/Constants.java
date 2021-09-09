@@ -19,13 +19,16 @@
 
 package org.wso2.carbon.extension.identity.emailotp.common.constant;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * EMAIL OTP service constants.
  */
 
 public class Constants {
 
-    public static final String CORRELATION_ID_MDC = "Correlation-ID";
     public static final String ALGORITHM_NAME = "SHA1PRNG";
     public static final String ALGORITHM_HMAC = "HmacSHA1";
     public static final String ALGORITHM_HMAC_SHA = "HMAC-SHA-1";
@@ -39,15 +42,14 @@ public class Constants {
     public static final int DEFAULT_EMAIL_RESEND_THROTTLE_INTERVAL = 30000;
 
     public static final String EMAIL_OTP_IDENTITY_EVENT_MODULE_NAME = "emailOtp";
-    public static final String EMAIL_OTP_ENABLED = "email.enabled";
+    public static final String EMAIL_OTP_ENABLED = "emailOtp.enabled";
     public static final String EMAIL_OTP_LENGTH = "emailOtp.tokenLength";
-    public static final String EMAIL_OTP_EXPIRY_TIME = "emailOtp.tokenExpiryTime";
-    public static final String EMAIL_OTP_TOKEN_VALIDITY_PERIOD = "smsOtp.tokenValidityPeriod";
+    public static final String EMAIL_OTP_VALIDITY_PERIOD = "emailOtp.tokenValidityPeriod";
     public static final String EMAIL_OTP_ALPHA_NUMERIC_OTP = "emailOtp.isEnableAlphanumericToken";
     public static final String EMAIL_OTP_TRIGGER_OTP_NOTIFICATION = "emailOtp.triggerNotification";
-    public static final String EMAIL_OTP_RENEWAL_INTERVAL = "emailOtp.tokenRenewInterval";;
-    public static final String EMAIL_OTP_RESEND_THROTTLE_INTERVAL = "email.resendThrottleInterval";
-    public static final String EMAIL_OTP_SHOW_FAILURE_REASON = "email.showValidationFailureReason";
+    public static final String EMAIL_OTP_RENEWAL_INTERVAL = "emailOtp.tokenRenewalInterval";
+    public static final String EMAIL_OTP_RESEND_THROTTLE_INTERVAL = "emailOtp.resendThrottleInterval";
+    public static final String EMAIL_OTP_SHOW_FAILURE_REASON = "emailOtp.showValidationFailureReason";
 
     /**
      * EMAIL OTP service error codes.
@@ -131,25 +133,27 @@ public class Constants {
         }
     }
 
-    /**
-     * Forbidden Error Messages
-     */
-    public enum ForbiddenErrorMessages {
+    // Forbidden error codes.
+    private static List<String> forbiddenErrors = new ArrayList<>();
+    // Conflict error codes.
+    private static List<String> conflictErrors = new ArrayList<>();
+    // Not Found error codes.
+    private static List<String> notFoundErrors = Arrays.asList(
+            ErrorMessage.CLIENT_INVALID_USER_ID.code
+    );
 
+    public static boolean isForbiddenError(String errorCode) {
+
+        return forbiddenErrors.contains(errorCode);
     }
 
-    /**
-     * Not Found Error Messages
-     */
-    public enum NotFoundErrorMessages {
+    public static boolean isConflictError(String errorCode) {
 
-        EMAIL_60003
+        return conflictErrors.contains(errorCode);
     }
 
-    /**
-     * Conflict Error Messages
-     */
-    public enum ConflictErrorMessages {
+    public static boolean isNotFoundError(String errorCode) {
 
+        return notFoundErrors.contains(errorCode);
     }
 }
