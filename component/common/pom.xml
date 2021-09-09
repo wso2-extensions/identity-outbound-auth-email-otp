@@ -19,6 +19,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <artifactId>identity-outbound-auth-email-otp</artifactId>
         <groupId>org.wso2.carbon.extension.identity.authenticator.outbound.emailotp</groupId>
@@ -26,7 +28,7 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <modelVersion>4.0.0</modelVersion>
+    <version>4.0.5-SNAPSHOT</version>
     <artifactId>org.wso2.carbon.extension.identity.emailotp.common</artifactId>
     <packaging>bundle</packaging>
     <name>WSO2 Carbon - Common functionalities for Email-OTP</name>
@@ -103,7 +105,7 @@
                     <instructions>
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>${project.artifactId}</Bundle-Name>
-                        <Private-Package>org.wso2.carbon.identity.emailotp.common.internal</Private-Package>
+                        <Private-Package>org.wso2.carbon.extension.identity.emailotp.common.internal</Private-Package>
                         <Import-Package>
                             org.apache.commons.logging.*; version="1.0.4",
                             org.osgi.framework,
@@ -111,8 +113,8 @@
                             *;resolution:=optional
                         </Import-Package>
                         <Export-Package>
-                            !org.wso2.carbon.identity.emailotp.common.internal,
-                            org.wso2.carbon.identity.emailotp.common.*; version="${project.version}",
+                            !org.wso2.carbon.extension.identity.emailotp.common.internal,
+                            org.wso2.carbon.extension.identity.emailotp.common.*; version="${project.version}",
                         </Export-Package>
                         <DynamicImport-Package>*</DynamicImport-Package>
                     </instructions>
