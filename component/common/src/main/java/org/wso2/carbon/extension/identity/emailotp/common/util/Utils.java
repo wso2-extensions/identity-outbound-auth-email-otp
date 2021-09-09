@@ -92,7 +92,7 @@ public class Utils {
         configs.setOtpLength(otpLength);
 
         String otpValidityPeriodValue =
-                StringUtils.trim(properties.getProperty(Constants.EMAIL_OTP_EXPIRY_TIME));
+                StringUtils.trim(properties.getProperty(Constants.EMAIL_OTP_VALIDITY_PERIOD));
         int otpValidityPeriod = StringUtils.isNumeric(otpValidityPeriodValue) ?
                 Integer.parseInt(otpValidityPeriodValue) * 1000 : Constants.DEFAULT_EMAIL_OTP_EXPIRY_TIME;
         configs.setOtpValidityPeriod(otpValidityPeriod);
