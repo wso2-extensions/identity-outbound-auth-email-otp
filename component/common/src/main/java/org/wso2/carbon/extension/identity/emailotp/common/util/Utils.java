@@ -41,7 +41,7 @@ public class Utils {
     /**
      * Read configurations and populate {@link ConfigsDTO} object.
      *
-     * @throws EmailOtpServerException Throws upon an issue on while reading configs.
+     * @throws EmailOtpServerException Throws upon an issue while reading configs.
      */
     public static void readConfigurations() throws EmailOtpServerException {
 

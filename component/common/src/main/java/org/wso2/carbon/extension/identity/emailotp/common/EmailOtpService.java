@@ -28,11 +28,11 @@ public interface EmailOtpService {
     /**
      * This method validates a provided OTP.
      *
-     * @param transactionId
-     * @param userId
-     * @param emailOTP
-     * @return {@link ValidationResponseDTO}
-     * @throws EmailOtpException
+     * @param transactionId                     UUID to track the flow.
+     * @param userId                            SCIM Id.
+     * @param emailOTP                          OTP to be validated.
+     * @return {@link ValidationResponseDTO}    OTP validation result.
+     * @throws EmailOtpException                Thrown if any server or client error occurred.
      */
     ValidationResponseDTO validateEmailOTP(String transactionId, String userId, String emailOTP) throws
             EmailOtpException;
@@ -40,9 +40,9 @@ public interface EmailOtpService {
     /**
      * This method will generate an OTP and send an EMAIL notification.
      *
-     * @param userId
-     * @return {@link GenerationResponseDTO}
-     * @throws EmailOtpException
+     * @param userId                            SCIM Id.
+     * @return {@link GenerationResponseDTO}    OTP generation response.
+     * @throws EmailOtpException                Thrown if any server or client error occurred.
      */
     GenerationResponseDTO generateEmailOTP(String userId) throws EmailOtpException;
 }

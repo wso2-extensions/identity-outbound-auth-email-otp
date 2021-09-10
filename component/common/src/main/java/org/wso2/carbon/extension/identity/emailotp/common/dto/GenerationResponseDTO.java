@@ -19,7 +19,7 @@
 package org.wso2.carbon.extension.identity.emailotp.common.dto;
 
 /**
- * This class represents a model of to generate Email OTP request.
+ * This class represents a model of to generate Email OTP response.
  */
 public class GenerationResponseDTO {
 

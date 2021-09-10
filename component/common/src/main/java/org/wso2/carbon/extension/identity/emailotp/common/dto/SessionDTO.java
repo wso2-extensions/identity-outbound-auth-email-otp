@@ -20,9 +20,8 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * Object used to save the data in the database
+ * Object used to save the data in the database.
  */
-
 public class SessionDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
