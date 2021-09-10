@@ -31,7 +31,7 @@ import org.wso2.carbon.extension.identity.emailotp.common.util.Utils;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
- * OSGI service component of the EMAIL OTP service.
+ * OSGI service component of the Email OTP service.
  */
 @Component(name = "org.wso2.carbon.extension.identity.emailotp.common",
         immediate = true

@@ -45,6 +45,6 @@ properties.resendThrottleInterval = 30
 5.Restart the server.
 
 ## REST API support
-REst API support for this OSGI service can be found in the below git repository.
+REST API support for this OSGI service can be found in the below git repository.
 
 [identity-otp-integration-endpoints](https://github.com/wso2-extensions/identity-otp-integration-endpoints)

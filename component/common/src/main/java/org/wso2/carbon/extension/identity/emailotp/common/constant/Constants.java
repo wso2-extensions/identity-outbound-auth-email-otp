@@ -24,7 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * EMAIL OTP service constants.
+ * Email OTP service constants.
  */
 
 public class Constants {

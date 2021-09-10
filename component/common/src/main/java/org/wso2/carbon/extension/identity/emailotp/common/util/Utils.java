@@ -32,7 +32,7 @@ import java.util.Properties;
 import java.util.UUID;
 
 /**
- * Util functions for EMAIL OTP service.
+ * Util functions for Email OTP service.
  */
 public class Utils {
 
@@ -159,23 +159,23 @@ public class Utils {
     public static EmailOtpServerException handleServerException(Constants.ErrorMessage error, String data,
                                                                 Throwable e) {
 
-        String message;
+        String description;
         if (StringUtils.isNotBlank(data)) {
-            message = String.format(error.getMessage(), data);
+            description = String.format(error.getDescription(), data);
         } else {
-            message = error.getMessage();
+            description = error.getDescription();
         }
-        return new EmailOtpServerException(message, error.getCode(), e);
+        return new EmailOtpServerException(error.getMessage(), description, error.getCode(), e);
     }
 
     public static EmailOtpServerException handleServerException(Constants.ErrorMessage error, String data) {
 
-        String message;
+        String description;
         if (StringUtils.isNotBlank(data)) {
-            message = String.format(error.getMessage(), data);
+            description = String.format(error.getDescription(), data);
         } else {
-            message = error.getMessage();
+            description = error.getDescription();
         }
-        return new EmailOtpServerException(message, error.getCode());
+        return new EmailOtpServerException(error.getMessage(), description, error.getCode());
     }
 }

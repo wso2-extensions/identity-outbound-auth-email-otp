@@ -22,7 +22,7 @@ import org.wso2.carbon.extension.identity.emailotp.common.dto.ConfigsDTO;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
- * Data holder for EMAIL OTP Service.
+ * Data holder for Email OTP Service.
  */
 public class EmailOtpServiceDataHolder {
 
