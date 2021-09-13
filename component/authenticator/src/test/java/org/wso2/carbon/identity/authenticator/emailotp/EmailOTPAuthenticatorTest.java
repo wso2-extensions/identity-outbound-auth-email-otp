@@ -76,6 +76,8 @@ import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -137,6 +139,7 @@ public class EmailOTPAuthenticatorTest {
     @Mock private Claim claim;
     @Mock private Enumeration<String> requestHeaders;
     @Mock private AuthenticatedUser authenticatedUser;
+    @Mock private EmailOTPServiceDataHolder dataHolder;
 
     @BeforeMethod
     public void setUp() throws Exception {
