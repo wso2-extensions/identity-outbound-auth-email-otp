@@ -16,6 +16,7 @@
 
 package org.wso2.carbon.extension.identity.emailotp.common.util;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -122,6 +123,11 @@ public class Utils {
         // Defaults to 'true' with an interval of 30 seconds.
         boolean resendThrottlingEnabled = resendThrottleInterval > 0;
         configs.setResendThrottlingEnabled(resendThrottlingEnabled);
+    }
+
+    public static String getHash(String text) {
+
+        return DigestUtils.sha256Hex(text);
     }
 
     public static String createTransactionId() {

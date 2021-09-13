@@ -103,8 +103,11 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         SessionDTO sessionDTO = issueOTP(user);
 
         GenerationResponseDTO responseDTO = new GenerationResponseDTO();
+        // If IS is handling the notifications, don't send the OTP in the response.
+        if (!sendNotification) {
+            responseDTO.setEmailOTP(sessionDTO.getOtpToken());
+        }
         responseDTO.setTransactionId(sessionDTO.getTransactionId());
-        responseDTO.setEmailOTP(sessionDTO.getOtpToken());
         return responseDTO;
     }
 
@@ -124,7 +127,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         boolean showFailureReason = EmailOtpServiceDataHolder.getConfigs().isShowFailureReason();
 
         // Retrieve session from the database.
-        String sessionId = String.valueOf(userId.hashCode());
+        String sessionId = Utils.getHash(userId);
         String jsonString = (String) SessionDataStore.getInstance()
                 .getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
         if (StringUtils.isBlank(jsonString)) {
@@ -197,7 +200,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
             sessionDTO = getPreviousValidOTPSession(user);
             // This is done in order to support 'resend throttling'.
             if (sessionDTO != null) {
-                String sessionId = String.valueOf(user.getUserID().hashCode());
+                String sessionId = Utils.getHash(user.getUserID());
                 // Remove previous OTP session.
                 SessionDataStore.getInstance().clearSessionData(sessionId, Constants.SESSION_TYPE_OTP);
                 // Re-persisting after changing the 'generated time' of the OTP session.
@@ -241,7 +244,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         sessionDTO.setFullQualifiedUserName(user.getFullQualifiedUsername());
         sessionDTO.setUserId(user.getUserID());
 
-        String sessionId = String.valueOf(user.getUserID().hashCode());
+        String sessionId = Utils.getHash(user.getUserID());
         persistOTPSession(sessionDTO, sessionId);
         return sessionDTO;
     }
@@ -279,7 +282,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
     private SessionDTO getPreviousValidOTPSession(User user) throws EmailOtpException {
 
         // Search previous session object.
-        String sessionId = String.valueOf(user.getUserID().hashCode());
+        String sessionId = Utils.getHash(user.getUserID());
         String jsonString = (String) SessionDataStore.getInstance().
                 getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
         if (StringUtils.isBlank(jsonString)) {
@@ -335,7 +338,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
 
     private void shouldThrottle(String userId) throws EmailOtpException {
 
-        String sessionId = String.valueOf(userId.hashCode());
+        String sessionId = Utils.getHash(userId);
         String jsonString = (String) SessionDataStore.getInstance().
                 getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
         if (StringUtils.isBlank(jsonString)) {
