@@ -1,20 +1,19 @@
 /*
- *  Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
  *
- *  WSO2 Inc. licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License.
- *  You may obtain a copy of the License at
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing,
- *  software distributed under the License is distributed on an
- *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- *  KIND, either express or implied.  See the License for the
- *  specific language governing permissions and limitations
- *  under the License.
- *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 
 package org.wso2.carbon.extension.identity.emailotp.common.constant;
@@ -26,7 +25,6 @@ import java.util.List;
 /**
  * Email OTP service constants.
  */
-
 public class Constants {
 
     public static final String ALGORITHM_NAME = "SHA1PRNG";
@@ -68,13 +66,13 @@ public class Constants {
                 "Invalid transaction Id."),
         CLIENT_MANDATORY_VALIDATION_PARAMETERS_EMPTY("EMAIL-60007", "Mandatory parameters not found.",
                 "Mandatory parameters not found : %s."),
-        CLIENT_OTP_USER_VALIDATION_FAILED("EMAIL-60007", "OTP user validation failed.",
+        CLIENT_OTP_USER_VALIDATION_FAILED("EMAIL-60008", "OTP user validation failed.",
                 "Provided OTP doesn't belong to the mentioned user : %s."),
-        CLIENT_OTP_VALIDATION_FAILED("EMAIL-60008", "Provided OTP is invalid.",
+        CLIENT_OTP_VALIDATION_FAILED("EMAIL-60009", "Provided OTP is invalid.",
                 "Provided OTP is invalid."),
-        CLIENT_SLOW_DOWN_RESEND("EMAIL-60009", "Slow down.",
+        CLIENT_SLOW_DOWN_RESEND("EMAIL-60010", "Slow down.",
                 "Please wait %s seconds before retrying."),
-        CLIENT_NO_OTP_FOR_USER("EMAIL-60010", "No OTP fround for the user.",
+        CLIENT_NO_OTP_FOR_USER("EMAIL-60011", "No OTP fround for the user.",
                 "No OTP found for the user Id : %s."),
 
         // Server error codes.
