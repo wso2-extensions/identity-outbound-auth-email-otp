@@ -41,6 +41,7 @@ import org.wso2.carbon.identity.application.authentication.framework.context.Aut
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.InvalidCredentialsException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.LogoutFailedException;
+import org.wso2.carbon.identity.application.authentication.framework.exception.UserIdNotFoundException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
@@ -71,6 +72,7 @@ import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.api.UserStoreManager;
 import org.wso2.carbon.user.core.UserCoreConstants;
 import org.wso2.carbon.user.core.UserStoreClientException;
+import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
@@ -1320,6 +1322,50 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
     }
 
     /**
+     * Check whether EmailOTP is disabled for user.
+     *
+     * @param authenticatedUser authenticated user
+     * @param context           authentication context
+     * @param parametersMap     parameter map
+     * @return if the email otp is disabled for user
+     *
+     * @throws AuthenticationFailedException
+     */
+    private boolean isEmailOTPDisableForUser(AuthenticatedUser authenticatedUser, AuthenticationContext context,
+                                             Map<String, String> parametersMap)
+            throws AuthenticationFailedException {
+
+        UserRealm userRealm;
+        try {
+            int tenantId = IdentityTenantUtil.getTenantId(authenticatedUser.getTenantDomain());
+            RealmService realmService = IdentityTenantUtil.getRealmService();
+            userRealm = realmService.getTenantUserRealm(tenantId);
+            if (userRealm != null) {
+                if (isAdminMakeUserToEnableOrDisableEmailOTP(context, parametersMap)) {
+                    AbstractUserStoreManager userStoreManager =
+                            (AbstractUserStoreManager) userRealm.getUserStoreManager();
+                    Map<String, String> claimValues
+                            = userStoreManager.getUserClaimValuesWithID(authenticatedUser.getUserId(),
+                            new String[]{EmailOTPAuthenticatorConstants.USER_EMAILOTP_DISABLED_CLAIM_URI}, null);
+                    String isEmailOTPEnabledByUser = claimValues.
+                            get(EmailOTPAuthenticatorConstants.USER_EMAILOTP_DISABLED_CLAIM_URI);
+                    return Boolean.parseBoolean(isEmailOTPEnabledByUser);
+                }
+            } else {
+                throw new AuthenticationFailedException("Cannot find the user realm for the given tenant domain : "
+                        + authenticatedUser.getTenantDomain());
+            }
+        } catch (UserStoreException e) {
+            throw new AuthenticationFailedException("Failed while trying to access userRealm of the user: "
+                    + authenticatedUser.getLoggableUserId(), e);
+        } catch (UserIdNotFoundException e) {
+            throw new AuthenticationFailedException("Error while checking if the email OTP is enabled for the user: "
+                    + authenticatedUser.getLoggableUserId(), e);
+        }
+        return false;
+    }
+
+    /**
      * Email OTP handled for local users.
      *
      * @param username            name of the user
@@ -2502,8 +2548,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
         AuthenticatedUser authenticatedUser = (AuthenticatedUser) context.getProperty(EmailOTPAuthenticatorConstants
                 .AUTHENTICATED_USER);
         Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
-        if (isEmailOTPDisableForUser(authenticatedUser.getAuthenticatedSubjectIdentifier(),
-                context, emailOTPParameters)) {
+        if (isEmailOTPDisableForUser(authenticatedUser, context, emailOTPParameters)) {
             // Email OTP is disabled for the user. Hence not going to trigger the event.
             return;
         }

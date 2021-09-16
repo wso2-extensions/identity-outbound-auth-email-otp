@@ -19,8 +19,9 @@
 package org.wso2.carbon.identity.authenticator.emailotp;
 
 public class EmailOTPAuthenticatorTestConstants {
+    public static final String USER_ID = "30aef87f-5e72-4a5b-b042-2289d670dc92";
     public static String EMAIL_ADDRESS = "abc@gmail.com";
-    public static String USER_NAME = "admin";
+    public static String USER_NAME = "testUser";
     public static String TENANT_DOMAIN = "wso2.org";
     public static int TENANT_ID = -1234;
     public static String IP_ADDRESS = "172.16.254.1";
