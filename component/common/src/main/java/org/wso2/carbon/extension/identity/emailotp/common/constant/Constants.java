@@ -136,9 +136,7 @@ public class Constants {
     // Conflict error codes.
     private static List<String> conflictErrors = new ArrayList<>();
     // Not Found error codes.
-    private static List<String> notFoundErrors = Arrays.asList(
-            ErrorMessage.CLIENT_INVALID_USER_ID.code
-    );
+    private static List<String> notFoundErrors = Arrays.asList(ErrorMessage.CLIENT_INVALID_USER_ID.code);
 
     public static boolean isForbiddenError(String errorCode) {
 

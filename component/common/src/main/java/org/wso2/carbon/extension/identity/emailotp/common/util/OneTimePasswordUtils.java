@@ -26,6 +26,7 @@ import org.wso2.carbon.extension.identity.emailotp.common.exception.EmailOtpServ
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -112,18 +113,18 @@ public class OneTimePasswordUtils {
     /**
      * This method generates an OTP value for the given set of parameters.
      *
-     * @param secret                    The shared secret.
-     * @param movingFactor              The counter, or other value that changes on a per-use
-     *                                  basis.
-     * @param codeDigits                The number of digits in the OTP, not including the checksum,
-     *                                  if any.
-     * @param addChecksum               A flag that indicates if a checksum digit
-     *                                  should be appended to the OTP.
-     * @param truncationOffset          The offset into the MAC result to begin truncation. If this
-     *                                  value is out of the range of 0 ... 15, then dynamic truncation
-     *                                  will be used. Dynamic truncation is when the last 4 bits of
-     *                                  the last byte of the MAC are used to determine the start
-     *                                  offset.
+     * @param secret           The shared secret.
+     * @param movingFactor     The counter, or other value that changes on a per-use
+     *                         basis.
+     * @param codeDigits       The number of digits in the OTP, not including the checksum,
+     *                         if any.
+     * @param addChecksum      A flag that indicates if a checksum digit
+     *                         should be appended to the OTP.
+     * @param truncationOffset The offset into the MAC result to begin truncation. If this
+     *                         value is out of the range of 0 ... 15, then dynamic truncation
+     *                         will be used. Dynamic truncation is when the last 4 bits of
+     *                         the last byte of the MAC are used to determine the start
+     *                         offset.
      * @throws NoSuchAlgorithmException If no provider makes either HmacSHA1 or HMAC-SHA-1 digest
      *                                  algorithms available.
      * @throws InvalidKeyException      The secret provided was not a valid HMAC-SHA-1 key.
@@ -180,7 +181,8 @@ public class OneTimePasswordUtils {
      * @throws InvalidKeyException      The secret provided was not a valid HMAC-SHA-1 key.
      */
     public static String generateAlphaNumericOTP(byte[] secret, long movingFactor, int codeDigits, boolean addChecksum,
-                                                 int truncationOffset) throws NoSuchAlgorithmException, InvalidKeyException {
+                                                 int truncationOffset)
+            throws NoSuchAlgorithmException, InvalidKeyException {
 
         // put movingFactor value into text byte array
         int digits = addChecksum ? (codeDigits + 1) : codeDigits;
