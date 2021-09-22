@@ -35,10 +35,8 @@ import org.wso2.carbon.extension.identity.emailotp.common.internal.EmailOtpServi
 import org.wso2.carbon.extension.identity.emailotp.common.util.OneTimePasswordUtils;
 import org.wso2.carbon.extension.identity.emailotp.common.util.Utils;
 import org.wso2.carbon.identity.application.authentication.framework.store.SessionDataStore;
-import org.wso2.carbon.identity.event.IdentityEventConfigBuilder;
 import org.wso2.carbon.identity.event.IdentityEventConstants;
 import org.wso2.carbon.identity.event.IdentityEventException;
-import org.wso2.carbon.identity.event.bean.ModuleConfiguration;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.governance.service.notification.NotificationChannels;
 import org.wso2.carbon.identity.recovery.IdentityRecoveryConstants;
@@ -52,7 +50,6 @@ import org.wso2.carbon.user.core.constants.UserCoreErrorConstants;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 /**
  * This class implements the {@link EmailOtpService} interface.
@@ -70,9 +67,8 @@ public class EmailOtpServiceImpl implements EmailOtpService {
 
         // Retrieve email only if notifications the are managed internally.
         boolean sendNotification = EmailOtpServiceDataHolder.getConfigs().isTriggerNotification();
-        String[] requestedClaims = sendNotification
-                ? new String[]{NotificationChannels.EMAIL_CHANNEL.getClaimUri()}
-                : null;
+        String[] requestedClaims =
+                sendNotification ? new String[]{NotificationChannels.EMAIL_CHANNEL.getClaimUri()} : null;
 
         // Retrieve user by ID.
         AbstractUserStoreManager userStoreManager;
@@ -157,12 +153,12 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         return new ValidationResponseDTO(userId, true);
     }
 
-    private ValidationResponseDTO isValid(SessionDTO sessionDTO, String smsOTP, String userId,
+    private ValidationResponseDTO isValid(SessionDTO sessionDTO, String emailOtp, String userId,
                                           String transactionId, boolean showFailureReason) {
 
         FailureReasonDTO error;
         // Check if the provided OTP is correct.
-        if (!StringUtils.equals(smsOTP, sessionDTO.getOtpToken())) {
+        if (!StringUtils.equals(emailOtp, sessionDTO.getOtpToken())) {
             if (log.isDebugEnabled()) {
                 log.debug(String.format("Invalid OTP provided for the user : %s.", userId));
             }
@@ -179,7 +175,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
             error = showFailureReason ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_EXPIRED_OTP, userId) : null;
             return new ValidationResponseDTO(userId, false, error);
         }
-        // Check if the provided transaction Id is correct.
+        // Check if the provided transaction ID is correct.
         if (!StringUtils.equals(transactionId, sessionDTO.getTransactionId())) {
             if (log.isDebugEnabled()) {
                 log.debug(String.format("Provided transaction Id doesn't match. User : %s.", userId));
@@ -231,10 +227,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
 
         // Generate OTP.
         String transactionId = Utils.createTransactionId();
-        String otp = OneTimePasswordUtils.generateOTP(
-                transactionId,
-                String.valueOf(Constants.NUMBER_BASE),
-                otpLength,
+        String otp = OneTimePasswordUtils.generateOTP(transactionId, String.valueOf(Constants.NUMBER_BASE), otpLength,
                 isAlphaNumericOtpEnabled);
 
         // Save the otp in the 'IDN_AUTH_SESSION_STORE' table.
@@ -271,7 +264,8 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         try {
             IdentityRecoveryServiceDataHolder.getInstance().getIdentityEventService().handleEvent(event);
         } catch (IdentityEventException e) {
-            throw Utils.handleServerException(Constants.ErrorMessage.SERVER_NOTIFICATION_SENDING_ERROR, user.getFullQualifiedUsername(), e);
+            throw Utils.handleServerException(Constants.ErrorMessage.SERVER_NOTIFICATION_SENDING_ERROR,
+                    user.getFullQualifiedUsername(), e);
         }
     }
 
@@ -322,19 +316,6 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                 getTenantId());
         if (log.isDebugEnabled()) {
             log.debug(String.format("Successfully persisted the OTP for the user Id: %s.", sessionDTO.getUserId()));
-        }
-    }
-
-    private Properties readConfigurations() throws EmailOtpServerException {
-
-        try {
-            ModuleConfiguration configs = IdentityEventConfigBuilder.getInstance()
-                    .getModuleConfigurations(Constants.EMAIL_OTP_IDENTITY_EVENT_MODULE_NAME);
-            // Work with the default values if configurations couldn't be loaded.
-            return configs != null ? configs.getModuleProperties() : new Properties();
-        } catch (IdentityEventException e) {
-            throw Utils.handleServerException(Constants.ErrorMessage.SERVER_EVENT_CONFIG_LOADING_ERROR,
-                    Constants.EMAIL_OTP_IDENTITY_EVENT_MODULE_NAME, e);
         }
     }
 

@@ -115,7 +115,8 @@ public class Utils {
         String otpResendThrottleIntervalValue = StringUtils.trim(
                 properties.getProperty(Constants.EMAIL_OTP_RESEND_THROTTLE_INTERVAL));
         int resendThrottleInterval = StringUtils.isNumeric(otpResendThrottleIntervalValue) ?
-                Integer.parseInt(otpResendThrottleIntervalValue) * 1000 : Constants.DEFAULT_EMAIL_RESEND_THROTTLE_INTERVAL;
+                Integer.parseInt(otpResendThrottleIntervalValue) * 1000 :
+                Constants.DEFAULT_EMAIL_RESEND_THROTTLE_INTERVAL;
         configs.setResendThrottleInterval(resendThrottleInterval);
 
         // Should we send the same OTP upon the next generation request? Defaults to 'false'.
