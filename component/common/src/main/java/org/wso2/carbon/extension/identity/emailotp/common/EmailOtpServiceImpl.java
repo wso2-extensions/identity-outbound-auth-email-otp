@@ -52,7 +52,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * This class implements the {@link EmailOtpService} interface.
+ * This class implements the EmailOtpService interface.
  */
 public class EmailOtpServiceImpl implements EmailOtpService {
 
@@ -101,7 +101,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         SessionDTO sessionDTO = issueOTP(user);
 
         GenerationResponseDTO responseDTO = new GenerationResponseDTO();
-        // If IS is handling the notifications, don't send the OTP in the response.
+        // If WSO2IS is handling the notifications, don't send the OTP in the response.
         if (!sendNotification) {
             responseDTO.setEmailOTP(sessionDTO.getOtpToken());
         }

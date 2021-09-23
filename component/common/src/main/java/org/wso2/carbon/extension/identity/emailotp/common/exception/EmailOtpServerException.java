@@ -19,7 +19,7 @@
 package org.wso2.carbon.extension.identity.emailotp.common.exception;
 
 /**
- * Email OTP server exception
+ * This class is to handle Email OTP server exception
  */
 public class EmailOtpServerException extends EmailOtpException {
 
