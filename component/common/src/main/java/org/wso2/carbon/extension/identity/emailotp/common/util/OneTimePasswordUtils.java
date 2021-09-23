@@ -61,9 +61,9 @@ public class OneTimePasswordUtils {
     }
 
     /**
-     * @param num       The number to calculate the checksum for.
-     * @param digits    Number of significant places in the number.
-     * @return          The checksum of num.
+     * @param num    The number to calculate the checksum for.
+     * @param digits Number of significant places in the number.
+     * @return The checksum of num.
      */
     public static int calcChecksum(long num, int digits) {
 
@@ -90,8 +90,8 @@ public class OneTimePasswordUtils {
      * algorithm. HMAC computes a Hashed Message Authentication Code and in this
      * case SHA1 is the hash algorithm used.
      *
-     * @param keyBytes                  Bytes to use for the HMAC-SHA-1 key.
-     * @param text                      Message or text to be authenticated.
+     * @param keyBytes Bytes to use for the HMAC-SHA-1 key.
+     * @param text     Message or text to be authenticated.
      * @throws NoSuchAlgorithmException If no provider makes either HmacSHA1 or HMAC-SHA-1 digest
      *                                  algorithms available.
      * @throws InvalidKeyException      The secret provided was not a valid HMAC-SHA-1 key.
@@ -164,18 +164,18 @@ public class OneTimePasswordUtils {
     /**
      * This method generates an alphanumeric OTP value for the given set of parameters.
      *
-     * @param secret                    The shared secret.
-     * @param movingFactor              The counter, or other value that changes on a per-use
-     *                                  basis.
-     * @param codeDigits                The number of digits in the OTP, not including the checksum,
-     *                                  if any.
-     * @param addChecksum               A flag that indicates if a checksum digit
-     *                                  should be appended to the OTP.
-     * @param truncationOffset          The offset into the MAC result to begin truncation. If this
-     *                                  value is out of the range of 0 ... 15, then dynamic truncation
-     *                                  will be used. Dynamic truncation is when the last 4 bits of
-     *                                  the last byte of the MAC are used to determine the start
-     *                                  offset.
+     * @param secret           The shared secret.
+     * @param movingFactor     The counter, or other value that changes on a per-use
+     *                         basis.
+     * @param codeDigits       The number of digits in the OTP, not including the checksum,
+     *                         if any.
+     * @param addChecksum      A flag that indicates if a checksum digit
+     *                         should be appended to the OTP.
+     * @param truncationOffset The offset into the MAC result to begin truncation. If this
+     *                         value is out of the range of 0 ... 15, then dynamic truncation
+     *                         will be used. Dynamic truncation is when the last 4 bits of
+     *                         the last byte of the MAC are used to determine the start
+     *                         offset.
      * @throws NoSuchAlgorithmException If no provider makes either HmacSHA1 or HMAC-SHA-1 digest
      *                                  algorithms available.
      * @throws InvalidKeyException      The secret provided was not a valid HMAC-SHA-1 key.

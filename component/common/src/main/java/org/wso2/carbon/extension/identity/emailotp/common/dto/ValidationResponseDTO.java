@@ -19,7 +19,7 @@
 package org.wso2.carbon.extension.identity.emailotp.common.dto;
 
 /**
- * This class represents a model of to validate Email OTP response.
+ * This class represents a model to validate Email OTP response.
  */
 public class ValidationResponseDTO {
 
