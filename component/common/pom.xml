@@ -24,11 +24,10 @@
     <parent>
         <artifactId>identity-outbound-auth-email-otp</artifactId>
         <groupId>org.wso2.carbon.extension.identity.authenticator.outbound.emailotp</groupId>
-        <version>4.0.5-SNAPSHOT</version>
+        <version>4.0.6-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <version>4.0.5-SNAPSHOT</version>
     <artifactId>org.wso2.carbon.extension.identity.emailotp.common</artifactId>
     <packaging>bundle</packaging>
     <name>WSO2 Carbon - Common functionalities for Email-OTP</name>
