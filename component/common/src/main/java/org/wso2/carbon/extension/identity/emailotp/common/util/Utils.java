@@ -42,7 +42,7 @@ public class Utils {
     private static final Log log = LogFactory.getLog(Utils.class);
 
     /**
-     * Read configurations and populate {@link ConfigsDTO} object.
+     * Read configurations and populate ConfigsDTO object.
      *
      * @throws EmailOtpServerException Throws upon an issue while reading configs.
      */

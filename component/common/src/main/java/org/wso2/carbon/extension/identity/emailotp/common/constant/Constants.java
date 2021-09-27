@@ -56,12 +56,13 @@ public class Constants {
 
         // Client error codes.
         CLIENT_BAD_REQUEST("EMAIL-60001", "Bad request.", "Bad request : %s."),
-        CLIENT_EMPTY_USER_ID("EMAIL-60002", "Provided user ID is empty.", "Provided user ID is empty."),
-        CLIENT_INVALID_USER_ID("EMAIL-60003", "Invalid user Id.", "Provided user ID is invalid : %s."),
+        CLIENT_EMPTY_USER_ID("EMAIL-60002", "Provided user ID is empty.",
+                "Provided user ID is empty."),
+        CLIENT_INVALID_USER_ID("EMAIL-60003", "Invalid user Id.",
+                "Provided user ID is invalid : %s."),
         CLIENT_BLANK_EMAIL_ADDRESS("EMAIL-60004", "Invalid email address.",
                 "No valid email address for the user : %s."),
-        CLIENT_EXPIRED_OTP("EMAIL-60005", "Expired OTP.",
-                "Expired OTP."),
+        CLIENT_EXPIRED_OTP("EMAIL-60005", "Expired OTP.", "Expired OTP."),
         CLIENT_INVALID_TRANSACTION_ID("EMAIL-60006", "Invalid transaction Id.",
                 "Invalid transaction Id."),
         CLIENT_MANDATORY_VALIDATION_PARAMETERS_EMPTY("EMAIL-60007", "Mandatory parameters not found.",

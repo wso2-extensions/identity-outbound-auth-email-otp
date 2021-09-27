@@ -132,17 +132,17 @@ public class OneTimePasswordUtils {
     public static String generateOTP(byte[] secret, long movingFactor, int codeDigits, boolean addChecksum,
                                      int truncationOffset) throws NoSuchAlgorithmException, InvalidKeyException {
 
-        // put movingFactor value into text byte array
+        // Put movingFactor value into text byte array.
         int digits = addChecksum ? (codeDigits + 1) : codeDigits;
         byte[] text = new byte[8];
         for (int i = text.length - 1; i >= 0; i--) {
             text[i] = (byte) (movingFactor & 0xff);
             movingFactor >>= 8;
         }
-        // compute hmac hash
+        // Compute hmac hash.
         byte[] hash = hmacShaGenerate(secret, text);
 
-        // put selected bytes into result int
+        // Put selected bytes into result int.
         int offset = hash[hash.length - 1] & 0xf;
         if ((0 <= truncationOffset) && (truncationOffset < (hash.length - 4))) {
             offset = truncationOffset;
@@ -184,16 +184,16 @@ public class OneTimePasswordUtils {
                                                  int truncationOffset)
             throws NoSuchAlgorithmException, InvalidKeyException {
 
-        // put movingFactor value into text byte array
+        // Put movingFactor value into text byte array.
         int digits = addChecksum ? (codeDigits + 1) : codeDigits;
         byte[] text = new byte[8];
         for (int i = text.length - 1; i >= 0; i--) {
             text[i] = (byte) (movingFactor & 0xff);
             movingFactor >>= 8;
         }
-        // compute hmac hash
+        // Compute hmac hash.
         byte[] hash = hmacShaGenerate(secret, text);
-        // put selected bytes into result int
+        // Put selected bytes into result int.
         int offset = hash[hash.length - 1] & 0xf;
         if ((0 <= truncationOffset) && (truncationOffset < (hash.length - 8))) {
             offset = truncationOffset;
