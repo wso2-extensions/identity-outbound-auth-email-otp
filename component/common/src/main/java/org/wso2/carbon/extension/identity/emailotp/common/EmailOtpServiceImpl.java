@@ -258,7 +258,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                 NotificationChannels.EMAIL_CHANNEL.getChannelType());
         properties.put(IdentityRecoveryConstants.TEMPLATE_TYPE, Constants.NOTIFICATION_TYPE_EMAIL_OTP);
         properties.put(IdentityRecoveryConstants.SEND_TO, getEmailAddress(user));
-        properties.put(IdentityRecoveryConstants.OTP_CODE, otp);
+        properties.put(Constants.OTP_CODE, otp);
 
         Event event = new Event(IdentityEventConstants.Event.TRIGGER_NOTIFICATION, properties);
         try {

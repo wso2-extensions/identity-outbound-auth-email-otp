@@ -32,6 +32,7 @@ public class Constants {
     public static final String ALGORITHM_HMAC_SHA = "HMAC-SHA-1";
     public static final String SESSION_TYPE_OTP = "EMAIL_OTP";
     public static final String NOTIFICATION_TYPE_EMAIL_OTP = "EmailOTP";
+    public static final String OTP_CODE = "OTPCode";
 
     public static final int NUMBER_BASE = 2;
     public static final int DEFAULT_OTP_LENGTH = 6;
