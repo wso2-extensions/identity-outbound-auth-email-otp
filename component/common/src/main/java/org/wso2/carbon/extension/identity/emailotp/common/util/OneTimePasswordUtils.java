@@ -23,16 +23,14 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.extension.identity.emailotp.common.constant.Constants;
 import org.wso2.carbon.extension.identity.emailotp.common.exception.EmailOtpServerException;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-
 /**
  * OTP generation utils.
- * <p>
  * Important: This class duplicates OTP util methods of the authenticator
  * module's 'org.wso2.carbon.identity.authenticator.emailotp.OneTimePassword' class.
  * Any fixes here, should be reflected there as well.
@@ -44,6 +42,12 @@ public class OneTimePasswordUtils {
 
     private static final Log log = LogFactory.getLog(OneTimePasswordUtils.class);
 
+    /**
+     * This method to generate a random number by giving the range.
+     *
+     * @param size length of the random number.
+     * @return random number string.
+     */
     public static String getRandomNumber(int size) {
 
         StringBuilder generatedToken = new StringBuilder();
@@ -61,6 +65,8 @@ public class OneTimePasswordUtils {
     }
 
     /**
+     * This is to calculate the check sum of a number.
+     *
      * @param num    The number to calculate the checksum for.
      * @param digits Number of significant places in the number.
      * @return The checksum of num.
@@ -92,6 +98,7 @@ public class OneTimePasswordUtils {
      *
      * @param keyBytes Bytes to use for the HMAC-SHA-1 key.
      * @param text     Message or text to be authenticated.
+     * @return Generated HMAC-SHA byte array.
      * @throws NoSuchAlgorithmException If no provider makes either HmacSHA1 or HMAC-SHA-1 digest
      *                                  algorithms available.
      * @throws InvalidKeyException      The secret provided was not a valid HMAC-SHA-1 key.
@@ -125,6 +132,7 @@ public class OneTimePasswordUtils {
      *                         will be used. Dynamic truncation is when the last 4 bits of
      *                         the last byte of the MAC are used to determine the start
      *                         offset.
+     * @return Generated OTP.
      * @throws NoSuchAlgorithmException If no provider makes either HmacSHA1 or HMAC-SHA-1 digest
      *                                  algorithms available.
      * @throws InvalidKeyException      The secret provided was not a valid HMAC-SHA-1 key.
@@ -176,6 +184,7 @@ public class OneTimePasswordUtils {
      *                         will be used. Dynamic truncation is when the last 4 bits of
      *                         the last byte of the MAC are used to determine the start
      *                         offset.
+     * @return Generate alpha numeric OTP.
      * @throws NoSuchAlgorithmException If no provider makes either HmacSHA1 or HMAC-SHA-1 digest
      *                                  algorithms available.
      * @throws InvalidKeyException      The secret provided was not a valid HMAC-SHA-1 key.

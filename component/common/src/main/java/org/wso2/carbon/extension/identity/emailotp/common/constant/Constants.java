@@ -140,16 +140,34 @@ public class Constants {
     // Not Found error codes.
     private static List<String> notFoundErrors = Arrays.asList(ErrorMessage.CLIENT_INVALID_USER_ID.code);
 
+    /**
+     * This is to check if the error is a Forbidden Error.
+     *
+     * @param errorCode Error code of the error.
+     * @return True if it is a forbidden error if not False.
+     */
     public static boolean isForbiddenError(String errorCode) {
 
         return forbiddenErrors.contains(errorCode);
     }
 
+    /**
+     * This is to check if the error is a Conflict Error.
+     *
+     * @param errorCode Error code of the error.
+     * @return True if it is a Conflict error if not False.
+     */
     public static boolean isConflictError(String errorCode) {
 
         return conflictErrors.contains(errorCode);
     }
 
+    /**
+     * This is to check if the error is a Not found Error.
+     *
+     * @param errorCode Error code of the error.
+     * @return True if it is a Not found error if not False.
+     */
     public static boolean isNotFoundError(String errorCode) {
 
         return notFoundErrors.contains(errorCode);
