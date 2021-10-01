@@ -56,7 +56,9 @@ public class Utils {
                 properties = configs.getModuleProperties();
             } else {
                 properties = new Properties();
-                log.debug("Couldn't find Email OTP handler configurations.");
+                if (log.isDebugEnabled()) {
+                    log.debug("Couldn't find Email OTP handler configurations.");
+                }
             }
             sanitizeAndPopulateConfigs(properties);
         } catch (IdentityEventException e) {
@@ -67,6 +69,12 @@ public class Utils {
                 EmailOtpServiceDataHolder.getConfigs().toString()));
     }
 
+    /**
+     * Sanitize the configurations and apply the default configs if the configs are not presented in the configurations.
+     *
+     * @param properties pass the properties.
+     * @throws EmailOtpServerException Throws upon an issue while populating configs.
+     */
     private static void sanitizeAndPopulateConfigs(Properties properties) throws EmailOtpServerException {
 
         ConfigsDTO configs = EmailOtpServiceDataHolder.getConfigs();
@@ -128,11 +136,22 @@ public class Utils {
         configs.setResendThrottlingEnabled(resendThrottlingEnabled);
     }
 
+    /**
+     * This is to hash a text in SHA256 algorithm.
+     *
+     * @param text Text that need to be hashed.
+     * @return Encoded hash.
+     */
     public static String getHash(String text) {
 
         return DigestUtils.sha256Hex(text);
     }
 
+    /**
+     * Generate a random transaction id for each transaction.
+     *
+     * @return Random generated UUID for to clearly identifies a transaction.
+     */
     public static String createTransactionId() {
 
         String transactionId = UUID.randomUUID().toString();
@@ -142,6 +161,13 @@ public class Utils {
         return transactionId;
     }
 
+    /**
+     * This is to handle client exceptions.
+     *
+     * @param error Error message.
+     * @param data  Error data.
+     * @return EmailOtpClientException.
+     */
     public static EmailOtpClientException handleClientException(Constants.ErrorMessage error, String data) {
 
         String description;
@@ -153,6 +179,14 @@ public class Utils {
         return new EmailOtpClientException(error.getMessage(), description, error.getCode());
     }
 
+    /**
+     * This is to handle client exceptions.
+     *
+     * @param error Error message.
+     * @param data  Error data.
+     * @param e     Thrown exception.
+     * @return EmailOtpClientException.
+     */
     public static EmailOtpClientException handleClientException(Constants.ErrorMessage error, String data,
                                                                 Throwable e) {
 
@@ -165,6 +199,14 @@ public class Utils {
         return new EmailOtpClientException(error.getMessage(), description, error.getCode(), e);
     }
 
+    /**
+     * This is to handle server exceptions.
+     *
+     * @param error Error message.
+     * @param data  Error data.
+     * @param e     Thrown exception.
+     * @return EmailOtpServerException.
+     */
     public static EmailOtpServerException handleServerException(Constants.ErrorMessage error, String data,
                                                                 Throwable e) {
 
@@ -177,6 +219,13 @@ public class Utils {
         return new EmailOtpServerException(error.getMessage(), description, error.getCode(), e);
     }
 
+    /**
+     * This is to handle server exceptions.
+     *
+     * @param error Error message.
+     * @param data  Error data.
+     * @return EmailOtpServerException.
+     */
     public static EmailOtpServerException handleServerException(Constants.ErrorMessage error, String data) {
 
         String description;

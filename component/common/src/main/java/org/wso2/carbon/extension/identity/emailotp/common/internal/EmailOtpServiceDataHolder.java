@@ -30,21 +30,41 @@ public class EmailOtpServiceDataHolder {
     private RealmService realmService;
     private static final ConfigsDTO configs = new ConfigsDTO();
 
+    /**
+     * To get the Email OTP service data holder instance.
+     *
+     * @return The instance of EmailOtpServiceDataHolder.
+     */
     public static EmailOtpServiceDataHolder getInstance() {
 
         return dataHolder;
     }
 
+    /**
+     * This is to get the Realm service.
+     *
+     * @return The instance of RealmService.
+     */
     public RealmService getRealmService() {
 
         return realmService;
     }
 
+    /**
+     * To set the Realm Service.
+     *
+     * @param realmService RealmService instance.
+     */
     public void setRealmService(RealmService realmService) {
 
         this.realmService = realmService;
     }
 
+    /**
+     * To get the configurations.
+     *
+     * @return The configurations are applied to the Email OTP service.
+     */
     public static ConfigsDTO getConfigs() {
 
         return configs;
