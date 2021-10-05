@@ -2,7 +2,7 @@ Welcome to the WSO2 Identity Server (IS) EmailOTP authenticator.
 
 WSO2 IS is one of the best Identity Servers, which enables you to offload your identity and user entitlement management burden totally from your application. It comes with many features, supports many industry standards and most importantly it allows you to extent it according to your security requirements. This repo contains Authenticators written to work with different third party systems. 
 
-With WSO2 IS, there are a lot of provisioning capabilities available. There are 3 major concepts as Inbound, Outbound provisioning and Just-In-Time provisioning. Inbound provisioning means , provisioning users and groups from an external system to IS. outbound provisioning means, provisioning users from IS to other external systems. JIT provisioning means, once a user tries to log in from an external IDP, a user can be created on the fly in IS with JIT. Repos under this account holds such components involve in communicating with external systems.
+With WSO2 IS, there are a lot of provisioning capabilities available. There are 3 major concepts as Inbound, Outbound provisioning, and Just-In-Time provisioning. Inbound provisioning means provisioning users and groups from an external system to IS. outbound provisioning means provisioning users from IS to other external systems. JIT provisioning means, once a user tries to log in from an external IDP, a user can be created on the fly in IS with JIT. Repos under this account holds such components involve in communicating with external systems.
 
 # EMAIL OTP Service
 
