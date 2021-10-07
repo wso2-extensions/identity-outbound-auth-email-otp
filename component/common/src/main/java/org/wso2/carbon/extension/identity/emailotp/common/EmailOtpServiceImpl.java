@@ -325,6 +325,9 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         String jsonString = (String) SessionDataStore.getInstance().
                 getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
         if (StringUtils.isBlank(jsonString)) {
+            if(log.isDebugEnabled()){
+                log.debug(String.format("No OTP session found for the user : %s.", userId));
+            }
             return;
         }
 
