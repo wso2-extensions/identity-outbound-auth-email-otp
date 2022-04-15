@@ -65,7 +65,7 @@
         <link href="css/custom-common.css" rel="stylesheet">
 
         <script src="js/scripts.js"></script>
-        <script src="assets/js/jquery-3.4.1.min.js"></script>
+        <script src="assets/js/jquery-3.6.0.min.js"></script>
         <!--[if lt IE 9]>
         <script src="js/html5shiv.min.js"></script>
         <script src="js/respond.min.js"></script>
@@ -118,7 +118,7 @@
             </p>
         </div>
     </footer>
-    <script src="libs/jquery_3.4.1/jquery-3.4.1.js"></script>
+    <script src="libs/jquery_3.6.0/jquery-3.6.0.js"></script>
     <script src="libs/bootstrap_3.4.1/js/bootstrap.min.js"></script>
     </body>
     </html>
