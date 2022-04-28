@@ -2403,19 +2403,17 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             String accountLockClaim =
                     userClaims.get(EmailOTPAuthenticatorConstants.ACCOUNT_LOCKED_CLAIM);
 
-            Map<String, String> updatedClaims = new HashMap<>();
             if (NumberUtils.isNumber(failedEmailOtpAttempts) && Integer.parseInt(failedEmailOtpAttempts) > 0 ||
                     NumberUtils.isNumber(failedLoginLockoutCount) && Integer.parseInt(failedLoginLockoutCount) > 0) {
+                Map<String, String> updatedClaims = new HashMap<>();
                 updatedClaims.put(EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM, "0");
                 updatedClaims.put(EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM, "0");
-            }
-            // Check the account lock claim to verify whether the user is previously locked.
-            if (Boolean.parseBoolean(accountLockClaim)) {
-                // Update the account locking related claims upon successful completion of the OTP verification.
-                updatedClaims.put(EmailOTPAuthenticatorConstants.ACCOUNT_LOCKED_CLAIM, Boolean.FALSE.toString());
-                updatedClaims.put(EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM, "0");
-            }
-            if (updatedClaims.size() > 0) {
+                // Check the account lock claim to verify whether the user is previously locked.
+                if (Boolean.parseBoolean(accountLockClaim)) {
+                    // Update the account locking related claims upon successful completion of the OTP verification.
+                    updatedClaims.put(EmailOTPAuthenticatorConstants.ACCOUNT_LOCKED_CLAIM, Boolean.FALSE.toString());
+                    updatedClaims.put(EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM, "0");
+                }
                 userStoreManager
                         .setUserClaimValues(usernameWithDomain, updatedClaims, UserCoreConstants.DEFAULT_PROFILE);
             }
