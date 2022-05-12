@@ -19,7 +19,7 @@
     <parent>
         <groupId>org.wso2.carbon.extension.identity.authenticator.outbound.emailotp</groupId>
         <artifactId>identity-outbound-auth-email-otp</artifactId>
-        <version>3.0.20-SNAPSHOT</version>
+        <version>3.0.20</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>org.wso2.carbon.extension.identity.authenticator.emailotp.feature</artifactId>
