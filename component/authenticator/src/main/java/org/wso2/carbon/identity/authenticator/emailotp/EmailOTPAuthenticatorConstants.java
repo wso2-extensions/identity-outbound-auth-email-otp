@@ -157,6 +157,7 @@ public class EmailOTPAuthenticatorConstants {
             "failedLoginLockoutCount";
     public static final String ACCOUNT_LOCKED_CLAIM = "http://wso2.org/claims/identity/accountLocked";
     public static final String ACCOUNT_UNLOCK_TIME_CLAIM = "http://wso2.org/claims/identity/unlockTime";
+    public static final String ACCOUNT_LOCKED_REASON_CLAIM_URI = "http://wso2.org/claims/identity/lockedReason";
     public static final String SHOW_AUTH_FAILURE_REASON = "showAuthFailureReason";
     public static final String ENABLE_ACCOUNT_LOCKING_FOR_FAILED_ATTEMPTS = "EnableAccountLockingForFailedAttempts";
     public static final String PROPERTY_LOGIN_FAIL_TIMEOUT_RATIO = "account.lock.handler.login.fail.timeout.ratio";
@@ -165,4 +166,7 @@ public class EmailOTPAuthenticatorConstants {
     public static final String PROPERTY_ACCOUNT_LOCK_TIME = "account.lock.handler.Time";
     public static final String ERROR_USER_ACCOUNT_LOCKED = "&authFailure=true&authFailureMsg=user.account.locked";
     public static final String ADMIN_INITIATED = "AdminInitiated";
+
+    public static final String MAX_EMAIL_OTP_ATTEMPTS_EXCEEDED = "MAX_EMAIL_OTP_ATTEMPTS_EXCEEDED";
+
 }
