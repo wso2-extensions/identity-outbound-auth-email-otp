@@ -10,10 +10,11 @@ This module provides a fully decoupled OSGI service to generate and validate EMA
 the authentication flow.
 
 ## Deployment instructions
-1. Build the repository using `mvn clean install`.
-2. Copy the `org.wso2.carbon.extension.identity.emailotp.common-<VERSION>.jar` to the
+1. Install Java 11 (or Java 17).
+2. Build the repository using `mvn clean install`.
+3. Copy the `org.wso2.carbon.extension.identity.emailotp.common-<VERSION>.jar` to the
    `<IS_HOME>/repository/components/dropins` directory.
-3. Add the below configurations to the `<IS_HOME>/repository/conf/deployment.toml` file.
+4. Add the below configurations to the `<IS_HOME>/repository/conf/deployment.toml` file.
 ```properties
 [[event_handler]]
 name = "emailOtp"

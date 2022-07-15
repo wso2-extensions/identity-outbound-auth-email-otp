@@ -70,12 +70,6 @@
                 <version>${jacoco.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.mockito</groupId>
-                <artifactId>mockito-all</artifactId>
-                <version>${mockito.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
                 <groupId>org.powermock</groupId>
                 <artifactId>powermock-core</artifactId>
                 <version>${powermock.version}</version>
@@ -97,7 +91,7 @@
             </dependency>
             <dependency>
                 <groupId>org.powermock</groupId>
-                <artifactId>powermock-api-mockito</artifactId>
+                <artifactId>powermock-api-mockito2</artifactId>
                 <version>${powermock.version}</version>
                 <scope>test</scope>
             </dependency>
@@ -469,10 +463,10 @@
     </distributionManagement>
 
     <properties>
-        <carbon.identity.version>5.20.144</carbon.identity.version>
+        <carbon.identity.version>5.21.7</carbon.identity.version>
         <carbon.identity.event.version>5.18.209</carbon.identity.event.version>
         <commons-logging.version>4.4.3</commons-logging.version>
-        <carbon.kernel.version>4.6.1</carbon.kernel.version>
+        <carbon.kernel.version>4.7.0-beta9</carbon.kernel.version>
         <identity.governance.version>1.4.1</identity.governance.version>
         <oltu.version>1.0.0.wso2v2</oltu.version>
         <org.apache.oltu.oauth2.client.version>1.0.0</org.apache.oltu.oauth2.client.version>
@@ -498,12 +492,12 @@
         </carbon.identity.account.lock.handler.imp.pkg.version.range>
         <!--Test Dependencies-->
         <junit.version>4.13.1</junit.version>
-        <testng.version>6.9.10</testng.version>
-        <jacoco.version>0.7.9</jacoco.version>
-        <powermock.version>1.6.5</powermock.version>
+        <testng.version>7.0.0</testng.version>
+        <jacoco.version>0.8.4</jacoco.version>
+        <powermock.version>2.0.2</powermock.version>
         <slf4j.api.version>1.5.6</slf4j.api.version>
-        <maven.surefire.plugin.version>2.18.1</maven.surefire.plugin.version>
-        <mockito.version>1.10.19</mockito.version>
+        <maven.surefire.plugin.version>2.22.0</maven.surefire.plugin.version>
+        <mockito.version>2.23.4</mockito.version>
 
         <apache.felix.scr.ds.annotations.version>1.2.4</apache.felix.scr.ds.annotations.version>
         <osgi.service.import.version.range>[1.2.0,2.0.0)</osgi.service.import.version.range>
