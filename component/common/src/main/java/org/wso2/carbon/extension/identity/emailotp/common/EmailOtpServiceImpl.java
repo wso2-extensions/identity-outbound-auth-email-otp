@@ -195,7 +195,6 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         return new ValidationResponseDTO(userId, true);
     }
 
-
     private ValidationResponseDTO isValid(SessionDTO sessionDTO, String emailOtp, String userId,
                                           String transactionId, boolean showFailureReason) {
 
