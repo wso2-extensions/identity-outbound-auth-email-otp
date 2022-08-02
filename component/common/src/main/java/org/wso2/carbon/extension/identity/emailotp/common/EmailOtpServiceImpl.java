@@ -153,6 +153,48 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         return new ValidationResponseDTO(userId, true);
     }
 
+    @Override
+    public ValidationResponseDTO verifyEmailOTP(String transactionId, String userId, String emailOTP) throws EmailOtpException {
+
+        // Sanitize inputs.
+        if (StringUtils.isBlank(transactionId) || StringUtils.isBlank(userId) || StringUtils.isBlank(emailOTP)) {
+            String missingParam = StringUtils.isBlank(transactionId) ? "transactionId"
+                    : StringUtils.isBlank(userId) ? "userId"
+                    : "emailOTP";
+            throw Utils.handleClientException(
+                    Constants.ErrorMessage.CLIENT_MANDATORY_VALIDATION_PARAMETERS_EMPTY, missingParam);
+        }
+
+        boolean showFailureReason = EmailOtpServiceDataHolder.getConfigs().isShowFailureReason();
+
+        // Retrieve session from the database.
+        String sessionId = Utils.getHash(userId);
+        String jsonString = (String) SessionDataStore.getInstance()
+                .getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
+        if (StringUtils.isBlank(jsonString)) {
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("No OTP session found for the user : %s.", userId));
+            }
+            FailureReasonDTO error = showFailureReason
+                    ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_NO_OTP_FOR_USER, userId)
+                    : null;
+            return new ValidationResponseDTO(userId, false, error);
+        }
+        SessionDTO sessionDTO;
+        try {
+            sessionDTO = new ObjectMapper().readValue(jsonString, SessionDTO.class);
+        } catch (IOException e) {
+            throw Utils.handleServerException(Constants.ErrorMessage.SERVER_JSON_SESSION_MAPPER_ERROR, null, e);
+        }
+
+        ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId, showFailureReason);
+        if (!responseDTO.isValid()) {
+            return responseDTO;
+        }
+
+        return new ValidationResponseDTO(userId, true);
+    }
+
     private ValidationResponseDTO isValid(SessionDTO sessionDTO, String emailOtp, String userId,
                                           String transactionId, boolean showFailureReason) {
 
