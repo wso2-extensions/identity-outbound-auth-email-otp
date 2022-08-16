@@ -40,6 +40,20 @@ public interface EmailOtpService {
             EmailOtpException;
 
     /**
+     * This method verify a provided OTP without invalidate.
+     *
+     * @param transactionId UUID to track the flow.
+     * @param userId        SCIM User Id.
+     * @param emailOTP      OTP to be validated.
+     * @return OTP verification result.
+     * @throws EmailOtpException Thrown if any server or client error occurred.
+     */
+    default ValidationResponseDTO verifyEmailOTP(String transactionId, String userId, String emailOTP) throws
+            EmailOtpException {
+        return null;
+    }
+
+    /**
      * This method will generate an OTP and send an EMAIL notification.
      *
      * @param userId SCIM User Id.
