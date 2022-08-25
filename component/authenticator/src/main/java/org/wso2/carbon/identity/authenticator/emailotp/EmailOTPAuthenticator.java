@@ -2559,7 +2559,14 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
         AuthenticatedUser authenticatedUser = (AuthenticatedUser) context.getProperty(EmailOTPAuthenticatorConstants
                 .AUTHENTICATED_USER);
         Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
-        if (isEmailOTPDisableForUser(authenticatedUser, context, emailOTPParameters)) {
+        String username = authenticatedUser.getAuthenticatedSubjectIdentifier();
+        boolean isUserExist;
+        try {
+            isUserExist = FederatedAuthenticatorUtil.isUserExistInUserStore(username);
+        } catch (UserStoreException e) {
+            throw new AuthenticationFailedException("Failed to get the user from user store.", e);
+        }
+        if (isUserExist && isEmailOTPDisableForUser(username, context, emailOTPParameters)) {
             // Email OTP is disabled for the user. Hence not going to trigger the event.
             return;
         }
