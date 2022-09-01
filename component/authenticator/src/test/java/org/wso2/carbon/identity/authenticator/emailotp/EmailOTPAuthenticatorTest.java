@@ -77,7 +77,6 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyObject;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.doNothing;
 import static org.powermock.api.mockito.PowerMockito.doReturn;
@@ -244,8 +243,9 @@ public class EmailOTPAuthenticatorTest {
                 EmailOTPAuthenticatorConstants.EMAIL_CLAIM, null))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
         emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
+        when(httpServletRequest.getHeader(anyString())).thenReturn(EmailOTPAuthenticatorConstants.IP_ADDRESS);
         doNothing().when(emailOTPAuthenticator, "sendOTP", anyString(), anyString(), anyString(), anyObject(),
-                nullable(String.class));
+                anyString());
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
@@ -275,8 +275,9 @@ public class EmailOTPAuthenticatorTest {
                 EmailOTPAuthenticatorConstants.EMAIL_CLAIM, null))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
         emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
+        when(httpServletRequest.getHeader(anyString())).thenReturn(EmailOTPAuthenticatorConstants.IP_ADDRESS);
         doNothing().when(emailOTPAuthenticator, "sendOTP", anyString(), anyString(), anyString(), anyObject(),
-                nullable(String.class));
+                anyString());
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
@@ -315,8 +316,9 @@ public class EmailOTPAuthenticatorTest {
                 EmailOTPAuthenticatorConstants.EMAIL_CLAIM, null))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
         emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
+        when(httpServletRequest.getHeader(anyString())).thenReturn(EmailOTPAuthenticatorConstants.IP_ADDRESS);
         doNothing().when(emailOTPAuthenticator, "sendOTP", anyString(), anyString(), anyString(), anyObject(),
-                nullable(String.class));
+                anyString());
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
@@ -355,8 +357,9 @@ public class EmailOTPAuthenticatorTest {
                 EmailOTPAuthenticatorConstants.EMAIL_CLAIM, null))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
         emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
+        when(httpServletRequest.getHeader(anyString())).thenReturn(EmailOTPAuthenticatorConstants.IP_ADDRESS);
         doNothing().when(emailOTPAuthenticator, "sendOTP", anyString(), anyString(), anyString(), anyObject(),
-                nullable(String.class));
+                anyString());
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
@@ -460,8 +463,9 @@ public class EmailOTPAuthenticatorTest {
         setStepConfigWithFederatedAuthenticator(authenticatedUser, authenticatorConfig);
         mockFederatedEmailAttributeKey(parameters, authenticatedUser, EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
         emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
+        when(httpServletRequest.getHeader(anyString())).thenReturn(EmailOTPAuthenticatorConstants.IP_ADDRESS);
         doNothing().when(emailOTPAuthenticator, "sendOTP", anyString(), anyString(), anyString(), anyObject(),
-                nullable(String.class));
+                anyString());
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
@@ -494,8 +498,9 @@ public class EmailOTPAuthenticatorTest {
         setStepConfigWithFederatedAuthenticator(authenticatedUser, authenticatorConfig);
         mockFederatedEmailAttributeKey(parameters, authenticatedUser, EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
         emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
+        when(httpServletRequest.getHeader(anyString())).thenReturn(EmailOTPAuthenticatorConstants.IP_ADDRESS);
         doNothing().when(emailOTPAuthenticator, "sendOTP", anyString(), anyString(), anyString(), anyObject(),
-                nullable(String.class));
+                anyString());
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
