@@ -881,16 +881,14 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
         try {
             String federatedEmailAttributeKey;
             String email = null;
-            StepConfig stepConfig = context.getSequenceConfig().getStepMap().get(context.getCurrentStep() - 1);
-            String previousStepAuthenticator = stepConfig.getAuthenticatedAutenticator().getName();
-            StepConfig currentStep = context.getSequenceConfig().getStepMap().get(context.getCurrentStep());
-            String currentStepAuthenticator = currentStep.getAuthenticatorList().iterator().next().getName();
             if (sendOtpToFederatedEmail) {
+                StepConfig stepConfig = context.getSequenceConfig().getStepMap().get(context.getCurrentStep() - 1);
+                String previousStepAuthenticator = stepConfig.getAuthenticatedAutenticator().getName();
                 federatedEmailAttributeKey = getFederatedEmailAttributeKey(context, previousStepAuthenticator);
                 if (StringUtils.isEmpty(federatedEmailAttributeKey)) {
-                    federatedEmailAttributeKey = getFederatedEmailAttributeKey(context, currentStepAuthenticator);
+                    federatedEmailAttributeKey = getFederatedEmailAttributeKey(context,
+                            context.getParameter(EmailOTPAuthenticatorConstants.AUTHENTICATION).toString());
                 }
-
                 // Email OTP authentication is mandatory and user doesn't exist in user store,then send the OTP to
                 // the email which is got from the claim set.
                 Map<ClaimMapping, String> userAttributes = context.getCurrentAuthenticatedIdPs().values().
@@ -1434,11 +1432,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
         try {
             if (sendOtpToFederatedEmail) {
                 if (StringUtils.isEmpty(federatedEmailAttributeKey)) {
-                    federatedEmailAttributeKey = getFederatedEmailAttributeKey(context, context.getSequenceConfig()
-                            .getStepMap().get(context.getCurrentStep()).getAuthenticatorList().iterator().next()
-                            .getName());
+                    federatedEmailAttributeKey = getFederatedEmailAttributeKey(context,
+                            context.getParameter(EmailOTPAuthenticatorConstants.AUTHENTICATION).toString());
                 }
-
                 String email = getEmailForFederatedUser(userAttributes, federatedEmailAttributeKey);
                 if (StringUtils.isEmpty(email)) {
                     if (isEmailOTPMandatory) {
