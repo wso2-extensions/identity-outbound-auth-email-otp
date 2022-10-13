@@ -157,5 +157,6 @@ public class EmailOTPAuthenticatorConstants {
     public static final String ADMIN_INITIATED = "AdminInitiated";
 
     public static final String MAX_EMAIL_OTP_ATTEMPTS_EXCEEDED = "MAX_EMAIL_OTP_ATTEMPTS_EXCEEDED";
+    public static final String OVERALL_FAILED_LOGIN_LOCKOUT_COUNT = "overallFailedLoginLockoutCount";
 
 }
