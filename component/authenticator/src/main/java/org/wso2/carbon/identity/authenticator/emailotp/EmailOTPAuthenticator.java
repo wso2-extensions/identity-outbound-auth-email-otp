@@ -2518,8 +2518,6 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             updatedClaims.put(EmailOTPAuthenticatorConstants.ACCOUNT_LOCKED_CLAIM, Boolean.TRUE.toString());
             updatedClaims.put(EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM, "0");
             updatedClaims.put(EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM, String.valueOf(unlockTime));
-            // updatedClaims.put(EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM,
-            //         String.valueOf(failedLoginLockoutCountValue + 1));
             updatedClaims.put(EmailOTPAuthenticatorConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI,
                     EmailOTPAuthenticatorConstants.MAX_EMAIL_OTP_ATTEMPTS_EXCEEDED);
             IdentityUtil.threadLocalProperties.get().put(EmailOTPAuthenticatorConstants.ADMIN_INITIATED, false);
