@@ -2397,22 +2397,17 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
 
             // Avoid updating the claims if they are already zero.
             String[] claimsToCheck = {EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM,
-                    EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM,
                     EmailOTPAuthenticatorConstants.ACCOUNT_LOCKED_CLAIM};
             Map<String, String> userClaims = userStoreManager.getUserClaimValues(usernameWithDomain, claimsToCheck,
                     UserCoreConstants.DEFAULT_PROFILE);
             String failedEmailOtpAttempts =
                     userClaims.get(EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM);
-            String failedLoginLockoutCount =
-                    userClaims.get(EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM);
             String accountLockClaim =
                     userClaims.get(EmailOTPAuthenticatorConstants.ACCOUNT_LOCKED_CLAIM);
 
-            if (NumberUtils.isNumber(failedEmailOtpAttempts) && Integer.parseInt(failedEmailOtpAttempts) > 0 ||
-                    NumberUtils.isNumber(failedLoginLockoutCount) && Integer.parseInt(failedLoginLockoutCount) > 0) {
+            if (NumberUtils.isNumber(failedEmailOtpAttempts) && Integer.parseInt(failedEmailOtpAttempts) > 0) {
                 Map<String, String> updatedClaims = new HashMap<>();
                 updatedClaims.put(EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM, "0");
-                updatedClaims.put(EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM, "0");
                 // Check the account lock claim to verify whether the user is previously locked.
                 if (Boolean.parseBoolean(accountLockClaim)) {
                     // Update the account locking related claims upon successful completion of the OTP verification.
@@ -2500,26 +2495,15 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
         Map<String, String> updatedClaims = new HashMap<>();
         if ((currentAttempts + 1) >= maxAttempts) {
             // Calculate the incremental unlock-time-interval in milli seconds.
-            if (context.getProperty(EmailOTPAuthenticatorConstants.OVERALL_FAILED_LOGIN_LOCKOUT_COUNT) != null &&
-                context.getProperty(EmailOTPAuthenticatorConstants.OVERALL_FAILED_LOGIN_LOCKOUT_COUNT)
-                        instanceof Integer) {
-                int overallLockoutCount =
-                        (int) context.getProperty(EmailOTPAuthenticatorConstants.OVERALL_FAILED_LOGIN_LOCKOUT_COUNT);
-                unlockTimePropertyValue = (long) (unlockTimePropertyValue * 1000 * 60 * Math.pow(unlockTimeRatio,
-                        overallLockoutCount));
-                updatedClaims.put(EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM,
-                        String.valueOf(overallLockoutCount + 1));
-            } else {
-                unlockTimePropertyValue = (long) (unlockTimePropertyValue * 1000 * 60 * Math.pow(unlockTimeRatio,
-                        failedLoginLockoutCountValue));
-                updatedClaims.put(EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM,
-                        String.valueOf(failedLoginLockoutCountValue + 1));
-            }
-            // Calculate unlock-time by adding current-time and unlock-time-interval in milli seconds.
+            unlockTimePropertyValue = (long) (unlockTimePropertyValue * 1000 * 60 * Math.pow(unlockTimeRatio,
+                    failedLoginLockoutCountValue));
+            // Calculate unlock-time by adding current-time and unlock-time-interval in milliseconds.
             long unlockTime = System.currentTimeMillis() + unlockTimePropertyValue;
             updatedClaims.put(EmailOTPAuthenticatorConstants.ACCOUNT_LOCKED_CLAIM, Boolean.TRUE.toString());
             updatedClaims.put(EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM, "0");
             updatedClaims.put(EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM, String.valueOf(unlockTime));
+            updatedClaims.put(EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM,
+                    String.valueOf(failedLoginLockoutCountValue + 1));
             updatedClaims.put(EmailOTPAuthenticatorConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI,
                     EmailOTPAuthenticatorConstants.MAX_EMAIL_OTP_ATTEMPTS_EXCEEDED);
             IdentityUtil.threadLocalProperties.get().put(EmailOTPAuthenticatorConstants.ADMIN_INITIATED, false);
