@@ -2397,22 +2397,17 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
 
             // Avoid updating the claims if they are already zero.
             String[] claimsToCheck = {EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM,
-                    EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM,
                     EmailOTPAuthenticatorConstants.ACCOUNT_LOCKED_CLAIM};
             Map<String, String> userClaims = userStoreManager.getUserClaimValues(usernameWithDomain, claimsToCheck,
                     UserCoreConstants.DEFAULT_PROFILE);
             String failedEmailOtpAttempts =
                     userClaims.get(EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM);
-            String failedLoginLockoutCount =
-                    userClaims.get(EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM);
             String accountLockClaim =
                     userClaims.get(EmailOTPAuthenticatorConstants.ACCOUNT_LOCKED_CLAIM);
 
-            if (NumberUtils.isNumber(failedEmailOtpAttempts) && Integer.parseInt(failedEmailOtpAttempts) > 0 ||
-                    NumberUtils.isNumber(failedLoginLockoutCount) && Integer.parseInt(failedLoginLockoutCount) > 0) {
+            if (NumberUtils.isNumber(failedEmailOtpAttempts) && Integer.parseInt(failedEmailOtpAttempts) > 0) {
                 Map<String, String> updatedClaims = new HashMap<>();
                 updatedClaims.put(EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM, "0");
-                updatedClaims.put(EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM, "0");
                 // Check the account lock claim to verify whether the user is previously locked.
                 if (Boolean.parseBoolean(accountLockClaim)) {
                     // Update the account locking related claims upon successful completion of the OTP verification.
