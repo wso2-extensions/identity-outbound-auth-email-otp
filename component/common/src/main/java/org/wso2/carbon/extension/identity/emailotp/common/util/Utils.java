@@ -127,6 +127,14 @@ public class Utils {
                 Constants.DEFAULT_EMAIL_RESEND_THROTTLE_INTERVAL;
         configs.setResendThrottleInterval(resendThrottleInterval);
 
+        // Maximum allowed validation attempts defaults to 5 if its not specified as a property in deployment.toml file.
+        String otpMaxValidationAttemptsAllowedValue = StringUtils.trim(
+                properties.getProperty(Constants.EMAIL_OTP_MAX_VALIDATION_ATTEMPTS_ALLOWED));
+        int maxValidationAttemptsAllowed = StringUtils.isNumeric(otpMaxValidationAttemptsAllowedValue) ?
+                Integer.parseInt(otpMaxValidationAttemptsAllowedValue) :
+                Constants.DEFAULT_MAX_VALIDATION_ATTEMPTS_ALLOWED;
+        configs.setMaxValidationAttemptsAllowed(maxValidationAttemptsAllowed);
+
         // Should we send the same OTP upon the next generation request? Defaults to 'false'.
         boolean resendSameOtp = (otpRenewalInterval > 0) && (otpRenewalInterval < otpValidityPeriod);
         configs.setResendSameOtp(resendSameOtp);

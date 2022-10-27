@@ -34,6 +34,7 @@ public class SessionDTO implements Serializable {
     private String transactionId;
     private String fullQualifiedUserName;
     private String userId;
+    private int validationAttempts;
 
     public String getOtpToken() {
 
@@ -95,6 +96,16 @@ public class SessionDTO implements Serializable {
         this.userId = userId;
     }
 
+    public int getValidationAttempts() {
+
+        return validationAttempts;
+    }
+
+    public void setValidationAttempts(int validationAttempts) {
+
+        this.validationAttempts = validationAttempts;
+    }
+
     @Override
     public boolean equals(Object o) {
 
@@ -110,14 +121,15 @@ public class SessionDTO implements Serializable {
                 getOtpToken().equals(that.getOtpToken()) &&
                 getTransactionId().equals(that.getTransactionId()) &&
                 getFullQualifiedUserName().equals(that.getFullQualifiedUserName()) &&
-                getUserId().equals(that.getUserId());
+                getUserId().equals(that.getUserId()) &&
+                getValidationAttempts() == that.getValidationAttempts();
     }
 
     @Override
     public int hashCode() {
 
         return Objects.hash(getOtpToken(), getGeneratedTime(), getExpiryTime(), getTransactionId(),
-                getFullQualifiedUserName(), getUserId());
+                getFullQualifiedUserName(), getUserId(), getValidationAttempts());
     }
 
     @Override
@@ -130,6 +142,7 @@ public class SessionDTO implements Serializable {
                 ", transactionId='" + transactionId + '\'' +
                 ", fullQualifiedUserName='" + fullQualifiedUserName + '\'' +
                 ", userId='" + userId + '\'' +
+                ", validationAttempts='" + validationAttempts + '\'' +
                 '}';
     }
 }

@@ -138,13 +138,27 @@ public class EmailOtpServiceImpl implements EmailOtpService {
             return new ValidationResponseDTO(userId, false, error);
         }
         SessionDTO sessionDTO;
+        int validateAttempt;
         try {
             sessionDTO = new ObjectMapper().readValue(jsonString, SessionDTO.class);
+            validateAttempt = sessionDTO.getValidationAttempts();
+            FailureReasonDTO error;
+            if (validateAttempt >= EmailOtpServiceDataHolder.getConfigs().getMaxValidationAttemptsAllowed()) {
+                SessionDataStore.getInstance().clearSessionData(sessionId, Constants.SESSION_TYPE_OTP);
+                error = showFailureReason
+                        ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_OTP_VALIDATION_BLOCKED, userId)
+                        : null;
+                return new ValidationResponseDTO(userId, false, error);
+            } else {
+                validateAttempt++;
+                sessionDTO.setValidationAttempts(validateAttempt);
+                persistOTPSession(sessionDTO, sessionId);
+            }
         } catch (IOException e) {
             throw Utils.handleServerException(Constants.ErrorMessage.SERVER_JSON_SESSION_MAPPER_ERROR, null, e);
         }
 
-        ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId, showFailureReason);
+        ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId, validateAttempt, showFailureReason);
         if (!responseDTO.isValid()) {
             return responseDTO;
         }
@@ -181,13 +195,27 @@ public class EmailOtpServiceImpl implements EmailOtpService {
             return new ValidationResponseDTO(userId, false, error);
         }
         SessionDTO sessionDTO;
+        int validateAttempt;
         try {
             sessionDTO = new ObjectMapper().readValue(jsonString, SessionDTO.class);
+            validateAttempt = sessionDTO.getValidationAttempts();
+            FailureReasonDTO error;
+            if (validateAttempt >= EmailOtpServiceDataHolder.getConfigs().getMaxValidationAttemptsAllowed()) {
+                SessionDataStore.getInstance().clearSessionData(sessionId, Constants.SESSION_TYPE_OTP);
+                error = showFailureReason
+                        ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_OTP_VALIDATION_BLOCKED, userId)
+                        : null;
+                return new ValidationResponseDTO(userId, false, error);
+            } else {
+                validateAttempt++;
+                sessionDTO.setValidationAttempts(validateAttempt);
+                persistOTPSession(sessionDTO, sessionId);
+            }
         } catch (IOException e) {
             throw Utils.handleServerException(Constants.ErrorMessage.SERVER_JSON_SESSION_MAPPER_ERROR, null, e);
         }
 
-        ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId, showFailureReason);
+        ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId, validateAttempt, showFailureReason);
         if (!responseDTO.isValid()) {
             return responseDTO;
         }
@@ -196,7 +224,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
     }
 
     private ValidationResponseDTO isValid(SessionDTO sessionDTO, String emailOtp, String userId,
-                                          String transactionId, boolean showFailureReason) {
+                                          String transactionId, int validateAttempt, boolean showFailureReason) {
 
         FailureReasonDTO error;
         // Check if the provided OTP is correct.
@@ -204,9 +232,11 @@ public class EmailOtpServiceImpl implements EmailOtpService {
             if (log.isDebugEnabled()) {
                 log.debug(String.format("Invalid OTP provided for the user : %s.", userId));
             }
+            int remainingFailedAttempts =
+                    EmailOtpServiceDataHolder.getConfigs().getMaxValidationAttemptsAllowed() - validateAttempt;
             error = showFailureReason
-                    ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_OTP_VALIDATION_FAILED, userId)
-                    : null;
+                    ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_OTP_VALIDATION_FAILED, userId,
+                    remainingFailedAttempts) : null;
             return new ValidationResponseDTO(userId, false, error);
         }
         // Check for expired OTPs.
