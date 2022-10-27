@@ -40,6 +40,8 @@ public class Constants {
     public static final int DEFAULT_EMAIL_OTP_EXPIRY_TIME = 120000;
     public static final int DEFAULT_EMAIL_RESEND_THROTTLE_INTERVAL = 30000;
 
+    public static final int DEFAULT_MAX_VALIDATION_ATTEMPTS_ALLOWED = 5;
+
     public static final String EMAIL_OTP_IDENTITY_EVENT_MODULE_NAME = "emailOtp";
     public static final String EMAIL_OTP_ENABLED = "emailOtp.enabled";
     public static final String EMAIL_OTP_LENGTH = "emailOtp.tokenLength";
@@ -48,6 +50,8 @@ public class Constants {
     public static final String EMAIL_OTP_TRIGGER_OTP_NOTIFICATION = "emailOtp.triggerNotification";
     public static final String EMAIL_OTP_RENEWAL_INTERVAL = "emailOtp.tokenRenewalInterval";
     public static final String EMAIL_OTP_RESEND_THROTTLE_INTERVAL = "emailOtp.resendThrottleInterval";
+
+    public static final String EMAIL_OTP_MAX_VALIDATION_ATTEMPTS_ALLOWED = "emailOtp.maxValidationAttemptsAllowed";
     public static final String EMAIL_OTP_SHOW_FAILURE_REASON = "emailOtp.showValidationFailureReason";
 
     /**
@@ -76,6 +80,8 @@ public class Constants {
                 "Please wait %s seconds before retrying."),
         CLIENT_NO_OTP_FOR_USER("EMAIL-60011", "No OTP fround for the user.",
                 "No OTP found for the user Id : %s."),
+        CLIENT_OTP_VALIDATION_BLOCKED("EMAIL-60011", "Maximum allowed failed validation attempts exceeded.",
+                "Maximum allowed failed validation attempts exceeded for user id : %s."),
 
         // Server error codes.
         SERVER_USER_STORE_MANAGER_ERROR("EMAIL-65001", "User store manager error.",

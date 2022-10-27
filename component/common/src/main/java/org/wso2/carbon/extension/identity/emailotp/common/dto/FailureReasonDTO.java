@@ -30,12 +30,22 @@ public class FailureReasonDTO {
     String code;
     String message;
     String description;
+    int remainingAttempts;
 
     public FailureReasonDTO(String code, String message, String description) {
 
         this.code = code;
         this.message = message;
         this.description = description;
+        this.remainingAttempts = 0;
+    }
+
+    public FailureReasonDTO(String code, String message, String description, int remainingAttempts) {
+
+        this.code = code;
+        this.message = message;
+        this.description = description;
+        this.remainingAttempts = remainingAttempts;
     }
 
     public FailureReasonDTO(Constants.ErrorMessage error, String data) {
@@ -44,6 +54,23 @@ public class FailureReasonDTO {
         this.message = error.getMessage();
         description = StringUtils.isNotBlank(data) ? String.format(error.getDescription(), data)
                 : error.getDescription();
+        this.remainingAttempts = 0;
+    }
+
+    /**
+     * This method composes the error message for failed sms-otp validation attempts.
+     *
+     * @param error                     Error message.
+     * @param data                      Data passed for the string argument in error message.
+     * @param remainingFailedAttempts   No of remaining validation attempts.
+     */
+    public FailureReasonDTO(Constants.ErrorMessage error, String data, int remainingFailedAttempts) {
+
+        this.code = error.getCode();
+        this.message = error.getMessage();
+        description = StringUtils.isNotBlank(data) ? String.format(error.getDescription(), data)
+                : error.getDescription();
+        this.remainingAttempts = remainingFailedAttempts;
     }
 
     public String getCode() {
@@ -74,5 +101,15 @@ public class FailureReasonDTO {
     public void setDescription(String description) {
 
         this.description = description;
+    }
+
+    public int getRemainingAttempts() {
+
+        return remainingAttempts;
+    }
+
+    public void setRemainingAttempts(int remainingAttempts) {
+
+        this.remainingAttempts = remainingAttempts;
     }
 }
