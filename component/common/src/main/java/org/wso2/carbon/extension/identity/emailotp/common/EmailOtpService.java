@@ -61,5 +61,15 @@ public interface EmailOtpService {
      * @throws EmailOtpException Thrown if any server or client error occurred.
      */
     GenerationResponseDTO generateEmailOTP(String userId) throws EmailOtpException;
+
+    /**
+     * This method will generate an OTP and send an EMAIL notification.
+     *
+     * @param userId SCIM User Id.
+     * @param emailOtpExpiryTime
+     * @return OTP generation response.
+     * @throws EmailOtpException Thrown if any server or client error occurred.
+     */
+    GenerationResponseDTO generateEmailOTP(String userId, String emailOtpExpiryTime) throws EmailOtpException;
 }
 

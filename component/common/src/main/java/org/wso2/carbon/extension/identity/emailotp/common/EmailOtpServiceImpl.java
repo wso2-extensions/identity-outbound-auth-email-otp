@@ -48,8 +48,10 @@ import org.wso2.carbon.user.core.common.User;
 import org.wso2.carbon.user.core.constants.UserCoreErrorConstants;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * This class implements the EmailOtpService interface.
@@ -98,7 +100,8 @@ public class EmailOtpServiceImpl implements EmailOtpService {
             throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_BLANK_EMAIL_ADDRESS, user.getUserID());
         }
 
-        SessionDTO sessionDTO = issueOTP(user);
+        int emailOtpExpiryTime = EmailOtpServiceDataHolder.getConfigs().getOtpValidityPeriod();
+        SessionDTO sessionDTO = issueOTP(user, emailOtpExpiryTime);
 
         GenerationResponseDTO responseDTO = new GenerationResponseDTO();
         // If WSO2IS is handling the notifications, don't send the OTP in the response.
@@ -107,6 +110,59 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         }
         responseDTO.setTransactionId(sessionDTO.getTransactionId());
         return responseDTO;
+    }
+
+    @Override
+    public GenerationResponseDTO generateEmailOTP(String userId, String emailOtpExpiryTime) throws EmailOtpException {
+
+        if (StringUtils.isBlank(userId)) {
+            throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_EMPTY_USER_ID, null);
+        }
+
+            // Retrieve email only if notifications the are managed internally.
+            boolean sendNotification = EmailOtpServiceDataHolder.getConfigs().isTriggerNotification();
+            String[] requestedClaims =
+                    sendNotification ? new String[]{NotificationChannels.EMAIL_CHANNEL.getClaimUri()} : null;
+
+            // Retrieve user by ID.
+            AbstractUserStoreManager userStoreManager;
+            User user;
+            try {
+                userStoreManager = (AbstractUserStoreManager) EmailOtpServiceDataHolder.getInstance()
+                        .getRealmService().getTenantUserRealm(getTenantId()).getUserStoreManager();
+                user = userStoreManager.getUserWithID(userId, requestedClaims, UserCoreConstants.DEFAULT_PROFILE);
+            } catch (UserStoreException e) {
+                // Handle user not found.
+                String errorCode = ((org.wso2.carbon.user.core.UserStoreException) e).getErrorCode();
+                if (UserCoreErrorConstants.ErrorMessages.ERROR_CODE_NON_EXISTING_USER.getCode().equals(errorCode)) {
+                    throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_INVALID_USER_ID, userId);
+                }
+                throw Utils.handleServerException(Constants.ErrorMessage.SERVER_USER_STORE_MANAGER_ERROR,
+                        String.format("Error while retrieving user for the Id : %s.", userId), e);
+            }
+
+            // If throttling is enabled, check if the resend request has sent too early.
+            boolean resendThrottlingEnabled = EmailOtpServiceDataHolder.getConfigs().isResendThrottlingEnabled();
+            if (resendThrottlingEnabled) {
+                shouldThrottle(userId);
+            }
+
+            String emailAddress = sendNotification ? getEmailAddress(user) : null;
+            if (sendNotification && StringUtils.isBlank(emailAddress)) {
+                throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_BLANK_EMAIL_ADDRESS, user.getUserID());
+            }
+
+            SessionDTO sessionDTO = issueOTP(user, Integer.parseInt(emailOtpExpiryTime));
+
+            GenerationResponseDTO responseDTO = new GenerationResponseDTO();
+            // If WSO2IS is handling the notifications, don't send the OTP in the response.
+            if (!sendNotification) {
+                responseDTO.setEmailOTP(sessionDTO.getOtpToken());
+            }
+            responseDTO.setTransactionId(sessionDTO.getTransactionId());
+            responseDTO.setEmailOtpExpiryTime(emailOtpExpiryTime);
+            return responseDTO;
+
     }
 
     @Override
@@ -123,9 +179,10 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         }
 
         boolean showFailureReason = EmailOtpServiceDataHolder.getConfigs().isShowFailureReason();
+        boolean isEnableMultipleSessions = EmailOtpServiceDataHolder.getConfigs().isEnableMultipleSessions();
 
         // Retrieve session from the database.
-        String sessionId = Utils.getHash(userId);
+        String sessionId = Utils.getHash(userId, transactionId);
         String jsonString = (String) SessionDataStore.getInstance()
                 .getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
         if (StringUtils.isBlank(jsonString)) {
@@ -144,12 +201,14 @@ public class EmailOtpServiceImpl implements EmailOtpService {
             throw Utils.handleServerException(Constants.ErrorMessage.SERVER_JSON_SESSION_MAPPER_ERROR, null, e);
         }
 
-        ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId, showFailureReason);
+        ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId, showFailureReason, sessionId);
         if (!responseDTO.isValid()) {
             return responseDTO;
         }
         // Valid OTP. Clear OTP session data.
-        SessionDataStore.getInstance().clearSessionData(sessionId, Constants.SESSION_TYPE_OTP);
+        if (!isEnableMultipleSessions== true) {
+            SessionDataStore.getInstance().clearSessionData(sessionId, Constants.SESSION_TYPE_OTP);
+        }
         return new ValidationResponseDTO(userId, true);
     }
 
@@ -168,7 +227,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         boolean showFailureReason = EmailOtpServiceDataHolder.getConfigs().isShowFailureReason();
 
         // Retrieve session from the database.
-        String sessionId = Utils.getHash(userId);
+        String sessionId = Utils.getHash(userId, transactionId);
         String jsonString = (String) SessionDataStore.getInstance()
                 .getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
         if (StringUtils.isBlank(jsonString)) {
@@ -187,7 +246,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
             throw Utils.handleServerException(Constants.ErrorMessage.SERVER_JSON_SESSION_MAPPER_ERROR, null, e);
         }
 
-        ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId, showFailureReason);
+        ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId, showFailureReason, sessionId);
         if (!responseDTO.isValid()) {
             return responseDTO;
         }
@@ -196,9 +255,16 @@ public class EmailOtpServiceImpl implements EmailOtpService {
     }
 
     private ValidationResponseDTO isValid(SessionDTO sessionDTO, String emailOtp, String userId,
-                                          String transactionId, boolean showFailureReason) {
+                                          String transactionId, boolean showFailureReason, String sessionId) throws EmailOtpServerException {
 
         FailureReasonDTO error;
+        String jsonString = (String) SessionDataStore.getInstance()
+                .getSessionData(String.valueOf(sessionId), Constants.SESSION_TYPE_OTP);
+        try {
+            sessionDTO = new ObjectMapper().readValue(jsonString, SessionDTO.class);
+        } catch (IOException e) {
+            throw Utils.handleServerException(Constants.ErrorMessage.SERVER_JSON_SESSION_MAPPER_ERROR, null, e);
+        }
         // Check if the provided OTP is correct.
         if (!StringUtils.equals(emailOtp, sessionDTO.getOtpToken())) {
             if (log.isDebugEnabled()) {
@@ -209,6 +275,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                     : null;
             return new ValidationResponseDTO(userId, false, error);
         }
+
         // Check for expired OTPs.
         if (System.currentTimeMillis() > sessionDTO.getExpiryTime()) {
             if (log.isDebugEnabled()) {
@@ -229,17 +296,19 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         return new ValidationResponseDTO(userId, true);
     }
 
-    private SessionDTO issueOTP(User user) throws EmailOtpException {
+    private SessionDTO issueOTP(User user, int emailOtpExpiryTime) throws EmailOtpException {
 
         boolean triggerNotification = EmailOtpServiceDataHolder.getConfigs().isTriggerNotification();
         boolean resendSameOtp = EmailOtpServiceDataHolder.getConfigs().isResendSameOtp();
+        boolean isEnableMultipleSessions = EmailOtpServiceDataHolder.getConfigs().isEnableMultipleSessions();
 
         // If 'Resend same OTP' is enabled, check if such OTP exists.
         SessionDTO sessionDTO = null;
-        if (resendSameOtp) {
+        if (resendSameOtp && isEnableMultipleSessions== false) {
             sessionDTO = getPreviousValidOTPSession(user);
             // This is done in order to support 'resend throttling'.
             if (sessionDTO != null) {
+                String transactionId = sessionDTO.getTransactionId();
                 String sessionId = Utils.getHash(user.getUserID());
                 // Remove previous OTP session.
                 SessionDataStore.getInstance().clearSessionData(sessionId, Constants.SESSION_TYPE_OTP);
@@ -251,7 +320,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
 
         // If no such valid OTPs exist, generate a new OTP and proceed.
         if (sessionDTO == null) {
-            sessionDTO = generateNewOTP(user);
+            sessionDTO = generateNewOTP(user, emailOtpExpiryTime);
         }
 
         // Sending Email notifications.
@@ -261,11 +330,10 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         return sessionDTO;
     }
 
-    private SessionDTO generateNewOTP(User user) throws EmailOtpServerException {
+    private SessionDTO generateNewOTP(User user, int emailOtpExpiryTime) throws EmailOtpServerException {
 
         boolean isAlphaNumericOtpEnabled = EmailOtpServiceDataHolder.getConfigs().isAlphaNumericOTP();
         int otpLength = EmailOtpServiceDataHolder.getConfigs().getOtpLength();
-        int otpValidityPeriod = EmailOtpServiceDataHolder.getConfigs().getOtpValidityPeriod();
 
         // Generate OTP.
         String transactionId = Utils.createTransactionId();
@@ -274,15 +342,15 @@ public class EmailOtpServiceImpl implements EmailOtpService {
 
         // Save the otp in the 'IDN_AUTH_SESSION_STORE' table.
         SessionDTO sessionDTO = new SessionDTO();
-        sessionDTO.setOtpToken(otp);
-        sessionDTO.setGeneratedTime(System.currentTimeMillis());
-        sessionDTO.setExpiryTime(sessionDTO.getGeneratedTime() + otpValidityPeriod);
-        sessionDTO.setTransactionId(transactionId);
-        sessionDTO.setFullQualifiedUserName(user.getFullQualifiedUsername());
-        sessionDTO.setUserId(user.getUserID());
+            sessionDTO.setOtpToken(otp);
+            sessionDTO.setGeneratedTime(System.currentTimeMillis());
+            sessionDTO.setExpiryTime(sessionDTO.getGeneratedTime() + emailOtpExpiryTime);
+            sessionDTO.setTransactionId(transactionId);
+            sessionDTO.setFullQualifiedUserName(user.getFullQualifiedUsername());
+            sessionDTO.setUserId(user.getUserID());
 
-        String sessionId = Utils.getHash(user.getUserID());
-        persistOTPSession(sessionDTO, sessionId);
+            String sessionId = Utils.getHash(user.getUserID(), transactionId);
+            persistOTPSession(sessionDTO, sessionId);
         return sessionDTO;
     }
 
@@ -320,7 +388,9 @@ public class EmailOtpServiceImpl implements EmailOtpService {
     private SessionDTO getPreviousValidOTPSession(User user) throws EmailOtpException {
 
         // Search previous session object.
-        String sessionId = Utils.getHash(user.getUserID());
+        GenerationResponseDTO responseDTO = new GenerationResponseDTO();
+        String transactionId = responseDTO.getTransactionId();
+        String sessionId = Utils.getHash(user.getUserID(), transactionId);
         String jsonString = (String) SessionDataStore.getInstance().
                 getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
         if (StringUtils.isBlank(jsonString)) {
@@ -363,7 +433,8 @@ public class EmailOtpServiceImpl implements EmailOtpService {
 
     private void shouldThrottle(String userId) throws EmailOtpException {
 
-        String sessionId = Utils.getHash(userId);
+        SessionDTO sessionDTO = null;
+        String sessionId = Utils.getHash(userId,sessionDTO.getTransactionId());
         String jsonString = (String) SessionDataStore.getInstance().
                 getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
         if (StringUtils.isBlank(jsonString)) {

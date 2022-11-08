@@ -108,6 +108,10 @@ public class Utils {
                 Integer.parseInt(otpValidityPeriodValue) * 1000 : Constants.DEFAULT_EMAIL_OTP_EXPIRY_TIME;
         configs.setOtpValidityPeriod(otpValidityPeriod);
 
+        boolean isEnableMultipleSessions = Boolean.parseBoolean(StringUtils.trim(
+                properties.getProperty(Constants.EMAIL_OTP_MULTIPLE_SESSIONS_ENABLED)));
+        configs.setEnableMultipleSessions(isEnableMultipleSessions);
+
         // If not defined, defaults to 'zero' to renew always.
         String otpRenewIntervalValue = StringUtils.trim(
                 properties.getProperty(Constants.EMAIL_OTP_RENEWAL_INTERVAL));
@@ -142,6 +146,12 @@ public class Utils {
      * @param text Text that need to be hashed.
      * @return Encoded hash.
      */
+    public static String getHash(String text, String text2) {
+
+        return DigestUtils.sha256Hex(text + text2);
+    }
+
+
     public static String getHash(String text) {
 
         return DigestUtils.sha256Hex(text);

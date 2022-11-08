@@ -25,6 +25,7 @@ public class GenerationResponseDTO {
 
     private String emailOTP;
     private String transactionId;
+    private static String emailOtpExpiryTime;
 
     public String getEmailOTP() {
 
@@ -44,5 +45,15 @@ public class GenerationResponseDTO {
     public void setTransactionId(String transactionId) {
 
         this.transactionId = transactionId;
+    }
+
+    public static String getEmailOtpExpiryTime() {
+
+        return emailOtpExpiryTime;
+    }
+
+    public void setEmailOtpExpiryTime(String emailOtpExpiryTime) {
+
+        this.emailOtpExpiryTime = emailOtpExpiryTime;
     }
 }
