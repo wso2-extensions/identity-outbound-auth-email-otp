@@ -48,10 +48,8 @@ import org.wso2.carbon.user.core.common.User;
 import org.wso2.carbon.user.core.constants.UserCoreErrorConstants;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * This class implements the EmailOtpService interface.
@@ -342,15 +340,15 @@ public class EmailOtpServiceImpl implements EmailOtpService {
 
         // Save the otp in the 'IDN_AUTH_SESSION_STORE' table.
         SessionDTO sessionDTO = new SessionDTO();
-            sessionDTO.setOtpToken(otp);
-            sessionDTO.setGeneratedTime(System.currentTimeMillis());
-            sessionDTO.setExpiryTime(sessionDTO.getGeneratedTime() + emailOtpExpiryTime);
-            sessionDTO.setTransactionId(transactionId);
-            sessionDTO.setFullQualifiedUserName(user.getFullQualifiedUsername());
-            sessionDTO.setUserId(user.getUserID());
+        sessionDTO.setOtpToken(otp);
+        sessionDTO.setGeneratedTime(System.currentTimeMillis());
+        sessionDTO.setExpiryTime(sessionDTO.getGeneratedTime() + emailOtpExpiryTime);
+        sessionDTO.setTransactionId(transactionId);
+        sessionDTO.setFullQualifiedUserName(user.getFullQualifiedUsername());
+        sessionDTO.setUserId(user.getUserID());
 
-            String sessionId = Utils.getHash(user.getUserID(), transactionId);
-            persistOTPSession(sessionDTO, sessionId);
+        String sessionId = Utils.getHash(user.getUserID(), transactionId);
+        persistOTPSession(sessionDTO, sessionId);
         return sessionDTO;
     }
 
@@ -388,9 +386,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
     private SessionDTO getPreviousValidOTPSession(User user) throws EmailOtpException {
 
         // Search previous session object.
-        GenerationResponseDTO responseDTO = new GenerationResponseDTO();
-        String transactionId = responseDTO.getTransactionId();
-        String sessionId = Utils.getHash(user.getUserID(), transactionId);
+        String sessionId = Utils.getHash(user.getUserID());
         String jsonString = (String) SessionDataStore.getInstance().
                 getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
         if (StringUtils.isBlank(jsonString)) {
