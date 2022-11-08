@@ -209,7 +209,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                 SessionDataStore.getInstance().clearSessionData(Utils.getHash(userId, transactionId), Constants.SESSION_TYPE_OTP);
 
             return new ValidationResponseDTO(userId, true);
-        }else {
+        } else {
             String sessionId = Utils.getHash(userId, transactionId);
             String jsonString = (String) SessionDataStore.getInstance()
                     .getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
@@ -280,7 +280,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
             }
 
             return new ValidationResponseDTO(userId, true);
-        }else {
+        } else {
             String sessionId = Utils.getHash(userId, transactionId);
             String jsonString = (String) SessionDataStore.getInstance()
                     .getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
@@ -401,7 +401,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         if(!isEnableMultipleSessions== true) {
             String sessionId = Utils.getHash(user.getUserID());
             persistOTPSession(sessionDTO, sessionId);
-        }else {
+        } else {
             String sessionId = Utils.getHash(user.getUserID(), transactionId);
             persistOTPSession(sessionDTO, sessionId);
         }
@@ -513,7 +513,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                 throw Utils.handleClientException(
                         Constants.ErrorMessage.CLIENT_SLOW_DOWN_RESEND, String.valueOf(waitingPeriod));
             }
-        }else {
+        } else {
             String sessionId = Utils.getHash(userId, sessionDTO.getTransactionId());
             String jsonString = (String) SessionDataStore.getInstance().
                     getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
