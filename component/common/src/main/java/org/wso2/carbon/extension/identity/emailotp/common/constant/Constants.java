@@ -49,6 +49,7 @@ public class Constants {
     public static final String EMAIL_OTP_RENEWAL_INTERVAL = "emailOtp.tokenRenewalInterval";
     public static final String EMAIL_OTP_RESEND_THROTTLE_INTERVAL = "emailOtp.resendThrottleInterval";
     public static final String EMAIL_OTP_SHOW_FAILURE_REASON = "emailOtp.showValidationFailureReason";
+    public static final String EMAIL_OTP_MULTIPLE_SESSIONS_ENABLED = "emailOtp.isEnableMultipleSessions";
 
     /**
      * EMAIL OTP service error codes.
