@@ -442,7 +442,6 @@ public class EmailOtpServiceImpl implements EmailOtpService {
     private SessionDTO getPreviousValidOTPSession(User user) throws EmailOtpException {
 
         // Search previous session object.
-        GenerationResponseDTO responseDTO = new GenerationResponseDTO();
         String sessionId = Utils.getHash(user.getUserID());
         String jsonString = (String) SessionDataStore.getInstance().
                 getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
@@ -489,12 +488,12 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         boolean isEnableMultipleSessions = EmailOtpServiceDataHolder.getConfigs().isEnableMultipleSessions();
 
         SessionDTO sessionDTO = null;
-        if(!isEnableMultipleSessions) {
+        if (!isEnableMultipleSessions) {
             String sessionId = Utils.getHash(userId);
             String jsonString = (String) SessionDataStore.getInstance().
                     getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
             if (StringUtils.isBlank(jsonString)) {
-                if(log.isDebugEnabled()){
+                if (log.isDebugEnabled()) {
                     log.debug(String.format("No OTP session found for the user : %s.", userId));
                 }
                 return;
