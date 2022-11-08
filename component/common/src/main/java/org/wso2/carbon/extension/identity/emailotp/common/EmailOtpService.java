@@ -66,7 +66,7 @@ public interface EmailOtpService {
      * This method will generate an OTP and send an EMAIL notification.
      *
      * @param userId SCIM User Id.
-     * @param emailOtpExpiryTime
+     * @param emailOtpExpiryTime, cannot be null
      * @return OTP generation response.
      * @throws EmailOtpException Thrown if any server or client error occurred.
      */

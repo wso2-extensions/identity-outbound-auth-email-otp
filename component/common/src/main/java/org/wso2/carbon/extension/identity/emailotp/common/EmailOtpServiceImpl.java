@@ -180,38 +180,69 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         boolean isEnableMultipleSessions = EmailOtpServiceDataHolder.getConfigs().isEnableMultipleSessions();
 
         // Retrieve session from the database.
-        String sessionId = Utils.getHash(userId, transactionId);
-        String jsonString = (String) SessionDataStore.getInstance()
-                .getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
-        if (StringUtils.isBlank(jsonString)) {
-            if (log.isDebugEnabled()) {
-                log.debug(String.format("No OTP session found for the user : %s.", userId));
-            }
-            FailureReasonDTO error = showFailureReason
-                    ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_NO_OTP_FOR_USER, userId)
-                    : null;
-            return new ValidationResponseDTO(userId, false, error);
-        }
-        SessionDTO sessionDTO;
-        try {
-            sessionDTO = new ObjectMapper().readValue(jsonString, SessionDTO.class);
-        } catch (IOException e) {
-            throw Utils.handleServerException(Constants.ErrorMessage.SERVER_JSON_SESSION_MAPPER_ERROR, null, e);
-        }
 
-        ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId, showFailureReason, sessionId);
-        if (!responseDTO.isValid()) {
-            return responseDTO;
+        if(!isEnableMultipleSessions) {
+            String sessionId = Utils.getHash(userId);
+            String jsonString = (String) SessionDataStore.getInstance()
+                    .getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
+            if (StringUtils.isBlank(jsonString)) {
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("No OTP session found for the user : %s.", userId));
+                }
+                FailureReasonDTO error = showFailureReason
+                        ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_NO_OTP_FOR_USER, userId)
+                        : null;
+                return new ValidationResponseDTO(userId, false, error);
+            }
+            SessionDTO sessionDTO;
+            try {
+                sessionDTO = new ObjectMapper().readValue(jsonString, SessionDTO.class);
+            } catch (IOException e) {
+                throw Utils.handleServerException(Constants.ErrorMessage.SERVER_JSON_SESSION_MAPPER_ERROR, null, e);
+            }
+
+            ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId, showFailureReason, sessionId);
+            if (!responseDTO.isValid()) {
+                return responseDTO;
+            }
+            // Valid OTP. Clear OTP session data.
+                SessionDataStore.getInstance().clearSessionData(Utils.getHash(userId, transactionId), Constants.SESSION_TYPE_OTP);
+
+            return new ValidationResponseDTO(userId, true);
+        }else {
+            String sessionId = Utils.getHash(userId, transactionId);
+            String jsonString = (String) SessionDataStore.getInstance()
+                    .getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
+            if (StringUtils.isBlank(jsonString)) {
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("No OTP session found for the user : %s.", userId));
+                }
+                FailureReasonDTO error = showFailureReason
+                        ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_NO_OTP_FOR_USER, userId)
+                        : null;
+                return new ValidationResponseDTO(userId, false, error);
+            }
+            SessionDTO sessionDTO;
+            try {
+                sessionDTO = new ObjectMapper().readValue(jsonString, SessionDTO.class);
+            } catch (IOException e) {
+                throw Utils.handleServerException(Constants.ErrorMessage.SERVER_JSON_SESSION_MAPPER_ERROR, null, e);
+            }
+
+            ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId, showFailureReason, sessionId);
+            if (!responseDTO.isValid()) {
+                return responseDTO;
+            }
+
+            return new ValidationResponseDTO(userId, true);
         }
-        // Valid OTP. Clear OTP session data.
-        if (!isEnableMultipleSessions== true) {
-            SessionDataStore.getInstance().clearSessionData(sessionId, Constants.SESSION_TYPE_OTP);
-        }
-        return new ValidationResponseDTO(userId, true);
     }
 
     @Override
     public ValidationResponseDTO verifyEmailOTP(String transactionId, String userId, String emailOTP) throws EmailOtpException {
+
+        boolean isEnableMultipleSessions = EmailOtpServiceDataHolder.getConfigs().isEnableMultipleSessions();
+        boolean showFailureReason = EmailOtpServiceDataHolder.getConfigs().isShowFailureReason();
 
         // Sanitize inputs.
         if (StringUtils.isBlank(transactionId) || StringUtils.isBlank(userId) || StringUtils.isBlank(emailOTP)) {
@@ -222,47 +253,66 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                     Constants.ErrorMessage.CLIENT_MANDATORY_VALIDATION_PARAMETERS_EMPTY, missingParam);
         }
 
-        boolean showFailureReason = EmailOtpServiceDataHolder.getConfigs().isShowFailureReason();
-
         // Retrieve session from the database.
-        String sessionId = Utils.getHash(userId, transactionId);
-        String jsonString = (String) SessionDataStore.getInstance()
-                .getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
-        if (StringUtils.isBlank(jsonString)) {
-            if (log.isDebugEnabled()) {
-                log.debug(String.format("No OTP session found for the user : %s.", userId));
+        if(!isEnableMultipleSessions) {
+            String sessionId = Utils.getHash(userId);
+            String jsonString = (String) SessionDataStore.getInstance()
+                    .getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
+            if (StringUtils.isBlank(jsonString)) {
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("No OTP session found for the user : %s.", userId));
+                }
+                FailureReasonDTO error = showFailureReason
+                        ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_NO_OTP_FOR_USER, userId)
+                        : null;
+                return new ValidationResponseDTO(userId, false, error);
             }
-            FailureReasonDTO error = showFailureReason
-                    ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_NO_OTP_FOR_USER, userId)
-                    : null;
-            return new ValidationResponseDTO(userId, false, error);
-        }
-        SessionDTO sessionDTO;
-        try {
-            sessionDTO = new ObjectMapper().readValue(jsonString, SessionDTO.class);
-        } catch (IOException e) {
-            throw Utils.handleServerException(Constants.ErrorMessage.SERVER_JSON_SESSION_MAPPER_ERROR, null, e);
-        }
+            SessionDTO sessionDTO;
+            try {
+                sessionDTO = new ObjectMapper().readValue(jsonString, SessionDTO.class);
+            } catch (IOException e) {
+                throw Utils.handleServerException(Constants.ErrorMessage.SERVER_JSON_SESSION_MAPPER_ERROR, null, e);
+            }
 
-        ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId, showFailureReason, sessionId);
-        if (!responseDTO.isValid()) {
-            return responseDTO;
-        }
+            ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId, showFailureReason, sessionId);
+            if (!responseDTO.isValid()) {
+                return responseDTO;
+            }
 
-        return new ValidationResponseDTO(userId, true);
+            return new ValidationResponseDTO(userId, true);
+        }else {
+            String sessionId = Utils.getHash(userId, transactionId);
+            String jsonString = (String) SessionDataStore.getInstance()
+                    .getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
+            if (StringUtils.isBlank(jsonString)) {
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("No OTP session found for the user : %s.", userId));
+                }
+                FailureReasonDTO error = showFailureReason
+                        ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_NO_OTP_FOR_USER, userId)
+                        : null;
+                return new ValidationResponseDTO(userId, false, error);
+            }
+            SessionDTO sessionDTO;
+            try {
+                sessionDTO = new ObjectMapper().readValue(jsonString, SessionDTO.class);
+            } catch (IOException e) {
+                throw Utils.handleServerException(Constants.ErrorMessage.SERVER_JSON_SESSION_MAPPER_ERROR, null, e);
+            }
+
+            ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId, showFailureReason, sessionId);
+            if (!responseDTO.isValid()) {
+                return responseDTO;
+            }
+
+            return new ValidationResponseDTO(userId, true);
+        }
     }
 
     private ValidationResponseDTO isValid(SessionDTO sessionDTO, String emailOtp, String userId,
                                           String transactionId, boolean showFailureReason, String sessionId) throws EmailOtpServerException {
 
         FailureReasonDTO error;
-        String jsonString = (String) SessionDataStore.getInstance()
-                .getSessionData(String.valueOf(sessionId), Constants.SESSION_TYPE_OTP);
-        try {
-            sessionDTO = new ObjectMapper().readValue(jsonString, SessionDTO.class);
-        } catch (IOException e) {
-            throw Utils.handleServerException(Constants.ErrorMessage.SERVER_JSON_SESSION_MAPPER_ERROR, null, e);
-        }
         // Check if the provided OTP is correct.
         if (!StringUtils.equals(emailOtp, sessionDTO.getOtpToken())) {
             if (log.isDebugEnabled()) {
@@ -302,7 +352,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
 
         // If 'Resend same OTP' is enabled, check if such OTP exists.
         SessionDTO sessionDTO = null;
-        if (resendSameOtp && isEnableMultipleSessions== false) {
+        if (resendSameOtp && !isEnableMultipleSessions) {
             sessionDTO = getPreviousValidOTPSession(user);
             // This is done in order to support 'resend throttling'.
             if (sessionDTO != null) {
@@ -332,6 +382,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
 
         boolean isAlphaNumericOtpEnabled = EmailOtpServiceDataHolder.getConfigs().isAlphaNumericOTP();
         int otpLength = EmailOtpServiceDataHolder.getConfigs().getOtpLength();
+        boolean isEnableMultipleSessions = EmailOtpServiceDataHolder.getConfigs().isEnableMultipleSessions();
 
         // Generate OTP.
         String transactionId = Utils.createTransactionId();
@@ -347,8 +398,13 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         sessionDTO.setFullQualifiedUserName(user.getFullQualifiedUsername());
         sessionDTO.setUserId(user.getUserID());
 
-        String sessionId = Utils.getHash(user.getUserID(), transactionId);
-        persistOTPSession(sessionDTO, sessionId);
+        if(!isEnableMultipleSessions== true) {
+            String sessionId = Utils.getHash(user.getUserID());
+            persistOTPSession(sessionDTO, sessionId);
+        }else {
+            String sessionId = Utils.getHash(user.getUserID(), transactionId);
+            persistOTPSession(sessionDTO, sessionId);
+        }
         return sessionDTO;
     }
 
@@ -386,6 +442,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
     private SessionDTO getPreviousValidOTPSession(User user) throws EmailOtpException {
 
         // Search previous session object.
+        GenerationResponseDTO responseDTO = new GenerationResponseDTO();
         String sessionId = Utils.getHash(user.getUserID());
         String jsonString = (String) SessionDataStore.getInstance().
                 getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
@@ -429,30 +486,59 @@ public class EmailOtpServiceImpl implements EmailOtpService {
 
     private void shouldThrottle(String userId) throws EmailOtpException {
 
+        boolean isEnableMultipleSessions = EmailOtpServiceDataHolder.getConfigs().isEnableMultipleSessions();
+
         SessionDTO sessionDTO = null;
-        String sessionId = Utils.getHash(userId,sessionDTO.getTransactionId());
-        String jsonString = (String) SessionDataStore.getInstance().
-                getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
-        if (StringUtils.isBlank(jsonString)) {
-            if(log.isDebugEnabled()){
-                log.debug(String.format("No OTP session found for the user : %s.", userId));
+        if(!isEnableMultipleSessions) {
+            String sessionId = Utils.getHash(userId);
+            String jsonString = (String) SessionDataStore.getInstance().
+                    getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
+            if (StringUtils.isBlank(jsonString)) {
+                if(log.isDebugEnabled()){
+                    log.debug(String.format("No OTP session found for the user : %s.", userId));
+                }
+                return;
             }
-            return;
-        }
 
-        SessionDTO previousOTPSessionDTO;
-        try {
-            previousOTPSessionDTO = new ObjectMapper().readValue(jsonString, SessionDTO.class);
-        } catch (IOException e) {
-            throw Utils.handleServerException(Constants.ErrorMessage.SERVER_JSON_SESSION_MAPPER_ERROR, null, e);
-        }
+            SessionDTO previousOTPSessionDTO;
+            try {
+                previousOTPSessionDTO = new ObjectMapper().readValue(jsonString, SessionDTO.class);
+            } catch (IOException e) {
+                throw Utils.handleServerException(Constants.ErrorMessage.SERVER_JSON_SESSION_MAPPER_ERROR, null, e);
+            }
 
-        long elapsedTimeSinceLastOtp = System.currentTimeMillis() - previousOTPSessionDTO.getGeneratedTime();
-        int resendThrottleInterval = EmailOtpServiceDataHolder.getConfigs().getResendThrottleInterval();
-        if (elapsedTimeSinceLastOtp < resendThrottleInterval) {
-            long waitingPeriod = (resendThrottleInterval - elapsedTimeSinceLastOtp) / 1000;
-            throw Utils.handleClientException(
-                    Constants.ErrorMessage.CLIENT_SLOW_DOWN_RESEND, String.valueOf(waitingPeriod));
+            long elapsedTimeSinceLastOtp = System.currentTimeMillis() - previousOTPSessionDTO.getGeneratedTime();
+            int resendThrottleInterval = EmailOtpServiceDataHolder.getConfigs().getResendThrottleInterval();
+            if (elapsedTimeSinceLastOtp < resendThrottleInterval) {
+                long waitingPeriod = (resendThrottleInterval - elapsedTimeSinceLastOtp) / 1000;
+                throw Utils.handleClientException(
+                        Constants.ErrorMessage.CLIENT_SLOW_DOWN_RESEND, String.valueOf(waitingPeriod));
+            }
+        }else {
+            String sessionId = Utils.getHash(userId, sessionDTO.getTransactionId());
+            String jsonString = (String) SessionDataStore.getInstance().
+                    getSessionData(sessionId, Constants.SESSION_TYPE_OTP);
+            if (StringUtils.isBlank(jsonString)) {
+                if(log.isDebugEnabled()){
+                    log.debug(String.format("No OTP session found for the user : %s.", userId));
+                }
+                return;
+            }
+
+            SessionDTO previousOTPSessionDTO;
+            try {
+                previousOTPSessionDTO = new ObjectMapper().readValue(jsonString, SessionDTO.class);
+            } catch (IOException e) {
+                throw Utils.handleServerException(Constants.ErrorMessage.SERVER_JSON_SESSION_MAPPER_ERROR, null, e);
+            }
+
+            long elapsedTimeSinceLastOtp = System.currentTimeMillis() - previousOTPSessionDTO.getGeneratedTime();
+            int resendThrottleInterval = EmailOtpServiceDataHolder.getConfigs().getResendThrottleInterval();
+            if (elapsedTimeSinceLastOtp < resendThrottleInterval) {
+                long waitingPeriod = (resendThrottleInterval - elapsedTimeSinceLastOtp) / 1000;
+                throw Utils.handleClientException(
+                        Constants.ErrorMessage.CLIENT_SLOW_DOWN_RESEND, String.valueOf(waitingPeriod));
+            }
         }
     }
 
