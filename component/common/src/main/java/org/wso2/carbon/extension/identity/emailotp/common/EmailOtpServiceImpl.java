@@ -234,6 +234,9 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                 return responseDTO;
             }
 
+            // Valid OTP. Clear OTP session data.
+            SessionDataStore.getInstance().clearSessionData(Utils.getHash(userId, transactionId), Constants.SESSION_TYPE_OTP);
+
             return new ValidationResponseDTO(userId, true);
         }
     }
