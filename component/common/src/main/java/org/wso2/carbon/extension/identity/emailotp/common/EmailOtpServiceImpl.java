@@ -206,7 +206,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                 return responseDTO;
             }
             // Valid OTP. Clear OTP session data.
-                SessionDataStore.getInstance().clearSessionData(Utils.getHash(userId, transactionId), Constants.SESSION_TYPE_OTP);
+                SessionDataStore.getInstance().clearSessionData(Utils.getHash(userId), Constants.SESSION_TYPE_OTP);
 
             return new ValidationResponseDTO(userId, true);
         } else {
@@ -233,9 +233,6 @@ public class EmailOtpServiceImpl implements EmailOtpService {
             if (!responseDTO.isValid()) {
                 return responseDTO;
             }
-
-            // Valid OTP. Clear OTP session data.
-            SessionDataStore.getInstance().clearSessionData(Utils.getHash(userId, transactionId), Constants.SESSION_TYPE_OTP);
 
             return new ValidationResponseDTO(userId, true);
         }
