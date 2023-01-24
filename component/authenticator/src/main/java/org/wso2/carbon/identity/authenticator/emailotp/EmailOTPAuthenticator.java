@@ -1020,7 +1020,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                 }
             }
             if (context.isRetrying()
-                    || StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))) {
+                    || !Boolean.parseBoolean(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))) {
                 redirectToEmailOTPLoginPage(response,request,context,emailOTPParameters,queryParams,email);
             }
         } catch (AuthenticationFailedException e) {
