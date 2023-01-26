@@ -1026,8 +1026,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                 }
             }
             if (context.isRetrying()
-                    || StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))) {
-                redirectToEmailOTPLoginPage(response, request, context, emailOTPParameters, queryParams, email);
+                    || !Boolean.parseBoolean(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))) {
+                redirectToEmailOTPLoginPage(response,request,context,emailOTPParameters,queryParams,email);
             }
         } catch (AuthenticationFailedException e) {
             throw new AuthenticationFailedException("Authentication Failed: Authenticator Properties may be null ", e);
