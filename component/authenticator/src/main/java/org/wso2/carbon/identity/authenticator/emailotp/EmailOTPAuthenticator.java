@@ -23,6 +23,7 @@ import org.apache.axiom.om.util.Base64;
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.context.ConfigurationContext;
 import org.apache.axis2.context.ConfigurationContextFactory;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
@@ -36,6 +37,7 @@ import org.wso2.carbon.identity.application.authentication.framework.AbstractApp
 import org.wso2.carbon.identity.application.authentication.framework.AuthenticatorFlowStatus;
 import org.wso2.carbon.identity.application.authentication.framework.FederatedApplicationAuthenticator;
 import org.wso2.carbon.identity.application.authentication.framework.LocalApplicationAuthenticator;
+import org.wso2.carbon.identity.application.authentication.framework.config.ConfigurationFacade;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.StepConfig;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
@@ -43,12 +45,15 @@ import org.wso2.carbon.identity.application.authentication.framework.exception.I
 import org.wso2.carbon.identity.application.authentication.framework.exception.LogoutFailedException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.UserIdNotFoundException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.Property;
+import org.wso2.carbon.identity.application.common.model.User;
 import org.wso2.carbon.identity.authenticator.emailotp.config.EmailOTPUtils;
 import org.wso2.carbon.identity.authenticator.emailotp.exception.EmailOTPException;
 import org.wso2.carbon.identity.authenticator.emailotp.internal.EmailOTPServiceDataHolder;
+import org.wso2.carbon.identity.authenticator.emailotp.util.EmailOTPAuthErrorConstants;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.IdentityEventConstants;
@@ -74,6 +79,7 @@ import org.wso2.carbon.user.core.UserCoreConstants;
 import org.wso2.carbon.user.core.UserStoreClientException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.user.core.util.UserCoreUtil;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.io.BufferedReader;
@@ -91,10 +97,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.RequestParams.RESTART_FLOW;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.DISABLE_OTP_RESEND_ON_FAILURE;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPUrlUtil.getEmailOTPErrorPageUrl;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPUrlUtil.getEmailOTPLoginPageUrl;
@@ -107,10 +113,20 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
         implements FederatedApplicationAuthenticator {
 
     private static final Log log = LogFactory.getLog(EmailOTPAuthenticator.class);
+    private AuthenticationContext authenticationContext;
 
     @Override
     public boolean canHandle(HttpServletRequest request) {
 
+        if (isIdfInitiatedFromEmailOTP()) {
+            if (log.isDebugEnabled()) {
+                log.debug("EmailOTP authenticator is handling identifier first flow ");
+            }
+            String userName = request.getParameter(EmailOTPAuthenticatorConstants.USER_NAME);
+            String restart = request.getParameter(RESTART_FLOW);
+
+            return StringUtils.isNotEmpty(userName) || StringUtils.isNotEmpty(restart);
+        }
         if (log.isDebugEnabled()) {
             log.debug("Inside EmailOTPAuthenticator canHandle method");
         }
@@ -126,34 +142,40 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                                            AuthenticationContext context)
             throws AuthenticationFailedException, LogoutFailedException {
         // if the logout request comes, then no need to go through and complete the flow.
-        if (context.isLogoutRequest()) {
+        this.authenticationContext = context;
+        if (authenticationContext.isLogoutRequest()) {
             return AuthenticatorFlowStatus.SUCCESS_COMPLETED;
         } else if (StringUtils.isNotEmpty(request.getParameter(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS))) {
             // if the request comes with EMAIL ADDRESS, it will go through this flow.
-            initiateAuthenticationRequest(request, response, context);
+            initiateAuthenticationRequest(request, response, authenticationContext);
             return AuthenticatorFlowStatus.INCOMPLETE;
         } else if (StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.CODE)) &&
                 StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))) {
             // if the request comes with code, it will go through this flow.
-            initiateAuthenticationRequest(request, response, context);
-            publishPostEmailOTPGeneratedEvent(request, context);
-            if (context.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATION)
+            if (!isIdfInitiatedFromEmailOTP()) {
+                return super.process(request, response, authenticationContext);
+            }
+            org.wso2.carbon.user.core.common.User user = resolveUser(request, authenticationContext);
+            setResolvedUserInContext(authenticationContext, user);
+            authenticationContext.setProperty(EmailOTPAuthenticatorConstants.IS_IDF_INITIATED_FROM_AUTHENTICATOR, false);
+            initiateAuthenticationRequest(request, response, authenticationContext);
+            publishPostEmailOTPGeneratedEvent(request, authenticationContext);
+            if (authenticationContext.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATION)
                     .equals(EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME)) {
                 // if the request comes with authentication is EmailOTP, it will go through this flow.
-                // set the current authenticator name
-                context.setCurrentAuthenticator(getName());
+                authenticationContext.setCurrentAuthenticator(getName());
                 return AuthenticatorFlowStatus.INCOMPLETE;
             } else {
                 // if the request comes with authentication is basic, complete the flow.
                 return AuthenticatorFlowStatus.SUCCESS_COMPLETED;
             }
         } else if (Boolean.parseBoolean(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))) {
-            AuthenticatorFlowStatus authenticatorFlowStatus = super.process(request, response, context);
-            publishPostEmailOTPGeneratedEvent(request, context);
+            AuthenticatorFlowStatus authenticatorFlowStatus = super.process(request, response, authenticationContext);
+            publishPostEmailOTPGeneratedEvent(request, authenticationContext);
             return authenticatorFlowStatus;
         } else {
-            AuthenticatorFlowStatus authenticatorFlowStatus = super.process(request, response, context);
-            publishPostEmailOTPValidatedEvent(request, context);
+            AuthenticatorFlowStatus authenticatorFlowStatus = super.process(request, response, authenticationContext);
+            publishPostEmailOTPValidatedEvent(request, authenticationContext);
             return authenticatorFlowStatus;
         }
     }
@@ -166,134 +188,161 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                                                  HttpServletResponse response, AuthenticationContext context)
             throws AuthenticationFailedException {
 
-        try {
-            boolean isEmailOTPMandatory;
-            boolean sendOtpToFederatedEmail;
-            String usecase;
-            Object propertiesFromLocal = null;
-            String email;
-            AuthenticatedUser authenticatedUser = null;
-            Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
-            String tenantDomain = context.getTenantDomain();
-            context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATION,
-                    EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME);
-            if (!tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
-                IdentityHelperUtil.loadApplicationAuthenticationXMLFromRegistry(context, getName(), tenantDomain);
-                propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
+        if (context.getLastAuthenticatedUser() == null) {
+            context.setProperty(EmailOTPAuthenticatorConstants.IS_IDF_INITIATED_FROM_AUTHENTICATOR, true);
+            String loginPage = ConfigurationFacade.getInstance().getAuthenticationEndpointURL();
+            String queryParams = context.getContextIdIncludedQueryParams();
+            try {
+                if (log.isDebugEnabled()) {
+                    String logMsg = String.format("Redirecting to identifier first flow since " +
+                                    "last authenticated user is null in SP: %s",
+                            context.getServiceProviderName());
+                    log.debug(logMsg);
+                }
+                // Redirecting the user to the login page
+                response.sendRedirect(loginPage + ("?" + queryParams) + "&" + EmailOTPAuthenticatorConstants.AUTHENTICATORS
+                        + EmailOTPAuthenticatorConstants.IDF_HANDLER_NAME + ":" + EmailOTPAuthenticatorConstants.LOCAL_AUTHENTICATOR);
+            } catch (IOException e) {
+                User user = User.getUserFromUserName(request.getParameter(EmailOTPAuthenticatorConstants.USER_NAME));
+                throw new AuthenticationFailedException(
+                        EmailOTPAuthErrorConstants.ErrorMessages.SYSTEM_ERROR_WHILE_AUTHENTICATING.getCode(),
+                        e.getMessage(), user, e);
             }
-            if (propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
-                isEmailOTPMandatory = Boolean.parseBoolean(emailOTPParameters
-                        .get(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY));
-                sendOtpToFederatedEmail = Boolean.parseBoolean(emailOTPParameters
-                        .get(EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE));
-                usecase = emailOTPParameters.get(EmailOTPAuthenticatorConstants.USE_CASE);
-            } else {
-                isEmailOTPMandatory = Boolean.parseBoolean(String.valueOf(context.getProperty
-                        (EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY)));
-                sendOtpToFederatedEmail = Boolean.parseBoolean(String.valueOf(context.getProperty
-                        (EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE)));
-                usecase = (String) context.getProperty(EmailOTPAuthenticatorConstants.USE_CASE);
-            }
-            String queryParams = FrameworkUtils.getQueryStringWithFrameworkContextId(context.getQueryParams(),
-                    context.getCallerSessionKey(), context.getContextIdentifier());
+        } else {
+            try {
+                boolean isEmailOTPMandatory;
+                boolean sendOtpToFederatedEmail;
+                String usecase;
+                Object propertiesFromLocal = null;
+                String email;
+                AuthenticatedUser authenticatedUser = null;
+                Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
+                String tenantDomain = context.getTenantDomain();
+                context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATION,
+                        EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME);
+                if (!tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
+                    IdentityHelperUtil.loadApplicationAuthenticationXMLFromRegistry(context, getName(), tenantDomain);
+                    propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
+                }
+                if (propertiesFromLocal != null || tenantDomain.equals(EmailOTPAuthenticatorConstants.SUPER_TENANT)) {
+                    isEmailOTPMandatory = Boolean.parseBoolean(emailOTPParameters
+                            .get(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY));
+                    sendOtpToFederatedEmail = Boolean.parseBoolean(emailOTPParameters
+                            .get(EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE));
+                    usecase = emailOTPParameters.get(EmailOTPAuthenticatorConstants.USE_CASE);
+                } else {
+                    isEmailOTPMandatory = Boolean.parseBoolean(String.valueOf(context.getProperty
+                            (EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY)));
+                    sendOtpToFederatedEmail = Boolean.parseBoolean(String.valueOf(context.getProperty
+                            (EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE)));
+                    usecase = (String) context.getProperty(EmailOTPAuthenticatorConstants.USE_CASE);
+                }
+                String queryParams = FrameworkUtils.getQueryStringWithFrameworkContextId(context.getQueryParams(),
+                        context.getCallerSessionKey(), context.getContextIdentifier());
 
-            // If 'usecase' property is not configured for email OTP authenticator, the below flow will be executed
-            // (Recommended flow)
-            if (StringUtils.isEmpty(usecase)) {
-                Map<Integer, StepConfig> stepConfigMap = context.getSequenceConfig().getStepMap();
-                Map<ClaimMapping, String> userAttributes = new HashMap<>();
-                String federatedEmailAttributeKey = null;
-                String username = null;
-                boolean isLocalUser = false;
-                // Iterate through the steps to identify from which step the user email address need to extracted
-                for (StepConfig stepConfig : stepConfigMap.values()) {
-                    authenticatedUser = stepConfig.getAuthenticatedUser();
-                    if (authenticatedUser != null && stepConfig.isSubjectAttributeStep()) {
-                        username = authenticatedUser.toFullQualifiedUsername();
-                        if (stepConfig.getAuthenticatedIdP().equals(EmailOTPAuthenticatorConstants
-                                .LOCAL_AUTHENTICATOR)) {
-                            isLocalUser = true;
+                // If 'usecase' property is not configured for email OTP authenticator, the below flow will be executed
+                // (Recommended flow)
+                if (StringUtils.isEmpty(usecase)) {
+                    Map<Integer, StepConfig> stepConfigMap = context.getSequenceConfig().getStepMap();
+                    Map<ClaimMapping, String> userAttributes = new HashMap<>();
+                    String federatedEmailAttributeKey = null;
+                    String username = null;
+                    boolean isLocalUser = false;
+                    // Iterate through the steps to identify from which step the user email address need to extracted
+                    for (StepConfig stepConfig : stepConfigMap.values()) {
+                        authenticatedUser = stepConfig.getAuthenticatedUser();
+                        if (authenticatedUser == null) {
+                            authenticatedUser = new AuthenticatedUser((org.wso2.carbon.user.core.common.User) context.getProperty("user"));
+                            stepConfig.setAuthenticatedUser(authenticatedUser);
+                            stepConfig.setAuthenticatedIdP(EmailOTPAuthenticatorConstants.LOCAL_AUTHENTICATOR);
+                        }
+                        if (stepConfig.isSubjectAttributeStep()) {
+                            username = authenticatedUser.toFullQualifiedUsername();
+                            if (stepConfig.getAuthenticatedIdP().equals(EmailOTPAuthenticatorConstants
+                                    .LOCAL_AUTHENTICATOR)) {
+                                isLocalUser = true;
+                                break;
+                            }
+                            userAttributes = authenticatedUser.getUserAttributes();
+                            federatedEmailAttributeKey = getFederatedEmailAttributeKey(context,
+                                    stepConfig.getAuthenticatedAutenticator().getName());
                             break;
                         }
-                        userAttributes = authenticatedUser.getUserAttributes();
-                        federatedEmailAttributeKey = getFederatedEmailAttributeKey(context,
-                                stepConfig.getAuthenticatedAutenticator().getName());
-                        break;
                     }
-                }
 
-                if (username == null) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Cannot find the subject attributed step with authenticated user.");
+                    if (username == null) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Cannot find the subject attributed step with authenticated user.");
+                        }
+                        throw new AuthenticationFailedException
+                                ("Authentication failed. Cannot find the subject attributed step with authenticated user.");
                     }
-                    throw new AuthenticationFailedException
-                            ("Authentication failed. Cannot find the subject attributed step with authenticated user.");
-                }
 
-                // Set authenticatedUser prop into context which will used in checkEmailOTPBehaviour()
-                context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER, authenticatedUser);
+                    // Set authenticatedUser prop into context which will used in checkEmailOTPBehaviour()
+                    context.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER, authenticatedUser);
 
-                if (isLocalUser) {
-                    handleEmailOTPForLocalUser(username, authenticatedUser, context, emailOTPParameters,
-                            isEmailOTPMandatory, queryParams, request, response);
+                    if (isLocalUser) {
+                        handleEmailOTPForLocalUser(username, authenticatedUser, context, emailOTPParameters,
+                                isEmailOTPMandatory, queryParams, request, response);
+
+                    } else {
+                        handleEmailOTPForFederatedUser(sendOtpToFederatedEmail, isEmailOTPMandatory, context,
+                                userAttributes, federatedEmailAttributeKey, authenticatedUser, username,
+                                queryParams, request, response);
+                    }
 
                 } else {
-                    handleEmailOTPForFederatedUser(sendOtpToFederatedEmail, isEmailOTPMandatory, context,
-                            userAttributes, federatedEmailAttributeKey, authenticatedUser, username,
-                            queryParams, request, response);
+                    // If the attribute 'usecase' is configured, this block will be executed.
+                    // This block need to be revised and recommended to be removed
+
+                    FederatedAuthenticatorUtil.setUsernameFromFirstStep(context);
+                    String username = String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.USER_NAME));
+                    authenticatedUser = (AuthenticatedUser) context.getProperty
+                            (EmailOTPAuthenticatorConstants.AUTHENTICATED_USER);
+                    // find the authenticated user.
+                    if (authenticatedUser == null) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Cannot find the authenticated user, the username : " + username + " may be null");
+                        }
+                        throw new AuthenticationFailedException
+                                ("Authentication failed!. Cannot find the authenticated user, the username : " + username +
+                                        " may be null");
+                    }
+
+                    boolean isUserExistence = FederatedAuthenticatorUtil.isUserExistInUserStore(username);
+
+                    if (isEmailOTPMandatory) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Process the EmailOTP mandatory flow ");
+                        }
+                        processEmailOTPMandatory(context, request, response, isUserExistence, username, queryParams,
+                                emailOTPParameters, sendOtpToFederatedEmail);
+
+                    } else if (isUserExistence && !isEmailOTPDisableForUser(username, context,
+                            emailOTPParameters)) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Process the EmailOTP optional flow, because email OTP is enabled for the user " +
+                                    username);
+                        }
+
+                        email = getEmailForLocalUser(username, context, emailOTPParameters, queryParams, request, response);
+
+                        if (StringUtils.isNotEmpty(email)) {
+                            processEmailOTPFlow(request, response, email, username, queryParams, context);
+                        }
+                    } else {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Process with the first step (basic) authenticator only for user " + username);
+                        }
+                        processFirstStepOnly(authenticatedUser, context);
+                    }
                 }
 
-            } else {
-                // If the attribute 'usecase' is configured, this block will be executed.
-                // This block need to be revised and recommended to be removed
-
-                FederatedAuthenticatorUtil.setUsernameFromFirstStep(context);
-                String username = String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.USER_NAME));
-                authenticatedUser = (AuthenticatedUser) context.getProperty
-                        (EmailOTPAuthenticatorConstants.AUTHENTICATED_USER);
-                // find the authenticated user.
-                if (authenticatedUser == null) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Cannot find the authenticated user, the username : " + username + " may be null");
-                    }
-                    throw new AuthenticationFailedException
-                            ("Authentication failed!. Cannot find the authenticated user, the username : " + username +
-                                    " may be null");
-                }
-
-                boolean isUserExistence = FederatedAuthenticatorUtil.isUserExistInUserStore(username);
-
-                if (isEmailOTPMandatory) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Process the EmailOTP mandatory flow ");
-                    }
-                    processEmailOTPMandatory(context, request, response, isUserExistence, username, queryParams,
-                            emailOTPParameters, sendOtpToFederatedEmail);
-
-                } else if (isUserExistence && !isEmailOTPDisableForUser(username, context,
-                        emailOTPParameters)) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Process the EmailOTP optional flow, because email OTP is enabled for the user " +
-                                username);
-                    }
-
-                    email = getEmailForLocalUser(username, context, emailOTPParameters, queryParams, request, response);
-
-                    if (StringUtils.isNotEmpty(email)) {
-                        processEmailOTPFlow(request, response, email, username, queryParams, context);
-                    }
-                } else {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Process with the first step (basic) authenticator only for user " + username);
-                    }
-                    processFirstStepOnly(authenticatedUser, context);
-                }
+            } catch (EmailOTPException e) {
+                throw new AuthenticationFailedException("Failed to get the email claim when proceed the EmailOTP flow ", e);
+            } catch (UserStoreException e) {
+                throw new AuthenticationFailedException("Failed to get the user from user store ", e);
             }
-
-        } catch (EmailOTPException e) {
-            throw new AuthenticationFailedException("Failed to get the email claim when proceed the EmailOTP flow ", e);
-        } catch (UserStoreException e) {
-            throw new AuthenticationFailedException("Failed to get the user from user store ", e);
         }
     }
 
@@ -770,7 +819,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
      *
      * @param username     the Username
      * @param tenantDomain the tenant domain
-     * @throws AuthenticationFailedException
+     * @throws AuthenticationFailedException AuthenticationFailedException
      */
     private void verifyUserExists(String username, String tenantDomain) throws AuthenticationFailedException {
 
@@ -805,7 +854,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
      * @param response    the HttpServletResponse
      * @param context     the AuthenticationContext
      * @param queryParams the queryParams
-     * @throws AuthenticationFailedException
+     * @throws AuthenticationFailedException AuthenticationFailedException
      */
     private void redirectToEmailAddressReqPage(HttpServletResponse response, AuthenticationContext context,
                                                Map<String, String> emailOTPParameters, String queryParams,
@@ -1027,7 +1076,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
             }
             if (context.isRetrying()
                     || !Boolean.parseBoolean(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))) {
-                redirectToEmailOTPLoginPage(response,request,context,emailOTPParameters,queryParams,email);
+                redirectToEmailOTPLoginPage(response, request, context, emailOTPParameters, queryParams, email);
             }
         } catch (AuthenticationFailedException e) {
             throw new AuthenticationFailedException("Authentication Failed: Authenticator Properties may be null ", e);
@@ -1328,8 +1377,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
      * @param context           authentication context
      * @param parametersMap     parameter map
      * @return if the email otp is disabled for user
-     *
-     * @throws AuthenticationFailedException
+     * @throws AuthenticationFailedException AuthenticationFailedException
      */
     private boolean isEmailOTPDisableForUser(AuthenticatedUser authenticatedUser, AuthenticationContext context,
                                              Map<String, String> parametersMap)
@@ -1916,7 +1964,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
             String tokenType = getAuthTokenType(context, emailOTPParameters, api);
             if (StringUtils.isNotEmpty(endpoint) && StringUtils.isNotEmpty(tokenType)) {
                 response = sendRESTCall(endpoint.replace(EmailOTPAuthenticatorConstants.ADMIN_EMAIL
-                        , authenticatorProperties.get(EmailOTPAuthenticatorConstants.EMAILOTP_EMAIL))
+                                , authenticatorProperties.get(EmailOTPAuthenticatorConstants.EMAILOTP_EMAIL))
                         , StringUtils.isNotEmpty(urlParams) ? urlParams : ""
                         , tokenType + " " +
                                 (isAccessTokenRequired(context, emailOTPParameters, authenticatorProperties) ?
@@ -2475,7 +2523,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
             UserRealm userRealm = getUserRealm(authenticatedUser);
             UserStoreManager userStoreManager = userRealm.getUserStoreManager();
             claimValues = userStoreManager.getUserClaimValues(IdentityUtil.addDomainToName(
-                    authenticatedUser.getUserName(), authenticatedUser.getUserStoreDomain()), new String[]{
+                            authenticatedUser.getUserName(), authenticatedUser.getUserStoreDomain()), new String[]{
                             EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM,
                             EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM},
                     UserCoreConstants.DEFAULT_PROFILE);
@@ -2555,6 +2603,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                 .AUTHENTICATED_USER);
         Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
         String username = authenticatedUser.getAuthenticatedSubjectIdentifier();
+        if (username == null) {
+            username = authenticatedUser.getUserName();
+        }
         boolean isUserExist;
         try {
             isUserExist = FederatedAuthenticatorUtil.isUserExistInUserStore(username);
@@ -2692,5 +2743,90 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
 
         return Boolean.parseBoolean(String.valueOf(
                 context.getProperty(EmailOTPAuthenticatorConstants.CODE_MISMATCH)));
+    }
+
+    private boolean isIdfInitiatedFromEmailOTP() {
+
+        return Boolean.TRUE.equals(
+                authenticationContext.getProperty(EmailOTPAuthenticatorConstants.IS_IDF_INITIATED_FROM_AUTHENTICATOR));
+    }
+
+    private String validateIdentifierFromRequest(HttpServletRequest request)
+            throws AuthenticationFailedException {
+
+        String identifierFromRequest = request.getParameter(EmailOTPAuthenticatorConstants.USER_NAME);
+        if (StringUtils.isBlank(identifierFromRequest)) {
+            throw new InvalidCredentialsException(EmailOTPAuthErrorConstants.ErrorMessages.EMPTY_USERNAME.getCode(),
+                    EmailOTPAuthErrorConstants.ErrorMessages.EMPTY_USERNAME.getMessage());
+        }
+        return identifierFromRequest;
+    }
+
+    /**
+     * This method is used to resolve the user from authentication response from identifier handler.
+     *
+     * @param request The httpServletRequest.
+     * @param context The authentication context.
+     * @throws AuthenticationFailedException In occasions of failing.
+     */
+    private org.wso2.carbon.user.core.common.User resolveUser(HttpServletRequest request, AuthenticationContext context)
+            throws AuthenticationFailedException {
+
+        String username = validateIdentifierFromRequest(request);
+        validateEmailUsername(username, context);
+        username = FrameworkUtils.preprocessUsername(username, context);
+        org.wso2.carbon.user.core.common.User user = new org.wso2.carbon.user.core.common.User();
+        String tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(username);
+        String tenantDomain = MultitenantUtils.getTenantDomain(username);
+
+        user.setUsername(tenantAwareUsername);
+        user.setUserStoreDomain(UserCoreUtil.extractDomainFromName(username));
+        user.setTenantDomain(tenantDomain);
+        return user;
+    }
+
+    private void setResolvedUserInContext(AuthenticationContext context, org.wso2.carbon.user.core.common.User user) {
+
+        Map<String, Object> authProperties = context.getProperties();
+        if (MapUtils.isEmpty(authProperties)) {
+            authProperties = new HashMap<>();
+            context.setProperties(authProperties);
+        }
+
+        String username = UserCoreUtil.addTenantDomainToEntry(user.getUsername(), user.getTenantDomain());
+        username = FrameworkUtils.prependUserStoreDomainToName(username);
+        authProperties.put(EmailOTPAuthenticatorConstants.USER_NAME, username);
+        addUsernameToContext(context, username);
+        setSubjectInContext(context, user);
+        context.setProperty("user", user);
+    }
+
+    private void validateEmailUsername(String identifierFromRequest, AuthenticationContext context)
+            throws InvalidCredentialsException {
+
+        if (!IdentityUtil.isEmailUsernameValidationDisabled()) {
+            FrameworkUtils.validateUsername(identifierFromRequest, context);
+        }
+    }
+
+    private void addUsernameToContext(AuthenticationContext context, String username) {
+
+        Map<String, String> identifierParams = new HashMap<>();
+        Map<String, Map<String, String>> contextParams = new HashMap<>();
+        identifierParams.put(FrameworkConstants.JSAttributes.JS_OPTIONS_USERNAME, username);
+        contextParams.put(FrameworkConstants.JSAttributes.JS_COMMON_OPTIONS, identifierParams);
+        //Identifier first is the first authenticator.
+        context.getPreviousAuthenticatedIdPs().clear();
+        context.addAuthenticatorParams(contextParams);
+    }
+
+    private void setSubjectInContext(AuthenticationContext context, org.wso2.carbon.user.core.common.User user) {
+
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setUserId(user.getUserID());
+        authenticatedUser.setUserName(user.getUsername());
+        authenticatedUser.setUserStoreDomain(user.getUserStoreDomain());
+        authenticatedUser.setTenantDomain(user.getTenantDomain());
+        context.setSubject(authenticatedUser);
     }
 }
