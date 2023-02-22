@@ -150,6 +150,10 @@ public class EmailOTPAuthenticatorConstants {
     public static final String ERROR_USER_ACCOUNT_LOCKED = "&authFailure=true&authFailureMsg=user.account.locked";
     public static final String ADMIN_INITIATED = "AdminInitiated";
     public static final String MAX_EMAIL_OTP_ATTEMPTS_EXCEEDED = "MAX_EMAIL_OTP_ATTEMPTS_EXCEEDED";
+    public static final String OTP_IS_OPTIONAL_AND_USER_DISABLED_EMAIL_OTP = "otpIsOptionalAndUserDisabledEmailOTP";
+    public static final String OTP_IS_OPTIONAL_WITHOUT_FEDERATED_EMAIL = "otpIsOptionalWithoutFederatedEmail";
+    public static final String OTP_OPTIONAL_WITHOUT_SEND_OTP_TO_FEDERATED_EMAIL =
+            "otpOptionalWithoutSendOTPToFederatedEmail";
 
     private EmailOTPAuthenticatorConstants() {
 
