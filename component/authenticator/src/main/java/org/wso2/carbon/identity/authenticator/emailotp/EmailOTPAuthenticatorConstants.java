@@ -152,8 +152,10 @@ public class EmailOTPAuthenticatorConstants {
     public static final String MAX_EMAIL_OTP_ATTEMPTS_EXCEEDED = "MAX_EMAIL_OTP_ATTEMPTS_EXCEEDED";
     public static final String OTP_IS_OPTIONAL_AND_USER_DISABLED_EMAIL_OTP = "otpIsOptionalAndUserDisabledEmailOTP";
     public static final String OTP_IS_OPTIONAL_WITHOUT_FEDERATED_EMAIL = "otpIsOptionalWithoutFederatedEmail";
-    public static final String OTP_OPTIONAL_WITHOUT_SEND_OTP_TO_FEDERATED_EMAIL =
+    public static final String OTP_IS_OPTIONAL_WITH_FEDERATED_EMAIL = "otpIsOptionalWithFederatedEmail";
+    public static final String OTP_IS_OPTIONAL_WITHOUT_SEND_OTP_TO_FEDERATED_EMAIL =
             "otpOptionalWithoutSendOTPToFederatedEmail";
+    public static final String WITHOUT_AUTHENTICATED_USER = "withoutAuthenticatedUser";
 
     private EmailOTPAuthenticatorConstants() {
 
