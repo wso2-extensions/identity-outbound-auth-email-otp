@@ -217,16 +217,19 @@ public class EmailOTPAuthenticatorTest {
         parameters.put(EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE, "true");
         authenticatorConfig.setParameterMap(parameters);
         authenticationContext.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
-        authenticationContext.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
+        authenticationContext.setProperty(EmailOTPAuthenticatorConstants.USER_NAME,
+                EmailOTPAuthenticatorTestConstants.USER_NAME);
         authenticationContext.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER, null);
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
         when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
         emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
         doNothing().when(emailOTPAuthenticator, "redirectUserToIdf", anyObject(), anyObject(), anyObject());
         setStepConfigWithBasicAuthenticator(null, authenticatorConfig);
-        AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse, authenticationContext);
+        AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
+                authenticationContext);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
-        Assert.assertTrue((boolean) authenticationContext.getProperty(EmailOTPAuthenticatorConstants.WITHOUT_AUTHENTICATED_USER));
+        Assert.assertTrue((boolean) authenticationContext.getProperty(
+                EmailOTPAuthenticatorConstants.WITHOUT_AUTHENTICATED_USER));
     }
 
     @Test(description = "Test case for process() method when email OTP is optional for local user")
@@ -514,7 +517,8 @@ public class EmailOTPAuthenticatorTest {
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
-        Assert.assertTrue((boolean) context.getProperty(EmailOTPAuthenticatorConstants.OTP_IS_OPTIONAL_WITH_FEDERATED_EMAIL));
+        Assert.assertTrue((boolean) context.getProperty(
+                EmailOTPAuthenticatorConstants.OTP_IS_OPTIONAL_WITH_FEDERATED_EMAIL));
     }
 
     @Test(description = "Test case for process() method when email OTP is mandatory for federated user and email " +
