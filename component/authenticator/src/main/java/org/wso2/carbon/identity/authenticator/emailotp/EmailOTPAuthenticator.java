@@ -279,16 +279,29 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                 if (context.getLastAuthenticatedUser() == null) {
                     context.setProperty(WITHOUT_AUTHENTICATED_USER, true);
                     redirectUserToIdf(request, response, context);
-                } else {
-                    initiateAuthenticationRequest(request, response, context);
-                }
+//                } else {
+//                    initiateAuthenticationRequest(request, response, context);
+//                }
                 return AuthenticatorFlowStatus.INCOMPLETE;
+                }
             }
             if (context.getLastAuthenticatedUser() == null) {
-                org.wso2.carbon.user.core.common.User user = resolveUser(request, context);
+                org.wso2.carbon.user.core.common.User user = resolveUser(request, context); // TODO: After this, we should check whether the user is there or not
                 setResolvedUserInContext(context, user);
-                context.setProperty(IS_IDF_INITIATED_FROM_AUTHENTICATOR, false);
+//                context.setProperty(IS_IDF_INITIATED_FROM_AUTHENTICATOR, false);
+            }
+
+            try {
                 initiateAuthenticationRequest(request, response, context);
+            } catch (AuthenticationFailedException e) {
+                // The case where user has entered an invalid username
+                log.error(e);
+                Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
+                String queryParams = FrameworkUtils.getQueryStringWithFrameworkContextId(context.getQueryParams(),
+                        context.getCallerSessionKey(), context.getContextIdentifier());
+                String dummyEmail = "dummy@email.com";
+                redirectToEmailOTPLoginPage(response, request, context, emailOTPParameters, queryParams, dummyEmail);
+                return AuthenticatorFlowStatus.INCOMPLETE;
             }
             publishPostEmailOTPGeneratedEvent(request, context);
             if (context.getProperty(AUTHENTICATION).equals(AUTHENTICATOR_NAME)) {
