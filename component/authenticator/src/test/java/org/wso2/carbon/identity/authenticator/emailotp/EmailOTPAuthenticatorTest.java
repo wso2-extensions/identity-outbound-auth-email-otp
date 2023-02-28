@@ -205,9 +205,7 @@ public class EmailOTPAuthenticatorTest {
         Assert.assertEquals(status, AuthenticatorFlowStatus.SUCCESS_COMPLETED);
     }
 
-    @Test(description = "Test case for process() method when authenticated user is null."
-//            , expectedExceptions = {AuthenticationFailedException.class}
-    )
+    @Test(description = "Test case for process() method when authenticated user is null.")
     public void testProcessWithoutAuthenticatedUser() throws Exception {
 
         AuthenticationContext authenticationContext = new AuthenticationContext();
@@ -408,9 +406,6 @@ public class EmailOTPAuthenticatorTest {
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.SUCCESS_COMPLETED);
-//        Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
-//        Assert.assertTrue((boolean) context.getProperty(EmailOTPAuthenticatorConstants.
-//                OTP_IS_OPTIONAL_AND_USER_DISABLED_EMAIL_OTP));
     }
 
     private void mockUserRealm() throws UserStoreException {
@@ -524,7 +519,7 @@ public class EmailOTPAuthenticatorTest {
 
     @Test(description = "Test case for process() method when email OTP is mandatory for federated user and email " +
             "attribute is not available."
-//            , expectedExceptions = AuthenticationFailedException.class
+            , expectedExceptions = AuthenticationFailedException.class
     )
     public void testProcessWhenEmailOTPIsMandatoryWithoutFederatedEmail() throws AuthenticationFailedException,
             LogoutFailedException {
@@ -585,14 +580,11 @@ public class EmailOTPAuthenticatorTest {
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.SUCCESS_COMPLETED);
-//        Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
-//        Assert.assertTrue((boolean) context.getProperty(EmailOTPAuthenticatorConstants.
-//                OTP_IS_OPTIONAL_WITHOUT_FEDERATED_EMAIL));
     }
 
     @Test(description = "Test case for process() method when email OTP is Mandatory and send OTP to federated " +
             "email attribute is diabled."
-//            , expectedExceptions = AuthenticationFailedException.class
+            , expectedExceptions = AuthenticationFailedException.class
     )
     public void testProcessWhenEmailOTPIsMandatoryWithoutSendOTPToFederatedEmail() throws AuthenticationFailedException,
             LogoutFailedException {
@@ -656,9 +648,6 @@ public class EmailOTPAuthenticatorTest {
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.SUCCESS_COMPLETED);
-//        Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
-//        Assert.assertTrue((boolean) context.getProperty(EmailOTPAuthenticatorConstants.
-//                OTP_IS_OPTIONAL_WITHOUT_SEND_OTP_TO_FEDERATED_EMAIL));
     }
 
     @Test

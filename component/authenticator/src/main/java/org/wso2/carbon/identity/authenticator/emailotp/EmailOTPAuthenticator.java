@@ -169,7 +169,7 @@ import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthentica
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.
         IS_ENABLE_EMAIL_VALUE_UPDATE;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.
-        IS_IDF_INITIATED_FROM_AUTHENTICATOR;
+        IS_IDENTIFIER_FIRST_INITIATED_FROM_AUTHENTICATOR;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.LOCAL_AUTHENTICATOR;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.MAILING_ENDPOINT;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.MAIL_API_KEY;
@@ -279,16 +279,12 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                 if (context.getLastAuthenticatedUser() == null) {
                     context.setProperty(WITHOUT_AUTHENTICATED_USER, true);
                     redirectUserToIdf(request, response, context);
-//                } else {
-//                    initiateAuthenticationRequest(request, response, context);
-//                }
-                return AuthenticatorFlowStatus.INCOMPLETE;
+                    return AuthenticatorFlowStatus.INCOMPLETE;
                 }
             }
             if (context.getLastAuthenticatedUser() == null) {
                 org.wso2.carbon.user.core.common.User user = resolveUser(request, context); // TODO: After this, we should check whether the user is there or not
                 setResolvedUserInContext(context, user);
-//                context.setProperty(IS_IDF_INITIATED_FROM_AUTHENTICATOR, false);
             }
 
             try {
@@ -2776,7 +2772,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
 
     private boolean isIdfInitiatedFromEmailOTP(AuthenticationContext context) {
 
-        return Boolean.TRUE.equals(context.getProperty(IS_IDF_INITIATED_FROM_AUTHENTICATOR));
+        return Boolean.TRUE.equals(context.getProperty(IS_IDENTIFIER_FIRST_INITIATED_FROM_AUTHENTICATOR));
     }
 
     private String validateIdentifierFromRequest(HttpServletRequest request) throws AuthenticationFailedException {
@@ -2848,7 +2844,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
     private void redirectUserToIdf(HttpServletRequest request, HttpServletResponse response,
                                    AuthenticationContext context) throws AuthenticationFailedException {
 
-        context.setProperty(IS_IDF_INITIATED_FROM_AUTHENTICATOR, true);
+        context.setProperty(IS_IDENTIFIER_FIRST_INITIATED_FROM_AUTHENTICATOR, true);
         String loginPage = ConfigurationFacade.getInstance().getAuthenticationEndpointURL();
         String queryParams = context.getContextIdIncludedQueryParams();
         try {

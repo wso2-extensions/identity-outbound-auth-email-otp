@@ -26,7 +26,7 @@ public class EmailOTPAuthenticatorConstants {
 
     public static final String AUTHENTICATOR_NAME = "EmailOTP";
     public static final String AUTHENTICATOR_FRIENDLY_NAME = "Email OTP";
-    public static final String IS_IDF_INITIATED_FROM_AUTHENTICATOR = "isIdfInitiatedFromAuthenticator";
+    public static final String IS_IDENTIFIER_FIRST_INITIATED_FROM_AUTHENTICATOR = "isIdfInitiatedFromAuthenticator";
     public static final String IDF_HANDLER_NAME = "IdentifierExecutor";
     public static final String ALGORITHM_NAME = "SHA1PRNG";
     public static final String ALGORITHM_HMAC = "HmacSHA1";
