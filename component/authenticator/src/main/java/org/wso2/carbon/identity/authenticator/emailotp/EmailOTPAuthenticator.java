@@ -305,6 +305,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                                                  AuthenticationContext context) throws AuthenticationFailedException {
 
         AuthenticatedUser authenticatedUser = getAuthenticatedUser(context);
+        // Set isOTPExpired property to false initially in the context whenever the authentication response is received.
+        context.setProperty(EmailOTPAuthenticatorConstants.OTP_EXPIRED, "false");
         boolean isLocalUser = isLocalUser(context);
         if (authenticatedUser == null) {
             String errorMessage = "Could not find an Authenticated user in the context.";
@@ -1014,7 +1016,6 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                 String ipAddress = IdentityUtil.getClientIpAddress(request);
                 context.setProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN, myToken);
                 context.setProperty(EmailOTPAuthenticatorConstants.OTP_GENERATED_TIME, System.currentTimeMillis());
-                context.setProperty(EmailOTPAuthenticatorConstants.OTP_EXPIRED, "false");
                 if (authenticatorProperties != null) {
                     if (StringUtils.isNotEmpty(myToken)) {
                         checkEmailOTPBehaviour(context, emailOTPParameters, authenticatorProperties, email, username,
@@ -1062,7 +1063,12 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
             if (context.isRetrying()
                     && !Boolean.parseBoolean(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))
                     && !isEmailUpdateFailed(context)) {
-                url = url + EmailOTPAuthenticatorConstants.RETRY_PARAMS;
+                // Build redirect url by validating whether the otp has been expired or not.
+                if (isOTPExpired(context)) {
+                    url = url + EmailOTPAuthenticatorConstants.ERROR_TOKEN_EXPIRED;
+                } else {
+                    url = url + EmailOTPAuthenticatorConstants.RETRY_PARAMS;
+                }
             }
             response.sendRedirect(url);
         } catch (IOException e) {
