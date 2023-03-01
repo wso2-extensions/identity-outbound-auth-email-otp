@@ -23,16 +23,17 @@ package org.wso2.carbon.identity.authenticator.emailotp.util;
  */
 public class EmailOTPAuthErrorConstants {
 
+    public static final String EMAIL_OTP_ERROR_CODE_PREFIX = "EOT-";
     /**
      * Authentication error constants of EmailOTP Authenticator.
      */
     public enum ErrorMessages {
 
         // Identifier related Error codes.
-        EMPTY_USERNAME("BAS-60002", "Username is empty."),
+        EMPTY_USERNAME("60001", "Username is empty."),
 
         // IO related Error codes
-        SYSTEM_ERROR_WHILE_AUTHENTICATING("BAS-65001", "System error while authenticating");
+        SYSTEM_ERROR_WHILE_AUTHENTICATING("65001", "System error while authenticating");
 
         private final String code;
         private final String message;
@@ -56,7 +57,7 @@ public class EmailOTPAuthErrorConstants {
          */
         public String getCode() {
 
-            return code;
+            return EMAIL_OTP_ERROR_CODE_PREFIX + code;
         }
 
         /**

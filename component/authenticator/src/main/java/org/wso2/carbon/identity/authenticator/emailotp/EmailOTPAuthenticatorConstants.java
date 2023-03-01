@@ -27,6 +27,7 @@ public class EmailOTPAuthenticatorConstants {
     public static final String AUTHENTICATOR_NAME = "EmailOTP";
     public static final String AUTHENTICATOR_FRIENDLY_NAME = "Email OTP";
     public static final String IS_IDENTIFIER_FIRST_INITIATED_FROM_AUTHENTICATOR = "isIdfInitiatedFromAuthenticator";
+    public static final String NOTIFY_USER_EXISTENCE = "Recovery.NotifyUserExistence";
     public static final String IDF_HANDLER_NAME = "IdentifierExecutor";
     public static final String ALGORITHM_NAME = "SHA1PRNG";
     public static final String ALGORITHM_HMAC = "HmacSHA1";
@@ -150,12 +151,8 @@ public class EmailOTPAuthenticatorConstants {
     public static final String ERROR_USER_ACCOUNT_LOCKED = "&authFailure=true&authFailureMsg=user.account.locked";
     public static final String ADMIN_INITIATED = "AdminInitiated";
     public static final String MAX_EMAIL_OTP_ATTEMPTS_EXCEEDED = "MAX_EMAIL_OTP_ATTEMPTS_EXCEEDED";
-    public static final String OTP_IS_OPTIONAL_AND_USER_DISABLED_EMAIL_OTP = "otpIsOptionalAndUserDisabledEmailOTP";
-    public static final String OTP_IS_OPTIONAL_WITHOUT_FEDERATED_EMAIL = "otpIsOptionalWithoutFederatedEmail";
-    public static final String OTP_IS_OPTIONAL_WITH_FEDERATED_EMAIL = "otpIsOptionalWithFederatedEmail";
-    public static final String OTP_IS_OPTIONAL_WITHOUT_SEND_OTP_TO_FEDERATED_EMAIL =
-            "otpOptionalWithoutSendOTPToFederatedEmail";
     public static final String WITHOUT_AUTHENTICATED_USER = "withoutAuthenticatedUser";
+    public static final String USER = "user";
 
     private EmailOTPAuthenticatorConstants() {
 

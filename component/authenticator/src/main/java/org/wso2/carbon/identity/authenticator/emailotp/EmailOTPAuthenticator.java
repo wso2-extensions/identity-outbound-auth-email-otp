@@ -184,14 +184,6 @@ import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthentica
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.OTP_EXPIRED;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.OTP_EXPIRE_TIME_DEFAULT;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.OTP_GENERATED_TIME;
-import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.
-        OTP_IS_OPTIONAL_AND_USER_DISABLED_EMAIL_OTP;
-import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.
-        OTP_IS_OPTIONAL_WITHOUT_FEDERATED_EMAIL;
-import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.
-        OTP_IS_OPTIONAL_WITHOUT_SEND_OTP_TO_FEDERATED_EMAIL;
-import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.
-        OTP_IS_OPTIONAL_WITH_FEDERATED_EMAIL;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.OTP_TOKEN;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.PASS_SP_NAME_TO_EVENT;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.PAYLOAD;
@@ -236,6 +228,9 @@ import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthentica
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.
         USE_EVENT_HANDLER_BASED_EMAIL_SENDER;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.WITHOUT_AUTHENTICATED_USER;
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.NOTIFY_USER_EXISTENCE;
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.USER;
+
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPUrlUtil.getEmailOTPErrorPageUrl;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPUrlUtil.getEmailOTPLoginPageUrl;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPUrlUtil.getRequestEmailPageUrl;
@@ -283,21 +278,27 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                 }
             }
             if (context.getLastAuthenticatedUser() == null) {
-                org.wso2.carbon.user.core.common.User user = resolveUser(request, context); // TODO: After this, we should check whether the user is there or not
+                org.wso2.carbon.user.core.common.User user = resolveUser(request, context);
                 setResolvedUserInContext(context, user);
             }
 
             try {
                 initiateAuthenticationRequest(request, response, context);
             } catch (AuthenticationFailedException e) {
-                // The case where user has entered an invalid username
-                log.error(e);
-                Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
-                String queryParams = FrameworkUtils.getQueryStringWithFrameworkContextId(context.getQueryParams(),
-                        context.getCallerSessionKey(), context.getContextIdentifier());
-                String dummyEmail = "dummy@email.com";
-                redirectToEmailOTPLoginPage(response, request, context, emailOTPParameters, queryParams, dummyEmail);
-                return AuthenticatorFlowStatus.INCOMPLETE;
+                if (context.getProperty(USER_NAME) == null) {
+                    // The case where user has entered an invalid username
+                    if (Boolean.parseBoolean(IdentityUtil.getProperty(NOTIFY_USER_EXISTENCE))) {
+                        log.error(e + ": The entered user is not in the user stores.");
+                    }
+                    Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
+                    String queryParams = FrameworkUtils.getQueryStringWithFrameworkContextId(context.getQueryParams(),
+                            context.getCallerSessionKey(), context.getContextIdentifier());
+                    String dummyEmail = "dummy@email.com";
+                    redirectToEmailOTPLoginPage(response, request, context, emailOTPParameters, queryParams, dummyEmail);
+                    return AuthenticatorFlowStatus.INCOMPLETE;
+                } else {
+                    throw new AuthenticationFailedException(""); // TODO: Fill this error message
+                }
             }
             publishPostEmailOTPGeneratedEvent(request, context);
             if (context.getProperty(AUTHENTICATION).equals(AUTHENTICATOR_NAME)) {
@@ -366,6 +367,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                 for (StepConfig stepConfig : stepConfigMap.values()) {
                     authenticatedUser = stepConfig.getAuthenticatedUser();
                     if (authenticatedUser == null) {
+                        // The case when the user is not resolved by a previous authenticator
+                        // But have been authenticated by email OTP IdF flow and set in context
                         authenticatedUser = new AuthenticatedUser((org.wso2.carbon.user.core.common.User)
                                 context.getProperty("user"));
                         stepConfig.setAuthenticatedUser(authenticatedUser);
@@ -1504,7 +1507,6 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                             + ". Email OTP is not mandatory and disabled for the user.");
                 }
                 processFirstStepOnly(authenticatedUser, context);
-                context.setProperty(OTP_IS_OPTIONAL_AND_USER_DISABLED_EMAIL_OTP, true);
             } else {
                 String email = getEmailForLocalUser(username, context, emailOTPParameters, queryParams, request,
                         response);
@@ -1568,13 +1570,11 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                                     + ". There is no email claim to send OTP and email OTP is not mandatory.");
                         }
                         processFirstStepOnly(authenticatedUser, context);
-                        context.setProperty(OTP_IS_OPTIONAL_WITHOUT_FEDERATED_EMAIL, true);
                     }
 
                 } else {
                     context.setProperty(RECEIVER_EMAIL, email);
                     processEmailOTPFlow(request, response, email, username, queryParams, context);
-                    context.setProperty(OTP_IS_OPTIONAL_WITH_FEDERATED_EMAIL, true);
                 }
 
             } else if (isEmailOTPMandatory) {
@@ -1591,7 +1591,6 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                             + "federated email is not enabled.");
                 }
                 processFirstStepOnly(authenticatedUser, context);
-                context.setProperty(OTP_IS_OPTIONAL_WITHOUT_SEND_OTP_TO_FEDERATED_EMAIL, true);
             }
         } catch (AuthenticationFailedException e) {
             throw new AuthenticationFailedException("Email OTP authentication is failed for federated user " + username,
@@ -2770,17 +2769,27 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
         return Boolean.parseBoolean(String.valueOf(context.getProperty(CODE_MISMATCH)));
     }
 
+    /**
+     * Check whether the Identifier first page is initialized from within the email OTP authenticator.
+     *
+     * @param context Authentication context
+     * @return whether the Identifier first page is initialized from within the email OTP authenticator
+     */
     private boolean isIdfInitiatedFromEmailOTP(AuthenticationContext context) {
 
         return Boolean.TRUE.equals(context.getProperty(IS_IDENTIFIER_FIRST_INITIATED_FROM_AUTHENTICATOR));
     }
 
-    private String validateIdentifierFromRequest(HttpServletRequest request) throws AuthenticationFailedException {
+    /**
+     * This method is used to resolve the username from authentication request.
+     *
+     * @param request The httpServletRequest.
+     * @throws AuthenticationFailedException In occasions of failing.
+     */
+    private String resolveUsernameFromRequest(HttpServletRequest request) throws AuthenticationFailedException {
 
         String identifierFromRequest = request.getParameter(USER_NAME);
         if (StringUtils.isBlank(identifierFromRequest)) {
-//            redirectUserToIdf(request, response, context); // TODO: redirect the user to login page, not throwing error
-            // TODO: Refer the username recovery flow
             throw new InvalidCredentialsException(EmailOTPAuthErrorConstants.ErrorMessages.EMPTY_USERNAME.getCode(),
                     EmailOTPAuthErrorConstants.ErrorMessages.EMPTY_USERNAME.getMessage());
         }
@@ -2797,7 +2806,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
     public org.wso2.carbon.user.core.common.User resolveUser(HttpServletRequest request, AuthenticationContext context)
             throws AuthenticationFailedException {
 
-        String username = validateIdentifierFromRequest(request); // obtains the username from the request
+        String username = resolveUsernameFromRequest(request);
         username = FrameworkUtils.preprocessUsername(username, context);
         org.wso2.carbon.user.core.common.User user = new org.wso2.carbon.user.core.common.User();
         String tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(username);
@@ -2834,7 +2843,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
     }
 
     /**
-     * This method is used to set the resolved user in context.
+     * This method is used to redirect the user to the username entering page (Idf: Identifier first).
      *
      * @param context  The authentication context
      * @param request  Request
