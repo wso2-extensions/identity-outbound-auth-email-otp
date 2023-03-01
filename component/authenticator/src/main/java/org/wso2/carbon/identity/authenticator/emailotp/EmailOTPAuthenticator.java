@@ -291,13 +291,15 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                         log.error(e + ": The entered user is not in the user stores.");
                     }
                     Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
-                    String queryParams = FrameworkUtils.getQueryStringWithFrameworkContextId(context.getQueryParams(),
-                            context.getCallerSessionKey(), context.getContextIdentifier());
-                    String dummyEmail = "dummy@email.com";
-                    redirectToEmailOTPLoginPage(response, request, context, emailOTPParameters, queryParams, dummyEmail);
+                    try {
+                        String emailOTPLoginPage = getEmailOTPLoginPageUrl(context, emailOTPParameters);
+                        response.sendRedirect(emailOTPLoginPage); // redirect the user to OTP entering page
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
                     return AuthenticatorFlowStatus.INCOMPLETE;
                 } else {
-                    throw new AuthenticationFailedException(""); // TODO: Fill this error message
+                    throw new AuthenticationFailedException("The email is not available for the entered user.");
                 }
             }
             publishPostEmailOTPGeneratedEvent(request, context);
