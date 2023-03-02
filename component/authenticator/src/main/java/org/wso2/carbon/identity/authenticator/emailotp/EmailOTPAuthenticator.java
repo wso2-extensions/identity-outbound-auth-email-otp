@@ -1075,7 +1075,12 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                     && !isEmailUpdateFailed(context)) {
                 // Build redirect url by validating whether the otp has been expired or not.
                 if (isOTPExpired(context)) {
-                    url = url + EmailOTPAuthenticatorConstants.ERROR_TOKEN_EXPIRED;
+                    // Differentiating the error message according to the config disableOTPResendOnFailure.
+                    if (isOTPResendingDisabledOnFailure(context)){
+                        url = url + EmailOTPAuthenticatorConstants.ERROR_TOKEN_EXPIRED;
+                    } else {
+                        url = url + EmailOTPAuthenticatorConstants.ERROR_TOKEN_EXPIRED_EMAIL_SENT;
+                    }
                 } else {
                     url = url + EmailOTPAuthenticatorConstants.RETRY_PARAMS;
                 }

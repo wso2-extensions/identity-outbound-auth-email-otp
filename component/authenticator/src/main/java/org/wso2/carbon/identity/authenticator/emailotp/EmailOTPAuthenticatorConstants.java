@@ -117,6 +117,7 @@ public class EmailOTPAuthenticatorConstants {
     public static final String PASS_SP_NAME_TO_EVENT = "passSPNameToEvent";
 
     public static final String SCREEN_VALUE = "&screenValue=";
+    public static final String ERROR_TOKEN_EXPIRED_EMAIL_SENT = "&authFailure=true&authFailureMsg=token.expired.email.sent";
     public static final String ERROR_TOKEN_EXPIRED = "&authFailure=true&authFailureMsg=token.expired";
     public static final String SHOW_EMAIL_ADDRESS_IN_UI = "showEmailAddressInUI";
     public static final String EMAIL_ADDRESS_REGEX = "emailAddressRegex";
