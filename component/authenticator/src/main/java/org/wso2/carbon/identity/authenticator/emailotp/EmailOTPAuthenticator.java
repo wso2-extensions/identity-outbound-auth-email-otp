@@ -47,7 +47,6 @@ import org.wso2.carbon.identity.application.authentication.framework.model.Authe
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.Property;
-import org.wso2.carbon.identity.application.common.model.User;
 import org.wso2.carbon.identity.authenticator.emailotp.config.EmailOTPUtils;
 import org.wso2.carbon.identity.authenticator.emailotp.exception.EmailOTPException;
 import org.wso2.carbon.identity.authenticator.emailotp.internal.EmailOTPServiceDataHolder;
@@ -149,6 +148,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
     public AuthenticatorFlowStatus process(HttpServletRequest request, HttpServletResponse response,
                                            AuthenticationContext context)
             throws AuthenticationFailedException, LogoutFailedException {
+
         // if the logout request comes, then no need to go through and complete the flow.
         if (context.isLogoutRequest()) {
             return AuthenticatorFlowStatus.SUCCESS_COMPLETED;
@@ -156,39 +156,41 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             // if the request comes with EMAIL ADDRESS, it will go through this flow.
             initiateAuthenticationRequest(request, response, context);
             return AuthenticatorFlowStatus.INCOMPLETE;
-        } else if (StringUtils.isEmpty(request.getParameter(CODE)) && StringUtils.isEmpty(request.getParameter(RESEND)))
-        {
-            // if the request comes with code, it will go through this flow.
-            if (!isIdfInitiatedFromEmailOTP(context)) {
+        } else if (StringUtils.isEmpty(request.getParameter(CODE)) && StringUtils.isEmpty(request.getParameter(RESEND))) {
+            // if the request doesn't contain an OTP code, it will go through this flow
+            if (!isIDFInitiatedFromEmailOTP(context)) {
+                // if the IDF is not initiated from within EmailOTP authenticator
                 if (context.getLastAuthenticatedUser() == null) {
+                    // If there is no authenticated user present in the context
                     context.setProperty(WITHOUT_AUTHENTICATED_USER, true);
-                    redirectUserToIdf(request, response, context);
+                    redirectUserToIDF(request, response, context); // Redirect to username entering page
                     context.setProperty(IS_IDENTIFIER_FIRST_INITIATED_FROM_AUTHENTICATOR, true);
                     return AuthenticatorFlowStatus.INCOMPLETE;
                 }
             }
             if (context.getLastAuthenticatedUser() == null) {
+                // when username is input to IDF and user is not yet set in context
                 AuthenticatedUser user = resolveUser(request, context);
                 setResolvedUserInContext(context, user);
             }
-
             try {
                 initiateAuthenticationRequest(request, response, context);
             } catch (AuthenticationFailedException e) {
-                if (context.getProperty(USER_NAME) == null) { // TODO: Check this if condition is correct
+                if (context.getProperty(USER_NAME) == null) { // for the case where no username is set in context
                     // The case where user has entered an invalid username
                     if (Boolean.parseBoolean(IdentityUtil.getProperty(NOTIFY_USER_EXISTENCE))) {
                         log.error(e + ": The entered user is not in the user stores.");
                     }
                     Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
                     try {
+                        // redirect the user to OTP entering page
                         String emailOTPLoginPage = getEmailOTPLoginPageUrl(context, emailOTPParameters);
-                        response.sendRedirect(emailOTPLoginPage); // redirect the user to OTP entering page
+                        response.sendRedirect(emailOTPLoginPage);
                     } catch (IOException ex) {
                         throw new RuntimeException(ex);
                     }
                     return AuthenticatorFlowStatus.INCOMPLETE;
-                } else {
+                } else { // for the case where the username is in context, but no email is resolved
                     throw new AuthenticationFailedException("The email is not available for the entered user.");
                 }
             }
@@ -824,7 +826,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      *
      * @param username     the Username
      * @param tenantDomain the tenant domain
-     * @throws AuthenticationFailedException
+     * @throws AuthenticationFailedException AuthenticationFailedException
      */
     private void verifyUserExists(String username, String tenantDomain) throws AuthenticationFailedException {
 
@@ -859,7 +861,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      * @param response    the HttpServletResponse
      * @param context     the AuthenticationContext
      * @param queryParams the queryParams
-     * @throws AuthenticationFailedException
+     * @throws AuthenticationFailedException AuthenticationFailedException
      */
     private void redirectToEmailAddressReqPage(HttpServletResponse response, AuthenticationContext context,
                                                Map<String, String> emailOTPParameters, String queryParams,
@@ -1379,7 +1381,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      * @param context           authentication context
      * @param parametersMap     parameter map
      * @return if the email otp is disabled for user
-     * @throws AuthenticationFailedException
+     * @throws AuthenticationFailedException AuthenticationFailedException
      */
     private boolean isEmailOTPDisableForUser(AuthenticatedUser authenticatedUser, AuthenticationContext context,
                                              Map<String, String> parametersMap)
@@ -1435,7 +1437,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             throws AuthenticationFailedException {
 
         try {
-            if (isEmailOTPDisableForUser(username, context, emailOTPParameters) && !isEmailOTPMandatory) {
+            if (!isEmailOTPMandatory && isEmailOTPDisableForUser(username, context, emailOTPParameters)) {
                 if (log.isDebugEnabled()) {
                     log.debug("Email OTP authentication is skipped for the user " + username +
                             ". Email OTP is not mandatory and disabled for the user.");
@@ -1633,7 +1635,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      * @return email
      * @throws EmailOTPException If an error occurred.
      */
-    private String getEmailValueForUsername(String username, AuthenticationContext context)
+    public String getEmailValueForUsername(String username, AuthenticationContext context)
             throws EmailOTPException {
 
         UserRealm userRealm;
@@ -2750,7 +2752,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      * @param context Authentication context
      * @return whether the Identifier first page is initialized from within the email OTP authenticator
      */
-    private boolean isIdfInitiatedFromEmailOTP(AuthenticationContext context) {
+    private boolean isIDFInitiatedFromEmailOTP(AuthenticationContext context) {
 
         return Boolean.TRUE.equals(context.getProperty(IS_IDENTIFIER_FIRST_INITIATED_FROM_AUTHENTICATOR));
     }
@@ -2793,10 +2795,6 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
         user.setUserStoreDomain(userStoreDomain);
         user.setTenantDomain(tenantDomain);
 
-        // TODO: Here, should check whether the user is in the user stores or not ?
-//        No, cuz it's detected from the 'getEmailForLocalUser' method
-//        If there's no email resolved, then an exception is thrown and user is redirected in the catch section
-
         return user;
     }
 
@@ -2833,7 +2831,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      * @param response Response
      * @throws AuthenticationFailedException AuthenticationFailedException
      */
-    private void redirectUserToIdf(HttpServletRequest request, HttpServletResponse response,
+    private void redirectUserToIDF(HttpServletRequest request, HttpServletResponse response,
                                    AuthenticationContext context) throws AuthenticationFailedException {
 
         String loginPage = ConfigurationFacade.getInstance().getAuthenticationEndpointURL();
@@ -2848,9 +2846,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             response.sendRedirect(loginPage + ("?" + queryParams) + "&" + AUTHENTICATORS + IDF_HANDLER_NAME + ":"
                     + LOCAL_AUTHENTICATOR);
         } catch (IOException e) {
-            User user = User.getUserFromUserName(request.getParameter(USER_NAME));
             throw new AuthenticationFailedException(EmailOTPAuthErrorConstants.ErrorMessages.
-                    SYSTEM_ERROR_WHILE_AUTHENTICATING.getCode(), e.getMessage(), user, e);
+                    SYSTEM_ERROR_WHILE_AUTHENTICATING.getCode(), e.getMessage(), e);
         }
     }
 }

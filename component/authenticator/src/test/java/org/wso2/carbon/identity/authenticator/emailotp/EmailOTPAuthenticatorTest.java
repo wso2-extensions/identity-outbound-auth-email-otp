@@ -59,6 +59,7 @@ import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.claim.ClaimManager;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.user.core.util.UserCoreUtil;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.util.ArrayList;
@@ -79,11 +80,14 @@ import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.AUTHENTICATION;
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME;
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.USER_NAME;
 
 @PrepareForTest({EmailOTPAuthenticator.class, FileBasedConfigurationBuilder.class, FederatedAuthenticatorUtil.class,
         FrameworkUtils.class, MultitenantUtils.class, IdentityTenantUtil.class, ConfigurationContextFactory.class,
         ConfigBuilder.class, NotificationBuilder.class, EmailOTPUtils.class, EmailOTPServiceDataHolder.class,
-        ServiceURLBuilder.class, AbstractUserStoreManager.class})
+        ServiceURLBuilder.class, AbstractUserStoreManager.class, UserCoreUtil.class})
 @PowerMockIgnore({"javax.crypto.*"})
 public class EmailOTPAuthenticatorTest {
 
@@ -128,6 +132,7 @@ public class EmailOTPAuthenticatorTest {
         mockStatic(EmailOTPServiceDataHolder.class);
         mockStatic(FederatedAuthenticatorUtil.class);
         mockStatic(FrameworkUtils.class);
+        mockStatic(UserCoreUtil.class);
         mockStatic(MultitenantUtils.class);
         mockStatic(IdentityTenantUtil.class);
         mockStatic(ConfigurationContextFactory.class);
@@ -205,8 +210,9 @@ public class EmailOTPAuthenticatorTest {
         Assert.assertEquals(status, AuthenticatorFlowStatus.SUCCESS_COMPLETED);
     }
 
-    @Test(description = "Test case for process() method when authenticated user is null.")
-    public void testProcessWithoutAuthenticatedUser() throws Exception {
+    @Test(description = "Test case for process() method when authenticated user is null and the username of an " +
+            "existing user is entered into the IdF page.")
+    public void testProcessWithoutAuthenticatedUserAndValidUsernameEntered() throws Exception {
 
         AuthenticationContext authenticationContext = new AuthenticationContext();
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
@@ -215,19 +221,74 @@ public class EmailOTPAuthenticatorTest {
         parameters.put(EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE, "true");
         authenticatorConfig.setParameterMap(parameters);
         authenticationContext.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
-        authenticationContext.setProperty(EmailOTPAuthenticatorConstants.USER_NAME,
-                EmailOTPAuthenticatorTestConstants.USER_NAME);
         authenticationContext.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER, null);
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
         when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
         emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
-        doNothing().when(emailOTPAuthenticator, "redirectUserToIdf", anyObject(), anyObject(), anyObject());
-        setStepConfigWithBasicAuthenticator(null, authenticatorConfig);
+        doNothing().when(emailOTPAuthenticator, "redirectUserToIDF", anyObject(), anyObject(), anyObject());
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 authenticationContext);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
-        Assert.assertTrue((boolean) authenticationContext.getProperty(
-                EmailOTPAuthenticatorConstants.WITHOUT_AUTHENTICATED_USER));
+        Assert.assertTrue((boolean) authenticationContext.getProperty(EmailOTPAuthenticatorConstants.WITHOUT_AUTHENTICATED_USER));
+        authenticationContext.setProperty(AUTHENTICATION, AUTHENTICATOR_NAME);
+        httpServletRequest.setAttribute(USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
+        when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.USER_NAME))
+                .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        when(FrameworkUtils.preprocessUsername(anyString(), anyObject()))
+                .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME + "@" + EmailOTPAuthenticatorTestConstants.TENANT_DOMAIN);
+        when(UserCoreUtil.extractDomainFromName(anyString())).thenReturn("PRIMARY");
+        when(MultitenantUtils.getTenantAwareUsername(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_DOMAIN);
+        mockUserRealm();
+        when(emailOTPAuthenticator.getEmailValueForUsername(EmailOTPAuthenticatorTestConstants.USER_NAME,
+                authenticationContext)).thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
+        doNothing().when(emailOTPAuthenticator, "processEmailOTPFlow", anyObject(), anyObject(), anyString(),
+                anyString(), anyString(), anyObject());
+        doNothing().when(emailOTPAuthenticator, "publishPostEmailOTPGeneratedEvent", anyObject(), anyObject());
+        setStepConfigWithEmailOTPAuthenticator(authenticatorConfig, authenticationContext);
+        status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
+                authenticationContext);
+        Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
+    }
+
+    @Test(description = "Test case for process() method when authenticated user is null and the username of a" +
+            "non existing user is entered into the IdF page.")
+    public void testProcessWithoutAuthenticatedUserAndInvalidUsernameEntered() throws Exception {
+        AuthenticationContext authenticationContext = new AuthenticationContext();
+        AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "true");
+        parameters.put(EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE, "true");
+        authenticatorConfig.setParameterMap(parameters);
+        authenticationContext.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
+        authenticationContext.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER, null);
+        authenticationContext.setSubject(null);
+        when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
+        when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
+        emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
+        doNothing().when(emailOTPAuthenticator, "redirectUserToIDF", anyObject(), anyObject(), anyObject());
+        AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
+                authenticationContext);
+        Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
+        Assert.assertTrue((boolean) authenticationContext.getProperty(EmailOTPAuthenticatorConstants.WITHOUT_AUTHENTICATED_USER));
+        authenticationContext.setProperty(AUTHENTICATION, AUTHENTICATOR_NAME);
+        // Entering a username of a user who is not in the user stores
+        httpServletRequest.setAttribute(USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME_2);
+        when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.USER_NAME))
+                .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME_2);
+        when(FrameworkUtils.preprocessUsername(anyString(), anyObject()))
+                .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME + "@" + EmailOTPAuthenticatorTestConstants.TENANT_DOMAIN);
+        when(UserCoreUtil.extractDomainFromName(anyString())).thenReturn("PRIMARY");
+        when(MultitenantUtils.getTenantAwareUsername(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_DOMAIN);
+        mockUserRealm();
+        doNothing().when(emailOTPAuthenticator, "processEmailOTPFlow", anyObject(), anyObject(), anyString(),
+                anyString(), anyString(), anyObject());
+        doNothing().when(emailOTPAuthenticator, "publishPostEmailOTPGeneratedEvent", anyObject(), anyObject());
+        setStepConfigWithEmailOTPAuthenticator(authenticatorConfig, authenticationContext);
+        status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
+                authenticationContext);
+        Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
     }
 
     @Test(description = "Test case for process() method when email OTP is optional for local user")
@@ -883,6 +944,30 @@ public class EmailOTPAuthenticatorTest {
         sequenceConfig.setStepMap(stepConfigMap);
         context.setSequenceConfig(sequenceConfig);
         context.setCurrentStep(2);
+    }
+
+    /**
+     * Set a step configuration to the context with EmailOTP authenticator.
+     *
+     * @param authenticatorConfig object
+     * @param authenticationContext object
+     */
+    public void setStepConfigWithEmailOTPAuthenticator (AuthenticatorConfig authenticatorConfig, AuthenticationContext authenticationContext) {
+
+        Map<Integer, StepConfig> stepConfigMap = new HashMap<>();
+        // Email OTP authenticator step
+        StepConfig emailOTPStep = new StepConfig();
+        authenticatorConfig.setName(EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME);
+        List<AuthenticatorConfig> authenticatorList = new ArrayList<>();
+        authenticatorList.add(authenticatorConfig);
+        emailOTPStep.setAuthenticatorList(authenticatorList);
+        emailOTPStep.setSubjectAttributeStep(true);
+        stepConfigMap.put(1, emailOTPStep);
+
+        SequenceConfig sequenceConfig = new SequenceConfig();
+        sequenceConfig.setStepMap(stepConfigMap);
+        authenticationContext.setSequenceConfig(sequenceConfig);
+        authenticationContext.setCurrentStep(1);
     }
 
     /**
