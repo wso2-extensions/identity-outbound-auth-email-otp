@@ -114,6 +114,7 @@ import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthentica
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.
         SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.SUPER_TENANT;
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.USER;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.USER_NAME;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.USE_CASE;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.WITHOUT_AUTHENTICATED_USER;
@@ -162,18 +163,19 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                 if (context.getLastAuthenticatedUser() == null) {
                     context.setProperty(WITHOUT_AUTHENTICATED_USER, true);
                     redirectUserToIdf(request, response, context);
+                    context.setProperty(IS_IDENTIFIER_FIRST_INITIATED_FROM_AUTHENTICATOR, true);
                     return AuthenticatorFlowStatus.INCOMPLETE;
                 }
             }
             if (context.getLastAuthenticatedUser() == null) {
-                org.wso2.carbon.user.core.common.User user = resolveUser(request, context);
+                AuthenticatedUser user = resolveUser(request, context);
                 setResolvedUserInContext(context, user);
             }
 
             try {
                 initiateAuthenticationRequest(request, response, context);
             } catch (AuthenticationFailedException e) {
-                if (context.getProperty(USER_NAME) == null) {
+                if (context.getProperty(USER_NAME) == null) { // TODO: Check this if condition is correct
                     // The case where user has entered an invalid username
                     if (Boolean.parseBoolean(IdentityUtil.getProperty(NOTIFY_USER_EXISTENCE))) {
                         log.error(e + ": The entered user is not in the user stores.");
@@ -259,13 +261,14 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                     if (authenticatedUser == null) {
                         // The case when the user is not resolved by a previous authenticator
                         // But have been authenticated by email OTP IdF flow and set in context
-                        authenticatedUser = new AuthenticatedUser((org.wso2.carbon.user.core.common.User)
-                                context.getProperty("user"));
+                        authenticatedUser = (AuthenticatedUser) context.getProperty(USER);
                         stepConfig.setAuthenticatedUser(authenticatedUser);
                         stepConfig.setAuthenticatedIdP(LOCAL_AUTHENTICATOR);
                     }
                     if (stepConfig.isSubjectAttributeStep()) {
-                        username = authenticatedUser.toFullQualifiedUsername();
+                        username = authenticatedUser.
+                                getUserName();
+//                                toFullQualifiedUsername();
                         if (stepConfig.getAuthenticatedIdP().equals(LOCAL_AUTHENTICATOR)) {
                             isLocalUser = true;
                             break;
@@ -1339,7 +1342,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      * @param context  the AuthenticationContext
      * @return true or false
      */
-    private boolean isEmailOTPDisableForUser(String username, AuthenticationContext context,
+    public boolean isEmailOTPDisableForUser(String username, AuthenticationContext context,
                                              Map<String, String> parametersMap)
             throws AuthenticationFailedException {
 
@@ -2758,7 +2761,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      * @param request The httpServletRequest.
      * @throws AuthenticationFailedException In occasions of failing.
      */
-    private String resolveUsernameFromRequest(HttpServletRequest request) throws AuthenticationFailedException {
+    public String resolveUsernameFromRequest(HttpServletRequest request) throws AuthenticationFailedException {
 
         String identifierFromRequest = request.getParameter(USER_NAME);
         if (StringUtils.isBlank(identifierFromRequest)) {
@@ -2775,18 +2778,25 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      * @param context The authentication context.
      * @throws AuthenticationFailedException In occasions of failing.
      */
-    public org.wso2.carbon.user.core.common.User resolveUser(HttpServletRequest request, AuthenticationContext context)
+    public AuthenticatedUser resolveUser(HttpServletRequest request, AuthenticationContext context)
             throws AuthenticationFailedException {
 
         String username = resolveUsernameFromRequest(request);
         username = FrameworkUtils.preprocessUsername(username, context);
-        org.wso2.carbon.user.core.common.User user = new org.wso2.carbon.user.core.common.User();
+        AuthenticatedUser user = new AuthenticatedUser();
         String tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(username);
+        String userStoreDomain = UserCoreUtil.extractDomainFromName(username);
         String tenantDomain = MultitenantUtils.getTenantDomain(username);
 
-        user.setUsername(tenantAwareUsername);
-        user.setUserStoreDomain(UserCoreUtil.extractDomainFromName(username));
+        user.setAuthenticatedSubjectIdentifier(tenantAwareUsername);
+        user.setUserName(tenantAwareUsername);
+        user.setUserStoreDomain(userStoreDomain);
         user.setTenantDomain(tenantDomain);
+
+        // TODO: Here, should check whether the user is in the user stores or not ?
+//        No, cuz it's detected from the 'getEmailForLocalUser' method
+//        If there's no email resolved, then an exception is thrown and user is redirected in the catch section
+
         return user;
     }
 
@@ -2796,21 +2806,22 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      * @param context The authentication context.
      * @param user    The user object
      */
-    private void setResolvedUserInContext(AuthenticationContext context, org.wso2.carbon.user.core.common.User user) {
+    private void setResolvedUserInContext(AuthenticationContext context, AuthenticatedUser user) {
 
-        setSubjectInContext(context, user);
-        context.setProperty("user", user);
+        setSubjectInContext(context, user); // sets lastAuthenticatedUser
+        context.setProperty(USER, user);
+        context.setProperty(AUTHENTICATED_USER, user);
     }
 
     /**
      * This method is used to set the subject in context.
      *
      * @param context The authentication context
-     * @param user    The user object
+     * @param authenticatedUser    The user object
      */
-    private void setSubjectInContext(AuthenticationContext context, org.wso2.carbon.user.core.common.User user) {
+    private void setSubjectInContext(AuthenticationContext context, AuthenticatedUser authenticatedUser) {
 
-        AuthenticatedUser authenticatedUser = new AuthenticatedUser(user);
+//        AuthenticatedUser authenticatedUser = new AuthenticatedUser(user);
         context.setSubject(authenticatedUser);
     }
 
@@ -2825,7 +2836,6 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
     private void redirectUserToIdf(HttpServletRequest request, HttpServletResponse response,
                                    AuthenticationContext context) throws AuthenticationFailedException {
 
-        context.setProperty(IS_IDENTIFIER_FIRST_INITIATED_FROM_AUTHENTICATOR, true);
         String loginPage = ConfigurationFacade.getInstance().getAuthenticationEndpointURL();
         String queryParams = context.getContextIdIncludedQueryParams();
         try {
