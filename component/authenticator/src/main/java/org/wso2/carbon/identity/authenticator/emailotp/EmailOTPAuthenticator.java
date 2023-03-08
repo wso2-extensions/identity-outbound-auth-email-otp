@@ -273,18 +273,16 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                         stepConfig.setAuthenticatedUser(authenticatedUser);
                         stepConfig.setAuthenticatedIdP(LOCAL_AUTHENTICATOR);
                     }
-                    if (stepConfig.isSubjectAttributeStep()) {
-                        if (authenticatedUser != null) {
-                            username = authenticatedUser.getUserName();
-                            if (stepConfig.getAuthenticatedIdP().equals(LOCAL_AUTHENTICATOR)) {
-                                isLocalUser = true;
-                                break;
-                            }
-                            userAttributes = authenticatedUser.getUserAttributes();
-                            federatedEmailAttributeKey = getFederatedEmailAttributeKey(context,
-                                    stepConfig.getAuthenticatedAutenticator().getName());
+                    if (authenticatedUser != null && stepConfig.isSubjectAttributeStep()) {
+                        username = authenticatedUser.getUserName();
+                        if (stepConfig.getAuthenticatedIdP().equals(LOCAL_AUTHENTICATOR)) {
+                            isLocalUser = true;
                             break;
                         }
+                        userAttributes = authenticatedUser.getUserAttributes();
+                        federatedEmailAttributeKey = getFederatedEmailAttributeKey(context,
+                                stepConfig.getAuthenticatedAutenticator().getName());
+                        break;
                     }
                 }
 
