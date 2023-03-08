@@ -149,7 +149,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             throws AuthenticationFailedException, LogoutFailedException {
 
         if (context.isLogoutRequest()) {
-            // if the logout request comes, then no need to go through and complete the flow.
+            // If the logout request comes, then no need to go through and complete the flow.
             return AuthenticatorFlowStatus.SUCCESS_COMPLETED;
         } else if (StringUtils.isNotEmpty(request.getParameter(EMAIL_ADDRESS))) {
             // if the request comes with EMAIL ADDRESS, it will go through this flow.
@@ -157,35 +157,35 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             return AuthenticatorFlowStatus.INCOMPLETE;
         } else if (StringUtils.isEmpty(request.getParameter(CODE)) && StringUtils.isEmpty(request.getParameter(RESEND)))
         {
-            // if the request doesn't contain an OTP code and resend is not set, it will go through this flow
+            // If the request doesn't contain an OTP code and resend is not set, it will go through this flow.
             if (!isIDFInitiatedFromEmailOTP(context)) {
-                // if the IDF is not initiated from within EmailOTP authenticator (this decides the state of the flow)
+                // If the IDF is not initiated from within EmailOTP authenticator (this decides the state of the flow).
                 if (context.getLastAuthenticatedUser() == null) {
-                    // this is the case that no prior authentication step has been done, and IDF has not been triggered
+                    // This is the case that no prior authentication step has been done, and IDF has not been triggered.
                     context.setProperty(WITHOUT_AUTHENTICATED_USER, true);
-                    redirectUserToIDF(response, context); // Redirect to username entering page
+                    redirectUserToIDF(response, context); // Redirect to username entering page.
                     context.setProperty(IS_IDENTIFIER_FIRST_INITIATED_FROM_AUTHENTICATOR, true);
                     return AuthenticatorFlowStatus.INCOMPLETE;
                 }
             }
             if (context.getLastAuthenticatedUser() == null) {
-                // when username is obtained through IDF page and the user is not yet set in the context
+                // When username is obtained through IDF page and the user is not yet set in the context.
                 AuthenticatedUser user = resolveUser(request, context);
                 setResolvedUserInContext(context, user);
             }
             try {
-                /* if the username is invalid, this will throw an exception and the user will be redirected to OTP page.
-                This will generate and prepare the email OTP to send */
+                /* If the username is invalid, this will throw an exception and the user will be redirected to OTP page.
+                This will generate and prepare the email OTP to send. */
                 initiateAuthenticationRequest(request, response, context);
             } catch (AuthenticationFailedException e) {
                 if (context.getProperty(USER_NAME) == null) { // null checker for the username
                     if (Boolean.parseBoolean(IdentityUtil.getProperty(NOTIFY_USER_EXISTENCE))) {
-                        // The case where user has entered an invalid username
+                        // The case where user has entered an invalid username.
                         log.error(e + ": The entered user is not in the user stores.");
                     }
                     Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
                     try {
-                        // redirect the user to OTP entering page
+                        // Redirect the user to OTP entering page.
                         String emailOTPLoginPage = getEmailOTPLoginPageUrl(context, emailOTPParameters);
                         response.sendRedirect(emailOTPLoginPage);
                     } catch (IOException ex) {
@@ -193,14 +193,14 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                     }
                     return AuthenticatorFlowStatus.INCOMPLETE;
                 } else {
-                    // for the case where the username is in context, but no email is resolved
+                    // For the case where the username is in context, but no email is resolved.
                     throw new AuthenticationFailedException("The email is not available for the entered user.");
                 }
             }
-            // sends the generated OTP via email
+            // Sends the generated OTP via email.
             publishPostEmailOTPGeneratedEvent(request, context);
             if (context.getProperty(AUTHENTICATION).equals(AUTHENTICATOR_NAME)) {
-                // if the request comes with authentication is EmailOTP, it will go through this flow.
+                // If the request comes with authentication is EmailOTP, it will go through this flow.
                 context.setCurrentAuthenticator(getName());
                 return AuthenticatorFlowStatus.INCOMPLETE;
             } else {
@@ -267,9 +267,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                     if ((authenticatedUser == null) && (context.getProperty(USER) != null)) {
                          /* This is the case when the user has not been resolved by a previous authenticator, but
                          username has been obtained by email OTP IdF flow. Resolved user already set in context
-                         in 'process' method, using `setResolvedUserInContext` method */
+                         in 'process' method, using `setResolvedUserInContext` method. */
                         authenticatedUser = (AuthenticatedUser) context.getProperty(USER);
-                        // Setting user and authenticator in stepConfig
+                        // Setting user and authenticator in stepConfig.
                         stepConfig.setAuthenticatedUser(authenticatedUser);
                         stepConfig.setAuthenticatedIdP(LOCAL_AUTHENTICATOR);
                     }
@@ -1580,7 +1580,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                     email = requestEmail;
                 }
             }
-        } catch (EmailOTPException | AuthenticationFailedException e) {
+        } catch (EmailOTPException e) {
             throw new AuthenticationFailedException("Extracting email claim is failed for the local user " +
                     username, e);
         }
@@ -2790,13 +2790,13 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             throws AuthenticationFailedException {
 
         String username = resolveUsernameFromRequest(request);
-        username = FrameworkUtils.preprocessUsername(username, context); // process as an email username if enabled
+        username = FrameworkUtils.preprocessUsername(username, context); // Process as an email username if enabled.
         AuthenticatedUser user = new AuthenticatedUser();
-        String tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(username);// username without tenant domain
-        String userStoreDomain = UserCoreUtil.extractDomainFromName(username); // extract user store domain name
-        String tenantDomain = MultitenantUtils.getTenantDomain(username); // extract tenant domain
+        String tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(username);// Username without tenantDomain.
+        String userStoreDomain = UserCoreUtil.extractDomainFromName(username); // Extract user store domain name.
+        String tenantDomain = MultitenantUtils.getTenantDomain(username); // Extract tenant domain.
 
-        // set user details
+        // Set user details.
         user.setAuthenticatedSubjectIdentifier(tenantAwareUsername);
         user.setUserName(tenantAwareUsername);
         user.setUserStoreDomain(userStoreDomain);
@@ -2813,7 +2813,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      */
     private void setResolvedUserInContext(AuthenticationContext context, AuthenticatedUser user) {
 
-        setSubjectInContext(context, user); // sets lastAuthenticatedUser property in context
+        setSubjectInContext(context, user); // Sets lastAuthenticatedUser property in context.
         context.setProperty(USER, user);
     }
 
@@ -2846,7 +2846,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                         + "last authenticated user is null in SP: %s", context.getServiceProviderName());
                 log.debug(logMsg);
             }
-            // Redirecting the user to the login page
+            // Redirecting the user to the IDF login page.
             response.sendRedirect(loginPage + ("?" + queryParams) + "&" + AUTHENTICATORS + IDF_HANDLER_NAME + ":"
                     + LOCAL_AUTHENTICATOR);
         } catch (IOException e) {

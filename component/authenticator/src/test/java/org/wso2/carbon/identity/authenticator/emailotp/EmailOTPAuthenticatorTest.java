@@ -233,7 +233,7 @@ public class EmailOTPAuthenticatorTest {
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
         Assert.assertTrue((boolean) authenticationContext.getProperty(EmailOTPAuthenticatorConstants.WITHOUT_AUTHENTICATED_USER));
 
-        // After user is redirected to the IDF page
+        // After user is redirected to the IDF page.
         authenticationContext.setProperty(AUTHENTICATION, AUTHENTICATOR_NAME);
         setStepConfigWithEmailOTPAuthenticator(authenticatorConfig, authenticationContext);
 
@@ -245,7 +245,7 @@ public class EmailOTPAuthenticatorTest {
         when(MultitenantUtils.getTenantAwareUsername(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
         when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_DOMAIN);
         mockUserRealm();
-        // an email is present for the username
+        // An email is present for the username.
         when(emailOTPAuthenticator.getEmailValueForUsername(EmailOTPAuthenticatorTestConstants.USER_NAME,
                 authenticationContext)).thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
         doNothing().when(emailOTPAuthenticator, "processEmailOTPFlow", anyObject(), anyObject(), anyString(),
@@ -281,11 +281,11 @@ public class EmailOTPAuthenticatorTest {
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
         Assert.assertTrue((boolean) authenticationContext.getProperty(EmailOTPAuthenticatorConstants.WITHOUT_AUTHENTICATED_USER));
 
-        // After user is redirected to the IDF page
+        // After user is redirected to the IDF page.
         authenticationContext.setProperty(AUTHENTICATION, AUTHENTICATOR_NAME);
         setStepConfigWithEmailOTPAuthenticator(authenticatorConfig, authenticationContext);
 
-        // Entering a username of a user who is not in the user stores
+        // Entering a username of a user who is not in the user stores.
         when(httpServletRequest.getParameter(USER_NAME))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
         when(FrameworkUtils.preprocessUsername(anyString(), anyObject()))
@@ -294,7 +294,7 @@ public class EmailOTPAuthenticatorTest {
         when(MultitenantUtils.getTenantAwareUsername(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
         when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_DOMAIN);
         mockUserRealm();
-        // an email is not present for the username
+        // An email is not present for the username.
         when(emailOTPAuthenticator.getEmailValueForUsername(EmailOTPAuthenticatorTestConstants.USER_NAME,
                 authenticationContext)).thenReturn(null);
         doNothing().when(emailOTPAuthenticator, "processEmailOTPFlow", anyObject(), anyObject(), anyString(),
@@ -970,7 +970,7 @@ public class EmailOTPAuthenticatorTest {
     public void setStepConfigWithEmailOTPAuthenticator (AuthenticatorConfig authenticatorConfig, AuthenticationContext authenticationContext) {
 
         Map<Integer, StepConfig> stepConfigMap = new HashMap<>();
-        // Email OTP authenticator step
+        // Email OTP authenticator step.
         StepConfig emailOTPStep = new StepConfig();
         authenticatorConfig.setName(EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME);
         List<AuthenticatorConfig> authenticatorList = new ArrayList<>();
