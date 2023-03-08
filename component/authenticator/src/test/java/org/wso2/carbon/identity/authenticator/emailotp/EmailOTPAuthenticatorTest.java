@@ -214,25 +214,30 @@ public class EmailOTPAuthenticatorTest {
             "existing user is entered into the IdF page.")
     public void testProcessWithoutAuthenticatedUserAndValidUsernameEntered() throws Exception {
 
-        AuthenticationContext authenticationContext = new AuthenticationContext();
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
         Map<String, String> parameters = new HashMap<>();
         parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "true");
         parameters.put(EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE, "true");
         authenticatorConfig.setParameterMap(parameters);
+        AuthenticationContext authenticationContext = new AuthenticationContext();
         authenticationContext.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         authenticationContext.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER, null);
+
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
         when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
         emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
-        doNothing().when(emailOTPAuthenticator, "redirectUserToIDF", anyObject(), anyObject(), anyObject());
+        doNothing().when(emailOTPAuthenticator, "redirectUserToIDF", anyObject(), anyObject());
+
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 authenticationContext);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
         Assert.assertTrue((boolean) authenticationContext.getProperty(EmailOTPAuthenticatorConstants.WITHOUT_AUTHENTICATED_USER));
+
+        // After user is redirected to the IDF page
         authenticationContext.setProperty(AUTHENTICATION, AUTHENTICATOR_NAME);
-        httpServletRequest.setAttribute(USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
-        when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.USER_NAME))
+        setStepConfigWithEmailOTPAuthenticator(authenticatorConfig, authenticationContext);
+
+        when(httpServletRequest.getParameter(USER_NAME))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
         when(FrameworkUtils.preprocessUsername(anyString(), anyObject()))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME + "@" + EmailOTPAuthenticatorTestConstants.TENANT_DOMAIN);
@@ -240,12 +245,13 @@ public class EmailOTPAuthenticatorTest {
         when(MultitenantUtils.getTenantAwareUsername(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
         when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_DOMAIN);
         mockUserRealm();
+        // an email is present for the username
         when(emailOTPAuthenticator.getEmailValueForUsername(EmailOTPAuthenticatorTestConstants.USER_NAME,
                 authenticationContext)).thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
         doNothing().when(emailOTPAuthenticator, "processEmailOTPFlow", anyObject(), anyObject(), anyString(),
                 anyString(), anyString(), anyObject());
         doNothing().when(emailOTPAuthenticator, "publishPostEmailOTPGeneratedEvent", anyObject(), anyObject());
-        setStepConfigWithEmailOTPAuthenticator(authenticatorConfig, authenticationContext);
+
         status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 authenticationContext);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
@@ -254,38 +260,47 @@ public class EmailOTPAuthenticatorTest {
     @Test(description = "Test case for process() method when authenticated user is null and the username of a" +
             "non existing user is entered into the IdF page.")
     public void testProcessWithoutAuthenticatedUserAndInvalidUsernameEntered() throws Exception {
-        AuthenticationContext authenticationContext = new AuthenticationContext();
+
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
         Map<String, String> parameters = new HashMap<>();
         parameters.put(EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY, "true");
         parameters.put(EmailOTPAuthenticatorConstants.SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE, "true");
         authenticatorConfig.setParameterMap(parameters);
+        AuthenticationContext authenticationContext = new AuthenticationContext();
         authenticationContext.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         authenticationContext.setProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER, null);
         authenticationContext.setSubject(null);
+
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
         when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
         emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
-        doNothing().when(emailOTPAuthenticator, "redirectUserToIDF", anyObject(), anyObject(), anyObject());
+        doNothing().when(emailOTPAuthenticator, "redirectUserToIDF", anyObject(), anyObject());
+
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 authenticationContext);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
         Assert.assertTrue((boolean) authenticationContext.getProperty(EmailOTPAuthenticatorConstants.WITHOUT_AUTHENTICATED_USER));
+
+        // After user is redirected to the IDF page
         authenticationContext.setProperty(AUTHENTICATION, AUTHENTICATOR_NAME);
+        setStepConfigWithEmailOTPAuthenticator(authenticatorConfig, authenticationContext);
+
         // Entering a username of a user who is not in the user stores
-        httpServletRequest.setAttribute(USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME_2);
-        when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.USER_NAME))
-                .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME_2);
+        when(httpServletRequest.getParameter(USER_NAME))
+                .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
         when(FrameworkUtils.preprocessUsername(anyString(), anyObject()))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME + "@" + EmailOTPAuthenticatorTestConstants.TENANT_DOMAIN);
         when(UserCoreUtil.extractDomainFromName(anyString())).thenReturn("PRIMARY");
         when(MultitenantUtils.getTenantAwareUsername(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
         when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_DOMAIN);
         mockUserRealm();
+        // an email is not present for the username
+        when(emailOTPAuthenticator.getEmailValueForUsername(EmailOTPAuthenticatorTestConstants.USER_NAME,
+                authenticationContext)).thenReturn(null);
         doNothing().when(emailOTPAuthenticator, "processEmailOTPFlow", anyObject(), anyObject(), anyString(),
                 anyString(), anyString(), anyObject());
         doNothing().when(emailOTPAuthenticator, "publishPostEmailOTPGeneratedEvent", anyObject(), anyObject());
-        setStepConfigWithEmailOTPAuthenticator(authenticatorConfig, authenticationContext);
+
         status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 authenticationContext);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
