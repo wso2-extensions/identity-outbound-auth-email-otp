@@ -237,6 +237,7 @@ public class EmailOTPAuthenticatorTest {
         authenticationContext.setProperty(AUTHENTICATION, AUTHENTICATOR_NAME);
         setStepConfigWithEmailOTPAuthenticator(authenticatorConfig, authenticationContext);
 
+        // Resolving the user object.
         when(httpServletRequest.getParameter(USER_NAME))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
         when(FrameworkUtils.preprocessUsername(anyString(), anyObject()))
@@ -245,7 +246,9 @@ public class EmailOTPAuthenticatorTest {
         when(MultitenantUtils.getTenantAwareUsername(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
         when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_DOMAIN);
         mockUserRealm();
+
         // An email is present for the username.
+        when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
         when(emailOTPAuthenticator.getEmailValueForUsername(EmailOTPAuthenticatorTestConstants.USER_NAME,
                 authenticationContext)).thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
         doNothing().when(emailOTPAuthenticator, "processEmailOTPFlow", anyObject(), anyObject(), anyString(),
@@ -285,7 +288,7 @@ public class EmailOTPAuthenticatorTest {
         authenticationContext.setProperty(AUTHENTICATION, AUTHENTICATOR_NAME);
         setStepConfigWithEmailOTPAuthenticator(authenticatorConfig, authenticationContext);
 
-        // Entering a username of a user who is not in the user stores.
+        // Resolving the user object.
         when(httpServletRequest.getParameter(USER_NAME))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
         when(FrameworkUtils.preprocessUsername(anyString(), anyObject()))
@@ -293,13 +296,9 @@ public class EmailOTPAuthenticatorTest {
         when(UserCoreUtil.extractDomainFromName(anyString())).thenReturn("PRIMARY");
         when(MultitenantUtils.getTenantAwareUsername(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.USER_NAME);
         when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_DOMAIN);
-        mockUserRealm();
-        // An email is not present for the username.
-        when(emailOTPAuthenticator.getEmailValueForUsername(EmailOTPAuthenticatorTestConstants.USER_NAME,
-                authenticationContext)).thenReturn(null);
-        doNothing().when(emailOTPAuthenticator, "processEmailOTPFlow", anyObject(), anyObject(), anyString(),
-                anyString(), anyString(), anyObject());
-        doNothing().when(emailOTPAuthenticator, "publishPostEmailOTPGeneratedEvent", anyObject(), anyObject());
+
+        // A user is not present for the username.
+        when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(false);
 
         status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 authenticationContext);
@@ -316,6 +315,8 @@ public class EmailOTPAuthenticatorTest {
         AuthenticatedUser authenticatedUser = new AuthenticatedUser();
         authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
         authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        setAuthenticatedUserInContext(authenticatedUser, context);
+        when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
@@ -347,6 +348,8 @@ public class EmailOTPAuthenticatorTest {
         AuthenticatedUser authenticatedUser = new AuthenticatedUser();
         authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
         authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        setAuthenticatedUserInContext(authenticatedUser, context);
+        when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
@@ -380,6 +383,8 @@ public class EmailOTPAuthenticatorTest {
         AuthenticatedUser authenticatedUser = new AuthenticatedUser();
         authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
         authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        setAuthenticatedUserInContext(authenticatedUser, context);
+        when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
@@ -387,7 +392,6 @@ public class EmailOTPAuthenticatorTest {
         when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(), anyString()))
                 .thenReturn(null);
         when(stepConfig.getAuthenticatedAutenticator()).thenReturn(authenticatorConfig);
-        when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
         setStepConfigWithBasicAuthenticator(authenticatedUser, authenticatorConfig);
         mockUserRealm();
         when(MultitenantUtils.getTenantAwareUsername(EmailOTPAuthenticatorTestConstants.USER_NAME))
@@ -420,6 +424,8 @@ public class EmailOTPAuthenticatorTest {
         AuthenticatedUser authenticatedUser = new AuthenticatedUser();
         authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
         authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        setAuthenticatedUserInContext(authenticatedUser, context);
+        when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
@@ -427,7 +433,6 @@ public class EmailOTPAuthenticatorTest {
         when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(), anyString()))
                 .thenReturn(null);
         when(stepConfig.getAuthenticatedAutenticator()).thenReturn(authenticatorConfig);
-        when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
         setStepConfigWithBasicAuthenticator(authenticatedUser, authenticatorConfig);
         mockUserRealm();
         when(MultitenantUtils.getTenantAwareUsername(EmailOTPAuthenticatorTestConstants.USER_NAME))
@@ -461,15 +466,15 @@ public class EmailOTPAuthenticatorTest {
         AuthenticatedUser authenticatedUser = new AuthenticatedUser();
         authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
         authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        setAuthenticatedUserInContext(authenticatedUser, context);
+        when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
-        setAuthenticatedUserInContext(authenticatedUser, context);
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
         when(fileBasedConfigurationBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
         when(FrameworkUtils.getQueryStringWithFrameworkContextId(anyString(), anyString(), anyString()))
                 .thenReturn(null);
         when(stepConfig.getAuthenticatedAutenticator()).thenReturn(authenticatorConfig);
-        when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
         setStepConfigWithBasicAuthenticator(authenticatedUser, authenticatorConfig);
         mockUserRealm();
         when(MultitenantUtils.getTenantAwareUsername(EmailOTPAuthenticatorTestConstants.USER_NAME))
@@ -538,6 +543,8 @@ public class EmailOTPAuthenticatorTest {
         AuthenticatedUser authenticatedUser = new AuthenticatedUser();
         authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
         authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        setAuthenticatedUserInContext(authenticatedUser, context);
+        when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
         context.setAuthenticatorProperties(parameters);
@@ -572,6 +579,8 @@ public class EmailOTPAuthenticatorTest {
         AuthenticatedUser authenticatedUser = new AuthenticatedUser();
         authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
         authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        setAuthenticatedUserInContext(authenticatedUser, context);
+        when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
         context.setAuthenticatorProperties(parameters);
@@ -594,7 +603,7 @@ public class EmailOTPAuthenticatorTest {
     @Test(description = "Test case for process() method when email OTP is mandatory for federated user and email " +
             "attribute is not available.", expectedExceptions = AuthenticationFailedException.class)
     public void testProcessWhenEmailOTPIsMandatoryWithoutFederatedEmail() throws AuthenticationFailedException,
-            LogoutFailedException {
+            LogoutFailedException, UserStoreException {
 
         when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_ID);
@@ -607,6 +616,8 @@ public class EmailOTPAuthenticatorTest {
         AuthenticatedUser authenticatedUser = new AuthenticatedUser();
         authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
         authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        setAuthenticatedUserInContext(authenticatedUser, context);
+        when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
         context.setAuthenticatorProperties(parameters);
@@ -636,10 +647,11 @@ public class EmailOTPAuthenticatorTest {
         AuthenticatedUser authenticatedUser = new AuthenticatedUser();
         authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
         authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        setAuthenticatedUserInContext(authenticatedUser, context);
+        when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
         context.setAuthenticatorProperties(parameters);
-        setAuthenticatedUserInContext(authenticatedUser, context);
         when(IdentityTenantUtil.getRealmService()).thenReturn(realmService);
         when(realmService.getTenantUserRealm(anyInt())).thenReturn(userRealm);
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
@@ -656,7 +668,7 @@ public class EmailOTPAuthenticatorTest {
     @Test(description = "Test case for process() method when email OTP is Mandatory and send OTP to federated " +
             "email attribute is disabled.", expectedExceptions = AuthenticationFailedException.class)
     public void testProcessWhenEmailOTPIsMandatoryWithoutSendOTPToFederatedEmail() throws AuthenticationFailedException,
-            LogoutFailedException {
+            LogoutFailedException, UserStoreException {
 
         when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(EmailOTPAuthenticatorTestConstants.TENANT_ID);
@@ -670,6 +682,8 @@ public class EmailOTPAuthenticatorTest {
         AuthenticatedUser authenticatedUser = new AuthenticatedUser();
         authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
         authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        setAuthenticatedUserInContext(authenticatedUser, context);
+        when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
         context.setAuthenticatorProperties(parameters);
@@ -700,10 +714,11 @@ public class EmailOTPAuthenticatorTest {
         AuthenticatedUser authenticatedUser = new AuthenticatedUser();
         authenticatedUser.setAuthenticatedSubjectIdentifier(EmailOTPAuthenticatorTestConstants.USER_NAME);
         authenticatedUser.setUserName(EmailOTPAuthenticatorTestConstants.USER_NAME);
+        setAuthenticatedUserInContext(authenticatedUser, context);
+        when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(true);
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, EmailOTPAuthenticatorTestConstants.USER_NAME);
         context.setAuthenticatorProperties(parameters);
-        setAuthenticatedUserInContext(authenticatedUser, context);
         when(IdentityTenantUtil.getRealmService()).thenReturn(realmService);
         when(realmService.getTenantUserRealm(anyInt())).thenReturn(userRealm);
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilder);
@@ -965,9 +980,9 @@ public class EmailOTPAuthenticatorTest {
      * Set a step configuration to the context with EmailOTP authenticator.
      *
      * @param authenticatorConfig object
-     * @param authenticationContext object
+     * @param context object
      */
-    public void setStepConfigWithEmailOTPAuthenticator (AuthenticatorConfig authenticatorConfig, AuthenticationContext authenticationContext) {
+    public void setStepConfigWithEmailOTPAuthenticator (AuthenticatorConfig authenticatorConfig, AuthenticationContext context) {
 
         Map<Integer, StepConfig> stepConfigMap = new HashMap<>();
         // Email OTP authenticator step.
@@ -981,8 +996,8 @@ public class EmailOTPAuthenticatorTest {
 
         SequenceConfig sequenceConfig = new SequenceConfig();
         sequenceConfig.setStepMap(stepConfigMap);
-        authenticationContext.setSequenceConfig(sequenceConfig);
-        authenticationContext.setCurrentStep(1);
+        context.setSequenceConfig(sequenceConfig);
+        context.setCurrentStep(1);
     }
 
     /**

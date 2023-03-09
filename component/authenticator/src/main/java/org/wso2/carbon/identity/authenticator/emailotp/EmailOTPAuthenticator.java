@@ -155,8 +155,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             // if the request comes with EMAIL ADDRESS, it will go through this flow.
             initiateAuthenticationRequest(request, response, context);
             return AuthenticatorFlowStatus.INCOMPLETE;
-        } else if (StringUtils.isEmpty(request.getParameter(CODE)) && StringUtils.isEmpty(request.getParameter(RESEND)))
-        {
+        } else if (StringUtils.isEmpty(request.getParameter(CODE))
+                && StringUtils.isEmpty(request.getParameter(RESEND))) {
             // If the request doesn't contain an OTP code and resend is not set, it will go through this flow.
             if (!isIDFInitiatedFromEmailOTP(context)) {
                 // If the IDF is not initiated from within EmailOTP authenticator (this decides the state of the flow).
@@ -173,30 +173,34 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                 AuthenticatedUser user = resolveUser(request, context);
                 setResolvedUserInContext(context, user);
             }
+
+            boolean isUserExistence = false;
             try {
-                /* If the username is invalid, this will throw an exception and the user will be redirected to OTP page.
-                This will generate and prepare the email OTP to send. */
-                initiateAuthenticationRequest(request, response, context);
-            } catch (AuthenticationFailedException e) {
-                if (context.getProperty(USER_NAME) == null) { // null checker for the username
-                    if (Boolean.parseBoolean(IdentityUtil.getProperty(NOTIFY_USER_EXISTENCE))) {
-                        // The case where user has entered an invalid username.
-                        log.error(e + ": The entered user is not in the user stores.");
-                    }
-                    Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
-                    try {
-                        // Redirect the user to OTP entering page.
-                        String emailOTPLoginPage = getEmailOTPLoginPageUrl(context, emailOTPParameters);
-                        response.sendRedirect(emailOTPLoginPage);
-                    } catch (IOException ex) {
-                        throw new RuntimeException(ex);
-                    }
-                    return AuthenticatorFlowStatus.INCOMPLETE;
-                } else {
-                    // For the case where the username is in context, but no email is resolved.
-                    throw new AuthenticationFailedException("The email is not available for the entered user.");
+                isUserExistence = FederatedAuthenticatorUtil.isUserExistInUserStore(context.getLastAuthenticatedUser().getUserName());
+            } catch (UserStoreException e) {
+                if (log.isDebugEnabled()) {
+                    log.debug(e);
                 }
             }
+
+            if (isUserExistence) {
+                initiateAuthenticationRequest(request, response, context);
+            } else {
+                // The case where user has entered an invalid username
+                if (Boolean.parseBoolean(IdentityUtil.getProperty(NOTIFY_USER_EXISTENCE)) && log.isDebugEnabled()) {
+                    log.debug("The entered user is not in the user stores.");
+                }
+                Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
+                try {
+                    // redirect the user to OTP entering page
+                    String emailOTPLoginPage = getEmailOTPLoginPageUrl(context, emailOTPParameters);
+                    response.sendRedirect(emailOTPLoginPage);
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+                return AuthenticatorFlowStatus.INCOMPLETE;
+            }
+
             // Sends the generated OTP via email.
             publishPostEmailOTPGeneratedEvent(request, context);
             if (context.getProperty(AUTHENTICATION).equals(AUTHENTICATOR_NAME)) {
