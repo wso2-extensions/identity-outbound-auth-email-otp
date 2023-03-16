@@ -74,6 +74,10 @@
                             version="${carbon.identity.account.lock.handler.imp.pkg.version.range}",
                             org.wso2.carbon.identity.handler.event.account.lock.exception;
                             version="${carbon.identity.account.lock.handler.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.captcha.connector.recaptcha; version="${identity.governance.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.captcha.util; version="${identity.governance.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.governance; version="${identity.governance.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.governance.common; version="${identity.governance.imp.pkg.version.range}",
                             *;resolution:=optional
                         </Import-Package>
                         <Export-Package>
@@ -148,6 +152,14 @@
     </build>
 
     <dependencies>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.governance</groupId>
+            <artifactId>org.wso2.carbon.identity.captcha</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.governance</groupId>
+            <artifactId>org.wso2.carbon.identity.governance</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.core</artifactId>

@@ -22,6 +22,7 @@ import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.handler.event.account.lock.service.AccountLockService;
 import org.wso2.carbon.user.core.service.RealmService;
+import java.util.Properties;
 
 /**
  * Encapsulates the data of EmailOTP authenticator.
@@ -33,6 +34,7 @@ public class EmailOTPServiceDataHolder {
     private IdentityEventService identityEventService;
     private IdentityGovernanceService identityGovernanceService;
     private RealmService realmService;
+    private Properties recaptchaConfigs;
 
     public static EmailOTPServiceDataHolder getInstance() {
 
@@ -107,5 +109,13 @@ public class EmailOTPServiceDataHolder {
     public void setAccountLockService(AccountLockService accountLockService) {
 
         this.accountLockService = accountLockService;
+    }
+
+    public Properties getRecaptchaConfigs() {
+        return recaptchaConfigs;
+    }
+
+    public void setRecaptchaConfigs(Properties recaptchaConfigs) {
+        this.recaptchaConfigs = recaptchaConfigs;
     }
 }

@@ -33,6 +33,17 @@ import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.handler.event.account.lock.service.AccountLockService;
 import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.identity.captcha.util.CaptchaConstants;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
+
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Properties;
 
 import java.util.Hashtable;
 
@@ -49,6 +60,7 @@ public class EmailOTPAuthenticatorServiceComponent {
 
     protected void activate(ComponentContext ctxt) {
 
+        buildReCaptchaFilterProperties();
         try {
             EmailOTPAuthenticator authenticator = new EmailOTPAuthenticator();
             Hashtable<String, String> props = new Hashtable<>();
@@ -134,5 +146,31 @@ public class EmailOTPAuthenticatorServiceComponent {
     protected void unsetAccountLockService(AccountLockService accountLockService) {
 
         EmailOTPServiceDataHolder.getInstance().setAccountLockService(null);
+    }
+
+    /**
+     * Read the captcha-config.properties file located in repository/conf/identity directory and set the
+     * configurations required to enable recaptcha in the Data holder.
+     */
+    private void buildReCaptchaFilterProperties() {
+
+        Path path = Paths.get(IdentityUtil.getIdentityConfigDirPath(), CaptchaConstants.CAPTCHA_CONFIG_FILE_NAME);
+
+        if (Files.exists(path)) {
+            Properties properties = new Properties();
+            try (Reader in = new InputStreamReader(Files.newInputStream(path), StandardCharsets.UTF_8)) {
+                properties.load(in);
+            } catch (IOException e) {
+                log.error("Error while loading '" + CaptchaConstants.CAPTCHA_CONFIG_FILE_NAME + "' configuration " +
+                        "file", e);
+            }
+
+            boolean reCaptchaEnabled = Boolean.parseBoolean(properties.getProperty(CaptchaConstants
+                    .RE_CAPTCHA_ENABLED));
+
+            if (reCaptchaEnabled) {
+                EmailOTPServiceDataHolder.getInstance().setRecaptchaConfigs(properties);
+            }
+        }
     }
 }

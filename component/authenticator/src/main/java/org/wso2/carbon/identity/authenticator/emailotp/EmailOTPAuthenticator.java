@@ -56,6 +56,7 @@ import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.IdentityEventConstants;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
+import org.wso2.carbon.identity.governance.IdentityGovernanceException;
 import org.wso2.carbon.identity.mgt.IdentityMgtConfigException;
 import org.wso2.carbon.identity.mgt.IdentityMgtServiceException;
 import org.wso2.carbon.identity.mgt.NotificationSender;
@@ -78,6 +79,8 @@ import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
+import org.wso2.carbon.identity.captcha.connector.recaptcha.SSOLoginReCaptchaConfig;
+import org.wso2.carbon.identity.captcha.util.CaptchaConstants;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -94,6 +97,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -109,6 +113,7 @@ import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthentica
         IS_IDENTIFIER_FIRST_INITIATED_FROM_AUTHENTICATOR;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.LOCAL_AUTHENTICATOR;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.RESEND;
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.RESEND_CONFIRMATION_RECAPTCHA_ENABLE;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.
         SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.SUPER_TENANT;
@@ -218,6 +223,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
         } else {
             AuthenticatorFlowStatus authenticatorFlowStatus = super.process(request, response, context);
             publishPostEmailOTPValidatedEvent(request, context);
+            // To make sure to add recaptcha to email OTP auth only when used as the first factor of authentication
+            context.setProperty(IS_IDENTIFIER_FIRST_INITIATED_FROM_AUTHENTICATOR, false); // TODO: Is this necessary?
             return authenticatorFlowStatus;
         }
     }
@@ -1125,6 +1132,11 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                     && !Boolean.parseBoolean(request.getParameter(RESEND))
                     && !isEmailUpdateFailed(context)) {
                 url = url + EmailOTPAuthenticatorConstants.RETRY_PARAMS;
+            }
+            if (isIDFInitiatedFromEmailOTP(context)) {
+                // To make sure to add recaptcha to email OTP auth only when used as the first factor of authentication
+                // TODO: Is this condition necessary?
+                url += getCaptchaParams(context.getTenantDomain());
             }
             response.sendRedirect(url);
         } catch (IOException e) {
@@ -2857,5 +2869,84 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             throw new AuthenticationFailedException(EmailOTPAuthErrorConstants.ErrorMessages.
                     SYSTEM_ERROR_WHILE_AUTHENTICATING.getCode(), e.getMessage(), e);
         }
+    }
+
+    /**
+     * Append the recaptcha related params if recaptcha is enabled for the authentication always.
+     *
+     * @param tenantDomain        Tenant domain of the application.
+     * @return string with the appended recaptcha params
+     */
+    private String getCaptchaParams(String tenantDomain) {
+
+        SSOLoginReCaptchaConfig connector = new SSOLoginReCaptchaConfig();
+        String defaultCaptchaConfigName = connector.getName() +
+                CaptchaConstants.ReCaptchaConnectorPropertySuffixes.ENABLE_ALWAYS;
+        String captchaEnabledConfigName = connector.getName() +
+                CaptchaConstants.ReCaptchaConnectorPropertySuffixes.ENABLE;
+        String captchaParams = "";
+        Property[] connectorConfigs;
+        Properties captchaConfigs = getCaptchaConfigs();
+
+        if (captchaConfigs != null && !captchaConfigs.isEmpty() &&
+                Boolean.parseBoolean(captchaConfigs.getProperty(CaptchaConstants.RE_CAPTCHA_ENABLED))) {
+
+            boolean forcefullyEnabledRecaptchaForAllTenants = Boolean.parseBoolean(captchaConfigs.getProperty(
+                    CaptchaConstants.FORCEFULLY_ENABLED_RECAPTCHA_FOR_ALL_TENANTS));
+            try {
+                connectorConfigs = EmailOTPServiceDataHolder.getInstance().getIdentityGovernanceService()
+                        .getConfiguration(new String[]{defaultCaptchaConfigName, RESEND_CONFIRMATION_RECAPTCHA_ENABLE,
+                                captchaEnabledConfigName}, tenantDomain);
+                for (Property connectorConfig : connectorConfigs) {
+                    if (defaultCaptchaConfigName.equals(connectorConfig.getName())) {
+                        // SSO Login Captcha Config
+                        if (Boolean.parseBoolean(connectorConfig.getValue()) ||
+                                forcefullyEnabledRecaptchaForAllTenants) {
+                            captchaParams = EmailOTPAuthenticatorConstants.RECAPTCHA_PARAM + "true";
+                        } else {
+                            if (log.isDebugEnabled()) {
+                                log.debug("Enforcing recaptcha for SSO Login is not enabled.");
+                            }
+                        }
+                    }
+                }
+
+            } catch (IdentityGovernanceException e) {
+                log.error("Error occurred while verifying the captcha configs. Proceeding the authentication request " +
+                        "without enabling recaptcha.", e);
+            }
+        } else {
+            if (log.isDebugEnabled()) {
+                log.debug("Recaptcha is not enabled.");
+            }
+        }
+
+        return captchaParams;
+    }
+
+    /**
+     * Get the recaptcha configs from the data holder if they are valid.
+     *
+     * @return recaptcha properties
+     */
+    private Properties getCaptchaConfigs() {
+
+        Properties properties = EmailOTPServiceDataHolder.getInstance().getRecaptchaConfigs();
+
+        if (properties != null && !properties.isEmpty() &&
+                Boolean.valueOf(properties.getProperty(CaptchaConstants.RE_CAPTCHA_ENABLED))) {
+            if (StringUtils.isBlank(properties.getProperty(CaptchaConstants.RE_CAPTCHA_SITE_KEY)) ||
+                    StringUtils.isBlank(properties.getProperty(CaptchaConstants.RE_CAPTCHA_API_URL)) ||
+                    StringUtils.isBlank(properties.getProperty(CaptchaConstants.RE_CAPTCHA_SECRET_KEY)) ||
+                    StringUtils.isBlank(properties.getProperty(CaptchaConstants.RE_CAPTCHA_VERIFY_URL))) {
+
+                if (log.isDebugEnabled()) {
+                    log.debug("Empty values found for the captcha properties in the file " + CaptchaConstants
+                            .CAPTCHA_CONFIG_FILE_NAME + ".");
+                }
+                properties.clear();
+            }
+        }
+        return properties;
     }
 }

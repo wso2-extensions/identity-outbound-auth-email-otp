@@ -300,6 +300,16 @@
             </dependency>
 
             <dependency>
+                <groupId>org.wso2.carbon.identity.governance</groupId>
+                <artifactId>org.wso2.carbon.identity.captcha</artifactId>
+                <version>${identity.governance.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.governance</groupId>
+                <artifactId>org.wso2.carbon.identity.governance</artifactId>
+                <version>${identity.governance.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.fasterxml.jackson.jaxrs</groupId>
                 <artifactId>jackson-jaxrs-json-provider</artifactId>
                 <version>${jackson-jaxrs-json-provider.version}</version>
@@ -473,7 +483,7 @@
         <carbon.identity.event.version>5.18.209</carbon.identity.event.version>
         <commons-logging.version>4.4.3</commons-logging.version>
         <carbon.kernel.version>4.7.0</carbon.kernel.version>
-        <identity.governance.version>1.4.1</identity.governance.version>
+        <identity.governance.version>1.8.21</identity.governance.version>
         <oltu.version>1.0.0.wso2v2</oltu.version>
         <org.apache.oltu.oauth2.client.version>1.0.0</org.apache.oltu.oauth2.client.version>
         <oltu.package.import.version.range>[1.0.0, 2.0.0)</oltu.package.import.version.range>

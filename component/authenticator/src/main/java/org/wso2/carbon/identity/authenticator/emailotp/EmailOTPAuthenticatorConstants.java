@@ -153,6 +153,8 @@ public class EmailOTPAuthenticatorConstants {
     public static final String MAX_EMAIL_OTP_ATTEMPTS_EXCEEDED = "MAX_EMAIL_OTP_ATTEMPTS_EXCEEDED";
     public static final String WITHOUT_AUTHENTICATED_USER = "withoutAuthenticatedUser";
     public static final String USER = "user";
+    public static final String RECAPTCHA_PARAM = "&reCaptcha=";
+    public static final String RESEND_CONFIRMATION_RECAPTCHA_ENABLE = "SelfRegistration.ResendConfirmationReCaptcha";
 
     private EmailOTPAuthenticatorConstants() {
 
