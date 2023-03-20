@@ -93,6 +93,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -1075,11 +1076,11 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                     && Boolean.parseBoolean(request.getParameter(RESEND)))
                     || (context.isRetrying() && !isOTPResendingDisabledOnFailure(context) && isOTPExpired(context))
                     || (context.isRetrying() && isEmailUpdateFailed(context))) {
-                OneTimePassword token = new OneTimePassword();
 
-                // Things to set from FE
+                // Things to set from frontend of management console
                 Boolean isCharInOTP = Boolean.parseBoolean(authenticatorProperties
                         .get(EmailOTPAuthenticatorConstants.EMAIL_OTP_NUMERIC_OTP));
+                context.setProperty(EmailOTPAuthenticatorConstants.IS_CHAR_IN_OTP, isCharInOTP);
 
                 int expiryTime = Integer.parseInt(EmailOTPAuthenticatorConstants.OTP_EXPIRE_TIME_DEFAULT);
                 if (StringUtils
@@ -1107,22 +1108,16 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                         numOfDigitsInOTP = numDigitsInProperties;
                     }
                 }
+                context.setProperty(EmailOTPAuthenticatorConstants.EMAIL_OTP_LENGTH, numOfDigitsInOTP);
 
-                String secret = OneTimePassword.getRandomNumber(EmailOTPAuthenticatorConstants.SECRET_KEY_LENGTH);
-                String myToken = token.generateToken(secret, "" + EmailOTPAuthenticatorConstants.NUMBER_BASE,
-                        numOfDigitsInOTP);
+                String myToken = generateOTP(context);
                 String ipAddress = IdentityUtil.getClientIpAddress(request);
                 context.setProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN, myToken);
                 context.setProperty(EmailOTPAuthenticatorConstants.OTP_GENERATED_TIME, System.currentTimeMillis());
                 context.setProperty(EmailOTPAuthenticatorConstants.OTP_EXPIRED, "false");
-                if (authenticatorProperties != null) {
-                    if (StringUtils.isNotEmpty(myToken)) {
-                        checkEmailOTPBehaviour(context, emailOTPParameters, authenticatorProperties, email, username,
-                                myToken, ipAddress);
-                    }
-                } else {
-                    throw new AuthenticationFailedException(
-                            "Error while retrieving properties. Authenticator Properties cannot be null");
+                if (StringUtils.isNotEmpty(myToken)) {
+                    checkEmailOTPBehaviour(context, emailOTPParameters, authenticatorProperties, email, username,
+                            myToken, ipAddress);
                 }
             }
             if (context.isRetrying() || !Boolean.parseBoolean(request.getParameter(RESEND))) {
@@ -2998,7 +2993,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
         Properties properties = EmailOTPServiceDataHolder.getInstance().getRecaptchaConfigs();
 
         if (properties != null && !properties.isEmpty() &&
-                Boolean.valueOf(properties.getProperty(CaptchaConstants.RE_CAPTCHA_ENABLED))) {
+                Boolean.parseBoolean(properties.getProperty(CaptchaConstants.RE_CAPTCHA_ENABLED))) {
             if (StringUtils.isBlank(properties.getProperty(CaptchaConstants.RE_CAPTCHA_SITE_KEY)) ||
                     StringUtils.isBlank(properties.getProperty(CaptchaConstants.RE_CAPTCHA_API_URL)) ||
                     StringUtils.isBlank(properties.getProperty(CaptchaConstants.RE_CAPTCHA_SECRET_KEY)) ||
@@ -3012,5 +3007,36 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             }
         }
         return properties;
+    }
+
+    /**
+     * Generate the OTP according to the configuration parameters.
+     *
+     * @param context AuthenticationContext.
+     * @return Generated OTP.
+     * @throws AuthenticationFailedException If an error occurred.
+     */
+    private String generateOTP(AuthenticationContext context) throws AuthenticationFailedException {
+
+        String charSet = getOTPCharset(context);
+        int otpLength = (int) context.getProperty(EmailOTPAuthenticatorConstants.EMAIL_OTP_LENGTH);
+
+        char[] chars = charSet.toCharArray();
+        SecureRandom rnd = new SecureRandom();
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < otpLength; i++) {
+            sb.append(chars[rnd.nextInt(chars.length)]);
+        }
+        return sb.toString();
+    }
+
+    private String getOTPCharset(AuthenticationContext context) {
+
+        boolean useOnlyNumericChars = !Boolean.parseBoolean(String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.IS_CHAR_IN_OTP)));
+        if (useOnlyNumericChars) {
+            return EmailOTPAuthenticatorConstants.EMAIL_OTP_NUMERIC_CHAR_SET;
+        }
+        return EmailOTPAuthenticatorConstants.EMAIL_OTP_UPPER_CASE_ALPHABET_CHAR_SET
+                + EmailOTPAuthenticatorConstants.EMAIL_OTP_NUMERIC_CHAR_SET;
     }
 }

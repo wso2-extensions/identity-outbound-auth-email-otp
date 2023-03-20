@@ -163,6 +163,9 @@ public class EmailOTPAuthenticatorConstants {
     public static final int EMAIL_OTP_MAX_LENGTH = 10;
     public static final int EMAIL_OTP_MAX_EXPIRY_TIME = 1440;
     public static final int EMAIL_OTP_MIN_EXPIRY_TIME = 1;
+    public static final String EMAIL_OTP_NUMERIC_CHAR_SET = "9245378016";
+    public static final String EMAIL_OTP_UPPER_CASE_ALPHABET_CHAR_SET = "KIGXHOYSPRWCEFMVUQLZDNABJT";
+    public static final String IS_CHAR_IN_OTP = "IsCharInOTP";
 
     private EmailOTPAuthenticatorConstants() {
 
