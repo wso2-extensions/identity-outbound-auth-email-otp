@@ -223,8 +223,6 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
         } else {
             AuthenticatorFlowStatus authenticatorFlowStatus = super.process(request, response, context);
             publishPostEmailOTPValidatedEvent(request, context);
-            // To make sure to add recaptcha to email OTP auth only when used as the first factor of authentication
-            context.setProperty(IS_IDENTIFIER_FIRST_INITIATED_FROM_AUTHENTICATOR, false); // TODO: Is this necessary?
             return authenticatorFlowStatus;
         }
     }
@@ -1078,9 +1076,41 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                     || (context.isRetrying() && !isOTPResendingDisabledOnFailure(context) && isOTPExpired(context))
                     || (context.isRetrying() && isEmailUpdateFailed(context))) {
                 OneTimePassword token = new OneTimePassword();
+
+                // Things to set from FE
+                Boolean isCharInOTP = Boolean.parseBoolean(authenticatorProperties
+                        .get(EmailOTPAuthenticatorConstants.EMAIL_OTP_NUMERIC_OTP));
+
+                int expiryTime = Integer.parseInt(EmailOTPAuthenticatorConstants.OTP_EXPIRE_TIME_DEFAULT);
+                if (StringUtils
+                        .isNotEmpty(authenticatorProperties.get(EmailOTPAuthenticatorConstants.EMAIL_OTP_EXPIRY_TIME))
+                        && authenticatorProperties.get(EmailOTPAuthenticatorConstants.EMAIL_OTP_EXPIRY_TIME) != null) {
+                    int expiryTimeInMinutes = Integer.parseInt(authenticatorProperties
+                            .get(EmailOTPAuthenticatorConstants.EMAIL_OTP_EXPIRY_TIME));
+                    if (expiryTimeInMinutes <= EmailOTPAuthenticatorConstants.EMAIL_OTP_MAX_EXPIRY_TIME
+                            && expiryTimeInMinutes >= EmailOTPAuthenticatorConstants.EMAIL_OTP_MIN_EXPIRY_TIME) {
+                        // TODO: If errored, it should be indicated in FE as well. This is just a safety option.
+                        expiryTime = expiryTimeInMinutes * 60 * 1000;
+                    }
+                }
+                context.setProperty(EmailOTPAuthenticatorConstants.TOKEN_EXPIRE_TIME_IN_MILIS,
+                        Integer.toString(expiryTime));
+
+                int numOfDigitsInOTP = EmailOTPAuthenticatorConstants.NUMBER_DIGIT;
+                if (StringUtils.isNotEmpty(authenticatorProperties.get(EmailOTPAuthenticatorConstants.EMAIL_OTP_LENGTH))
+                        && authenticatorProperties.get(EmailOTPAuthenticatorConstants.EMAIL_OTP_LENGTH) != null) {
+                    int numDigitsInProperties = Integer.parseInt(authenticatorProperties
+                            .get(EmailOTPAuthenticatorConstants.EMAIL_OTP_LENGTH));
+                    if (numDigitsInProperties >= EmailOTPAuthenticatorConstants.EMAIL_OTP_MIN_LENGTH
+                            && numDigitsInProperties <= EmailOTPAuthenticatorConstants.EMAIL_OTP_MAX_LENGTH) {
+                        // TODO: If errored, it should be indicated in FE as well. This is just a safety option.
+                        numOfDigitsInOTP = numDigitsInProperties;
+                    }
+                }
+
                 String secret = OneTimePassword.getRandomNumber(EmailOTPAuthenticatorConstants.SECRET_KEY_LENGTH);
                 String myToken = token.generateToken(secret, "" + EmailOTPAuthenticatorConstants.NUMBER_BASE,
-                        EmailOTPAuthenticatorConstants.NUMBER_DIGIT);
+                        numOfDigitsInOTP);
                 String ipAddress = IdentityUtil.getClientIpAddress(request);
                 context.setProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN, myToken);
                 context.setProperty(EmailOTPAuthenticatorConstants.OTP_GENERATED_TIME, System.currentTimeMillis());
@@ -1133,9 +1163,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                     && !isEmailUpdateFailed(context)) {
                 url = url + EmailOTPAuthenticatorConstants.RETRY_PARAMS;
             }
-            if (isIDFInitiatedFromEmailOTP(context)) {
-                // To make sure to add recaptcha to email OTP auth only when used as the first factor of authentication
-                // TODO: Is this condition necessary?
+            Map<String, String> authenticatorProperties = context.getAuthenticatorProperties();
+            if (Boolean.parseBoolean(authenticatorProperties.get(EmailOTPAuthenticatorConstants.EMAIL_OTP_ENABLE_RECAPTCHA))) {
                 url += getCaptchaParams(context.getTenantDomain());
             }
             response.sendRedirect(url);
@@ -2213,6 +2242,40 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
         email.setDisplayOrder(1);
         configProperties.add(email);
 
+        Property lengthOTP = new Property();
+        lengthOTP.setName(EmailOTPAuthenticatorConstants.EMAIL_OTP_LENGTH);
+        lengthOTP.setDisplayName("Email OTP length");
+        lengthOTP.setDescription("The number of allowed characters in the OTP. Please pick a value between 4-10.");
+        lengthOTP.setDefaultValue(Integer.toString(EmailOTPAuthenticatorConstants.NUMBER_DIGIT));
+        lengthOTP.setDisplayOrder(2);
+        configProperties.add(lengthOTP);
+
+        Property expiryTimeOTP = new Property();
+        expiryTimeOTP.setName(EmailOTPAuthenticatorConstants.EMAIL_OTP_EXPIRY_TIME);
+        expiryTimeOTP.setDisplayName("Email OTP expiry time (Minutes)");
+        expiryTimeOTP.setDescription("Please pick a value between 1 minute and 1440 minutes (1 day).");
+        expiryTimeOTP.setDefaultValue(EmailOTPAuthenticatorConstants.OTP_EXPIRE_TIME_DEFAULT);
+        expiryTimeOTP.setDisplayOrder(3);
+        configProperties.add(expiryTimeOTP);
+
+        Property enableRecaptcha = new Property();
+        enableRecaptcha.setName(EmailOTPAuthenticatorConstants.EMAIL_OTP_ENABLE_RECAPTCHA);
+        enableRecaptcha.setDisplayName("Enable reCAPTCHA");
+        enableRecaptcha.setDescription("Enable reCAPTCHA for email OTP authentication page.");
+        enableRecaptcha.setType("boolean");
+        enableRecaptcha.setDefaultValue("true");
+        enableRecaptcha.setDisplayOrder(4);
+        configProperties.add(enableRecaptcha);
+
+        Property numericOTP = new Property();
+        numericOTP.setName(EmailOTPAuthenticatorConstants.EMAIL_OTP_NUMERIC_OTP);
+        numericOTP.setDisplayName("Use only numeric characters for OTP");
+        numericOTP.setDescription("Please clear this checkbox to enable alphanumeric characters.");
+        numericOTP.setDefaultValue("true");
+        numericOTP.setType("boolean");
+        numericOTP.setDisplayOrder(5);
+        configProperties.add(numericOTP);
+
         return configProperties;
     }
 
@@ -2897,15 +2960,16 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                 connectorConfigs = EmailOTPServiceDataHolder.getInstance().getIdentityGovernanceService()
                         .getConfiguration(new String[]{defaultCaptchaConfigName, RESEND_CONFIRMATION_RECAPTCHA_ENABLE,
                                 captchaEnabledConfigName}, tenantDomain);
+                // TODO: Modify this recaptcha adding condition. Set a suitable config from FE and take it here
+//                        May be able to remove the iteration.
                 for (Property connectorConfig : connectorConfigs) {
                     if (defaultCaptchaConfigName.equals(connectorConfig.getName())) {
-                        // SSO Login Captcha Config
                         if (Boolean.parseBoolean(connectorConfig.getValue()) ||
                                 forcefullyEnabledRecaptchaForAllTenants) {
                             captchaParams = EmailOTPAuthenticatorConstants.RECAPTCHA_PARAM + "true";
                         } else {
                             if (log.isDebugEnabled()) {
-                                log.debug("Enforcing recaptcha for SSO Login is not enabled.");
+                                log.debug("Enforcing recaptcha for Email OTP is not enabled.");
                             }
                         }
                     }

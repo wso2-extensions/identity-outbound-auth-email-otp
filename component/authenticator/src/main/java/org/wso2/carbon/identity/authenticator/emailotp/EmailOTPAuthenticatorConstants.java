@@ -155,6 +155,14 @@ public class EmailOTPAuthenticatorConstants {
     public static final String USER = "user";
     public static final String RECAPTCHA_PARAM = "&reCaptcha=";
     public static final String RESEND_CONFIRMATION_RECAPTCHA_ENABLE = "SelfRegistration.ResendConfirmationReCaptcha";
+    public static final String EMAIL_OTP_LENGTH = "EmailOtpLength";
+    public static final String EMAIL_OTP_EXPIRY_TIME = "EmailOtpExpiryTime";
+    public static final String EMAIL_OTP_ENABLE_RECAPTCHA = "EnableRecaptcha";
+    public static final String EMAIL_OTP_NUMERIC_OTP = "OnlyNumericCharactersForOtp";
+    public static final int EMAIL_OTP_MIN_LENGTH = 4;
+    public static final int EMAIL_OTP_MAX_LENGTH = 10;
+    public static final int EMAIL_OTP_MAX_EXPIRY_TIME = 1440;
+    public static final int EMAIL_OTP_MIN_EXPIRY_TIME = 1;
 
     private EmailOTPAuthenticatorConstants() {
 
