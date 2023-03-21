@@ -32,14 +32,11 @@ public class EmailOTPAuthenticatorConstants {
     public static final String ALGORITHM_NAME = "SHA1PRNG";
     public static final String ALGORITHM_HMAC = "HmacSHA1";
     public static final String ALGORITHM_HMAC_SHA = "HMAC-SHA-1";
-    public static final int SECRET_KEY_LENGTH = 5;
-    public static final int NUMBER_BASE = 2;
     public static final int NUMBER_DIGIT = 6;
     public static final String EMAIL_API = "EmailAPI";
     public static final String ACCESS_TOKEN_REQUIRED_APIS = "accessTokenRequiredAPIs";
     public static final String API_KEY_HEADER_REQUIRED_APIS = "apiKeyHeaderRequiredAPIs";
     public static final String API_GMAIL = "Gmail";
-    public static final String API_SENDGRID = "Sendgrid";
     public static final String CLIENT_ID = "ClientId";
     public static final String CLIENT_SECRET = "ClientSecret";
     public static final String CODE = "OTPCode";
@@ -60,7 +57,6 @@ public class EmailOTPAuthenticatorConstants {
     public static final String MAIL_TO_EMAIL = "<TO_EMAIL>";
     public static final String MAIL_BODY = "<BODY>";
     public static final String MAIL_API_KEY = "<API_KEY>";
-    public static final String LOGIN_PAGE = "authenticationendpoint/login.do";
     public static final String EMAIL_ADDRESS_CAPTURE_PAGE = "authenticationendpoint/email_capture.do";
     public static final String EMAILOTP_PAGE = "authenticationendpoint/email_otp.do";
     public static final String ERROR_PAGE = "authenticationendpoint/email_otp_error.do";
@@ -124,12 +120,12 @@ public class EmailOTPAuthenticatorConstants {
     public static final String OTP_GENERATED_TIME = "tokenGeneratedTime";
     public static final String TOKEN_EXPIRE_TIME_IN_MILIS = "tokenExpirationTime";
     public static final String OTP_EXPIRE_TIME_DEFAULT = "300000";
+    public static final String OTP_EXPIRE_TIME_DEFAULT_IN_MINS = "5";
     public static final String OTP_EXPIRED = "isOTPExpired";
     public static final String DISABLE_OTP_RESEND_ON_FAILURE = "disableOTPResendOnFailure";
     public static final String SERVICE_PROVIDER_NAME = "serviceProviderName";
     public static final String IP_ADDRESS = "ipAddress";
     public static final String USER_AGENT = "user-agent";
-    public static final String X_FORWARDED_FOR = "x-forwarded-for";
     public static final String STATUS_SUCCESS = "success";
     public static final String STATUS_OTP_EXPIRED = "otp-expired";
     public static final String STATUS_CODE_MISMATCH = "code-mismatch";

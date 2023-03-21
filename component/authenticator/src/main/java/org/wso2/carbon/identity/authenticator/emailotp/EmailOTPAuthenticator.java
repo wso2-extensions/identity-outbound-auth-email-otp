@@ -2249,7 +2249,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
         expiryTimeOTP.setName(EmailOTPAuthenticatorConstants.EMAIL_OTP_EXPIRY_TIME);
         expiryTimeOTP.setDisplayName("Email OTP expiry time (Minutes)");
         expiryTimeOTP.setDescription("Please pick a value between 1 minute and 1440 minutes (1 day).");
-        expiryTimeOTP.setDefaultValue(EmailOTPAuthenticatorConstants.OTP_EXPIRE_TIME_DEFAULT);
+        expiryTimeOTP.setDefaultValue(EmailOTPAuthenticatorConstants.OTP_EXPIRE_TIME_DEFAULT_IN_MINS);
         expiryTimeOTP.setDisplayOrder(3);
         configProperties.add(expiryTimeOTP);
 
