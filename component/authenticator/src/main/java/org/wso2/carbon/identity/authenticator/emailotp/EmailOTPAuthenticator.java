@@ -51,6 +51,8 @@ import org.wso2.carbon.identity.authenticator.emailotp.config.EmailOTPUtils;
 import org.wso2.carbon.identity.authenticator.emailotp.exception.EmailOTPException;
 import org.wso2.carbon.identity.authenticator.emailotp.internal.EmailOTPServiceDataHolder;
 import org.wso2.carbon.identity.authenticator.emailotp.util.EmailOTPAuthErrorConstants;
+import org.wso2.carbon.identity.captcha.connector.recaptcha.SSOLoginReCaptchaConfig;
+import org.wso2.carbon.identity.captcha.util.CaptchaConstants;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.IdentityEventConstants;
@@ -79,8 +81,6 @@ import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
-import org.wso2.carbon.identity.captcha.connector.recaptcha.SSOLoginReCaptchaConfig;
-import org.wso2.carbon.identity.captcha.util.CaptchaConstants;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -110,20 +110,20 @@ import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthentica
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.EMAIL_ADDRESS;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.IDF_HANDLER_NAME;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.IS_EMAILOTP_MANDATORY;
-import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.
-        IS_IDENTIFIER_FIRST_INITIATED_FROM_AUTHENTICATOR;
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants
+        .IS_IDENTIFIER_FIRST_INITIATED_FROM_AUTHENTICATOR;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.LOCAL_AUTHENTICATOR;
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.NOTIFY_USER_EXISTENCE;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.RESEND;
-import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.RESEND_CONFIRMATION_RECAPTCHA_ENABLE;
-import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.
-        SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE;
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants
+        .RESEND_CONFIRMATION_RECAPTCHA_ENABLE;
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants
+        .SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.SUPER_TENANT;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.USER;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.USER_NAME;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.USE_CASE;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.WITHOUT_AUTHENTICATED_USER;
-import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.NOTIFY_USER_EXISTENCE;
-
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPUrlUtil.getEmailOTPErrorPageUrl;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPUrlUtil.getEmailOTPLoginPageUrl;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPUrlUtil.getRequestEmailPageUrl;
@@ -131,8 +131,8 @@ import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPUrlUtil.ge
 /**
  * Authenticator of EmailOTP.
  */
-public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator implements FederatedApplicationAuthenticator
-{
+public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
+        implements FederatedApplicationAuthenticator {
 
     private static final Log log = LogFactory.getLog(EmailOTPAuthenticator.class);
 
@@ -182,7 +182,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
 
             boolean isUserExistence = false;
             try {
-                isUserExistence = FederatedAuthenticatorUtil.isUserExistInUserStore(context.getLastAuthenticatedUser().getUserName());
+                isUserExistence = FederatedAuthenticatorUtil
+                        .isUserExistInUserStore(context.getLastAuthenticatedUser().getUserName());
             } catch (UserStoreException e) {
                 if (log.isDebugEnabled()) {
                     log.debug(e);
@@ -522,7 +523,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             if (userStoreManager != null) {
                 String savedOTPString = userStoreManager
                         .getUserClaimValue(tenantAwareUsername,
-                                EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_CLAIM,null);
+                                EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_CLAIM, null);
                 if (StringUtils.isNotEmpty(savedOTPString)) {
                     savedOTPs = savedOTPString.split(EmailOTPAuthenticatorConstants.BACKUP_CODES_SEPARATOR);
                 }
@@ -1159,7 +1160,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                 url = url + EmailOTPAuthenticatorConstants.RETRY_PARAMS;
             }
             Map<String, String> authenticatorProperties = context.getAuthenticatorProperties();
-            if (Boolean.parseBoolean(authenticatorProperties.get(EmailOTPAuthenticatorConstants.EMAIL_OTP_ENABLE_RECAPTCHA))) {
+            if (Boolean.parseBoolean(authenticatorProperties
+                    .get(EmailOTPAuthenticatorConstants.EMAIL_OTP_ENABLE_RECAPTCHA))) {
                 url += getCaptchaParams(context.getTenantDomain());
             }
             response.sendRedirect(url);
@@ -1199,7 +1201,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                 if (StringUtils.isNotEmpty(accessToken)) {
                     connection.setRequestProperty(EmailOTPAuthenticatorConstants.HTTP_AUTH, accessToken);
                 }
-                if (httpMethod.toUpperCase().equals(EmailOTPAuthenticatorConstants.HTTP_POST)) {
+                if (httpMethod.equalsIgnoreCase(EmailOTPAuthenticatorConstants.HTTP_POST)) {
                     OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream(),
                             EmailOTPAuthenticatorConstants.CHARSET);
                     if (StringUtils.isNotEmpty(payload)) {
@@ -1390,7 +1392,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      * @return true or false
      */
     public boolean isEmailOTPDisableForUser(String username, AuthenticationContext context,
-                                             Map<String, String> parametersMap)
+                                            Map<String, String> parametersMap)
             throws AuthenticationFailedException {
 
         UserRealm userRealm;
@@ -1524,7 +1526,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
     private void handleEmailOTPForFederatedUser(boolean sendOtpToFederatedEmail, boolean isEmailOTPMandatory,
                                                 AuthenticationContext context, Map<ClaimMapping, String> userAttributes,
                                                 String federatedEmailAttributeKey, AuthenticatedUser authenticatedUser,
-                                                String username, String queryParams,HttpServletRequest request,
+                                                String username, String queryParams, HttpServletRequest request,
                                                 HttpServletResponse response)
             throws AuthenticationFailedException {
 
@@ -1941,7 +1943,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                     (EmailOTPAuthenticatorConstants.SHOW_EMAIL_ADDRESS_IN_UI));
         } else if ((context.getProperty(EmailOTPAuthenticatorConstants.SHOW_EMAIL_ADDRESS_IN_UI)) != null) {
             isShowEmailAddressInUI = Boolean.parseBoolean(String.valueOf
-                            (context.getProperty(EmailOTPAuthenticatorConstants.SHOW_EMAIL_ADDRESS_IN_UI)));
+                    (context.getProperty(EmailOTPAuthenticatorConstants.SHOW_EMAIL_ADDRESS_IN_UI)));
         }
         return isShowEmailAddressInUI;
     }
@@ -2362,8 +2364,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
      * @param context       : the Authentication Context
      */
     protected boolean isExpired(long generatedTime, AuthenticationContext context)
-            throws AuthenticationFailedException
-    {
+            throws AuthenticationFailedException {
 
         long expireTime;
         try {
@@ -2609,7 +2610,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
             UserRealm userRealm = getUserRealm(authenticatedUser);
             UserStoreManager userStoreManager = userRealm.getUserStoreManager();
             claimValues = userStoreManager.getUserClaimValues(IdentityUtil.addDomainToName(
-                    authenticatedUser.getUserName(), authenticatedUser.getUserStoreDomain()), new String[]{
+                            authenticatedUser.getUserName(), authenticatedUser.getUserStoreDomain()), new String[]{
                             EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM,
                             EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM},
                     UserCoreConstants.DEFAULT_PROFILE);
@@ -2894,8 +2895,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
     /**
      * This method is used to set the subject in context.
      *
-     * @param context The authentication context
-     * @param authenticatedUser    The user object
+     * @param context           The authentication context
+     * @param authenticatedUser The user object
      */
     private void setSubjectInContext(AuthenticationContext context, AuthenticatedUser authenticatedUser) {
 
@@ -2932,7 +2933,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
     /**
      * Append the recaptcha related params if recaptcha is enabled for the authentication always.
      *
-     * @param tenantDomain        Tenant domain of the application.
+     * @param tenantDomain Tenant domain of the application.
      * @return string with the appended recaptcha params
      */
     private String getCaptchaParams(String tenantDomain) {
@@ -2971,8 +2972,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
                 }
 
             } catch (IdentityGovernanceException e) {
-                log.error("Error occurred while verifying the captcha configs. Proceeding the authentication request " +
-                        "without enabling recaptcha.", e);
+                log.error("Error occurred while verifying the captcha configs. Proceeding the authentication request "
+                        + "without enabling recaptcha.", e);
             }
         } else {
             if (log.isDebugEnabled()) {
@@ -3032,7 +3033,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator impl
 
     private String getOTPCharset(AuthenticationContext context) {
 
-        boolean useOnlyNumericChars = !Boolean.parseBoolean(String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.IS_CHAR_IN_OTP)));
+        boolean useOnlyNumericChars = !Boolean.parseBoolean
+                (String.valueOf(context.getProperty(EmailOTPAuthenticatorConstants.IS_CHAR_IN_OTP)));
         if (useOnlyNumericChars) {
             return EmailOTPAuthenticatorConstants.EMAIL_OTP_NUMERIC_CHAR_SET;
         }

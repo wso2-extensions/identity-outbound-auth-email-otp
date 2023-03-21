@@ -980,9 +980,9 @@ public class EmailOTPAuthenticatorTest {
      * Set a step configuration to the context with EmailOTP authenticator.
      *
      * @param authenticatorConfig object
-     * @param context object
+     * @param context             object
      */
-    public void setStepConfigWithEmailOTPAuthenticator (AuthenticatorConfig authenticatorConfig, AuthenticationContext context) {
+    public void setStepConfigWithEmailOTPAuthenticator(AuthenticatorConfig authenticatorConfig, AuthenticationContext context) {
 
         Map<Integer, StepConfig> stepConfigMap = new HashMap<>();
         // Email OTP authenticator step.

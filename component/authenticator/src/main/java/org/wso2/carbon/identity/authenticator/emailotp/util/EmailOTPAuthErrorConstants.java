@@ -24,6 +24,7 @@ package org.wso2.carbon.identity.authenticator.emailotp.util;
 public class EmailOTPAuthErrorConstants {
 
     public static final String EMAIL_OTP_ERROR_CODE_PREFIX = "EOT-";
+
     /**
      * Authentication error constants of EmailOTP Authenticator.
      */
