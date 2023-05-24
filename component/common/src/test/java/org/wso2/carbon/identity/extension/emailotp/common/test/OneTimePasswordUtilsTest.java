@@ -88,7 +88,7 @@ public class OneTimePasswordUtilsTest {
                 String.valueOf(Constants.NUMBER_BASE),
                 Constants.DEFAULT_OTP_LENGTH,
                 false),
-                "900361");
+                "673418");
     }
 
     @Test
@@ -100,6 +100,6 @@ public class OneTimePasswordUtilsTest {
                 String.valueOf(Constants.NUMBER_BASE),
                 Constants.DEFAULT_OTP_LENGTH,
                 true),
-                "W5GG7P");
+                "2B0A7V");
     }
 }

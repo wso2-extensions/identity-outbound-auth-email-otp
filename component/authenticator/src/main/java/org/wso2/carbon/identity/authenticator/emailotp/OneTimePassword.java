@@ -78,12 +78,13 @@ public class OneTimePassword {
 
     /**
      * This method uses the JCE to provide the HMAC-SHA-1 algorithm. HMAC computes a Hashed Message Authentication
-     * Code and in this case SHA1 is the hash algorithm used.
+     * Code and in this case SHA256 is the hash algorithm used.
      *
      * @param keyBytes The bytes to use for the HMAC-SHA-1 key.
      * @param text     The message or text to be authenticated.
-     * @throws NoSuchAlgorithmException If no provider makes either HmacSHA1 or HMAC-SHA-1 digest algorithms available.
-     * @throws InvalidKeyException      The secret provided was not a valid HMAC-SHA-1 key.
+     * @throws NoSuchAlgorithmException If no provider makes either HmacSHA256 or HMAC-SHA-256 digest algorithms
+     * available.
+     * @throws InvalidKeyException      The secret provided was not a valid HMAC-SHA-256 key.
      */
     public static byte[] hmacShaGenerate(byte[] keyBytes, byte[] text)
             throws NoSuchAlgorithmException, InvalidKeyException {
@@ -109,7 +110,8 @@ public class OneTimePassword {
      * @param truncationOffset The offset into the MAC result to begin truncation. If this value is out of the range
      *                         of 0 ... 15, then dynamic truncation will be used. Dynamic truncation is when the last
      *                         4 bits of the last byte of the MAC are used to determine the start offset.
-     * @throws NoSuchAlgorithmException If no provider makes either HmacSHA1 or HMAC-SHA-1 digest algorithms available.
+     * @throws NoSuchAlgorithmException If no provider makes either HmacSHA256 or HMAC-SHA-256 digest algorithms
+     * available.
      * @throws InvalidKeyException      The secret provided was not a valid HMAC-SHA-1 key.
      */
     public static String generateOTP(byte[] secret, long movingFactor, int codeDigits, boolean addChecksum,

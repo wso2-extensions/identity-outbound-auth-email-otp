@@ -92,16 +92,16 @@ public class OneTimePasswordUtils {
     }
 
     /**
-     * This method uses the JCE to provide the HMAC-SHA-1
+     * This method uses the JCE to provide the HMAC-SHA-256
      * algorithm. HMAC computes a Hashed Message Authentication Code and in this
-     * case SHA1 is the hash algorithm used.
+     * case SHA256 is the hash algorithm used.
      *
-     * @param keyBytes Bytes to use for the HMAC-SHA-1 key.
+     * @param keyBytes Bytes to use for the HMAC-SHA-256 key.
      * @param text     Message or text to be authenticated.
      * @return Generated HMAC-SHA byte array.
-     * @throws NoSuchAlgorithmException If no provider makes either HmacSHA1 or HMAC-SHA-1 digest
+     * @throws NoSuchAlgorithmException If no provider makes either HmacSHA256 or HMAC-SHA-256 digest
      *                                  algorithms available.
-     * @throws InvalidKeyException      The secret provided was not a valid HMAC-SHA-1 key.
+     * @throws InvalidKeyException      The secret provided was not a valid HMAC-SHA-256 key.
      */
     public static byte[] hmacShaGenerate(byte[] keyBytes, byte[] text) throws NoSuchAlgorithmException,
             InvalidKeyException {
@@ -133,9 +133,9 @@ public class OneTimePasswordUtils {
      *                         the last byte of the MAC are used to determine the start
      *                         offset.
      * @return Generated OTP.
-     * @throws NoSuchAlgorithmException If no provider makes either HmacSHA1 or HMAC-SHA-1 digest
+     * @throws NoSuchAlgorithmException If no provider makes either HmacSHA256 or HMAC-SHA-256 digest
      *                                  algorithms available.
-     * @throws InvalidKeyException      The secret provided was not a valid HMAC-SHA-1 key.
+     * @throws InvalidKeyException      The secret provided was not a valid HMAC-SHA-256 key.
      */
     public static String generateOTP(byte[] secret, long movingFactor, int codeDigits, boolean addChecksum,
                                      int truncationOffset) throws NoSuchAlgorithmException, InvalidKeyException {
@@ -185,9 +185,9 @@ public class OneTimePasswordUtils {
      *                         the last byte of the MAC are used to determine the start
      *                         offset.
      * @return Generate alpha numeric OTP.
-     * @throws NoSuchAlgorithmException If no provider makes either HmacSHA1 or HMAC-SHA-1 digest
+     * @throws NoSuchAlgorithmException If no provider makes either HmacSHA256 or HMAC-SHA-256 digest
      *                                  algorithms available.
-     * @throws InvalidKeyException      The secret provided was not a valid HMAC-SHA-1 key.
+     * @throws InvalidKeyException      The secret provided was not a valid HMAC-SHA-256 key.
      */
     public static String generateAlphaNumericOTP(byte[] secret, long movingFactor, int codeDigits, boolean addChecksum,
                                                  int truncationOffset)
@@ -238,7 +238,7 @@ public class OneTimePasswordUtils {
                 return generateAlphaNumericOTP(key.getBytes(), Long.parseLong(base), length, false, truncOffset);
             } catch (NoSuchAlgorithmException e) {
                 throw Utils.handleServerException(Constants.ErrorMessage.SERVER_GENERATE_ALPHA_NUMERIC_OTP_ERROR,
-                        "Unable to find the SHA1 Algorithm to generate OTP.", e);
+                        "Unable to find the SHA256 Algorithm to generate OTP.", e);
             } catch (InvalidKeyException e) {
                 throw Utils.handleServerException(Constants.ErrorMessage.SERVER_GENERATE_ALPHA_NUMERIC_OTP_ERROR,
                         "Unable to find the secret key.", e);
@@ -248,7 +248,7 @@ public class OneTimePasswordUtils {
                 return generateOTP(key.getBytes(), Long.parseLong(base), length, false, truncOffset);
             } catch (NoSuchAlgorithmException e) {
                 throw Utils.handleServerException(Constants.ErrorMessage.SERVER_GENERATE_OTP_ERROR,
-                        "Unable to find the SHA1 Algorithm to generate OTP.", e);
+                        "Unable to find the SHA256 Algorithm to generate OTP.", e);
             } catch (InvalidKeyException e) {
                 throw Utils.handleServerException(Constants.ErrorMessage.SERVER_GENERATE_OTP_ERROR,
                         "Unable to find the secret key.", e);
