@@ -87,7 +87,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @PrepareForTest({EmailOTPAuthenticator.class, FileBasedConfigurationBuilder.class, FederatedAuthenticatorUtil.class,
         FrameworkUtils.class, MultitenantUtils.class, IdentityTenantUtil.class, ConfigurationContextFactory.class,
         ConfigBuilder.class, NotificationBuilder.class, EmailOTPUtils.class, EmailOTPServiceDataHolder.class,
-        ServiceURLBuilder.class, AbstractUserStoreManager.class})
+        ServiceURLBuilder.class, AbstractUserStoreManager.class, OneTimePassword.class})
 @PowerMockIgnore({"javax.crypto.*"})
 public class EmailOTPAuthenticatorTest {
     private EmailOTPAuthenticator emailOTPAuthenticator;
@@ -136,6 +136,7 @@ public class EmailOTPAuthenticatorTest {
         mockStatic(ConfigBuilder.class);
         mockStatic(NotificationBuilder.class);
         mockStatic(EmailOTPUtils.class);
+        mockStatic(OneTimePassword.class);
 
         EmailOTPServiceDataHolder emailOTPServiceDataHolder = mock(EmailOTPServiceDataHolder.class);
         IdentityEventService identityEventService = mock(IdentityEventService.class);
@@ -243,6 +244,9 @@ public class EmailOTPAuthenticatorTest {
                 EmailOTPAuthenticatorConstants.EMAIL_CLAIM, null))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
         emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
+        // Mocking the random number generation since algorithm DRBG is not supported in java 8. Revert this when
+        // source is compatible with java 11.
+        when(OneTimePassword.getRandomNumber(EmailOTPAuthenticatorConstants.SECRET_KEY_LENGTH)).thenReturn("123456");
         doNothing().when(emailOTPAuthenticator, "sendOTP", anyString(), anyString(), anyString(), anyObject(),
                 anyString());
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
@@ -274,6 +278,9 @@ public class EmailOTPAuthenticatorTest {
                 EmailOTPAuthenticatorConstants.EMAIL_CLAIM, null))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
         emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
+        // Mocking the random number generation since algorithm DRBG is not supported in java 8. Revert this when
+        // source is compatible with java 11.
+        when(OneTimePassword.getRandomNumber(EmailOTPAuthenticatorConstants.SECRET_KEY_LENGTH)).thenReturn("123456");
         doNothing().when(emailOTPAuthenticator, "sendOTP", anyString(), anyString(), anyString(), anyObject(),
                 anyString());
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
@@ -313,6 +320,9 @@ public class EmailOTPAuthenticatorTest {
         when(userStoreManager.getUserClaimValue(EmailOTPAuthenticatorTestConstants.USER_NAME,
                 EmailOTPAuthenticatorConstants.EMAIL_CLAIM, null))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
+        // Mocking the random number generation since algorithm DRBG is not supported in java 8. Revert this when
+        // source is compatible with java 11.
+        when(OneTimePassword.getRandomNumber(EmailOTPAuthenticatorConstants.SECRET_KEY_LENGTH)).thenReturn("123456");
         emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
         doNothing().when(emailOTPAuthenticator, "sendOTP", anyString(), anyString(), anyString(), anyObject(),
                 anyString());
@@ -353,6 +363,9 @@ public class EmailOTPAuthenticatorTest {
         when(userStoreManager.getUserClaimValue(EmailOTPAuthenticatorTestConstants.USER_NAME,
                 EmailOTPAuthenticatorConstants.EMAIL_CLAIM, null))
                 .thenReturn(EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
+        // Mocking the random number generation since algorithm DRBG is not supported in java 8. Revert this when
+        // source is compatible with java 11.
+        when(OneTimePassword.getRandomNumber(EmailOTPAuthenticatorConstants.SECRET_KEY_LENGTH)).thenReturn("123456");
         emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
         doNothing().when(emailOTPAuthenticator, "sendOTP", anyString(), anyString(), anyString(), anyObject(),
                 anyString());
@@ -459,6 +472,9 @@ public class EmailOTPAuthenticatorTest {
         setStepConfigWithFederatedAuthenticator(authenticatedUser, authenticatorConfig);
         mockFederatedEmailAttributeKey(parameters, authenticatedUser, EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
         emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
+        // Mocking the random number generation since algorithm DRBG is not supported in java 8. Revert this when
+        // source is compatible with java 11.
+        when(OneTimePassword.getRandomNumber(EmailOTPAuthenticatorConstants.SECRET_KEY_LENGTH)).thenReturn("123456");
         doNothing().when(emailOTPAuthenticator, "sendOTP", anyString(), anyString(), anyString(), anyObject(),
                 anyString());
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
@@ -492,6 +508,9 @@ public class EmailOTPAuthenticatorTest {
                 .thenReturn(null);
         setStepConfigWithFederatedAuthenticator(authenticatedUser, authenticatorConfig);
         mockFederatedEmailAttributeKey(parameters, authenticatedUser, EmailOTPAuthenticatorTestConstants.EMAIL_ADDRESS);
+        // Mocking the random number generation since algorithm DRBG is not supported in java 8. Revert this when
+        // source is compatible with java 11.
+        when(OneTimePassword.getRandomNumber(EmailOTPAuthenticatorConstants.SECRET_KEY_LENGTH)).thenReturn("123456");
         emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
         doNothing().when(emailOTPAuthenticator, "sendOTP", anyString(), anyString(), anyString(), anyObject(),
                 anyString());

@@ -27,9 +27,9 @@ import java.util.List;
  */
 public class Constants {
 
-    public static final String ALGORITHM_NAME = "SHA1PRNG";
-    public static final String ALGORITHM_HMAC = "HmacSHA1";
-    public static final String ALGORITHM_HMAC_SHA = "HMAC-SHA-1";
+    public static final String ALGORITHM_NAME = "DRBG";
+    public static final String ALGORITHM_HMAC = "HmacSHA256";
+    public static final String ALGORITHM_HMAC_SHA = "HMAC-SHA-256";
     public static final String SESSION_TYPE_OTP = "EMAIL_OTP";
     public static final String NOTIFICATION_TYPE_EMAIL_OTP = "EmailOTP";
     public static final String OTP_CODE = "OTPCode";
