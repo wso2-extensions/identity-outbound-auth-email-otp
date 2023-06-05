@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *  Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org).
  *
  *  WSO2 Inc. licenses this file to you under the Apache License,
  *  Version 2.0 (the "License"); you may not use this file except
@@ -25,4 +25,5 @@ public class EmailOTPAuthenticatorTestConstants {
     public static String TENANT_DOMAIN = "wso2.org";
     public static int TENANT_ID = -1234;
     public static String IP_ADDRESS = "172.16.254.1";
+    public static final String DUMMY_LOGIN_PAGE_URL = "dummyLoginPageURL";
 }

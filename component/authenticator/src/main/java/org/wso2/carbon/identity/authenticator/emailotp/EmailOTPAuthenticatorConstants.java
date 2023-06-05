@@ -1,7 +1,7 @@
 /*
- *  Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *  Copyright (c) 2017, WSO2 LLC. (https://www.wso2.com).
  *
- *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  WSO2 LLC. licenses this file to you under the Apache License,
  *  Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License.
  *  You may obtain a copy of the License at
@@ -168,7 +168,21 @@ public class EmailOTPAuthenticatorConstants {
     public static final String PROPERTY_ACCOUNT_LOCK_TIME = "account.lock.handler.Time";
     public static final String ERROR_USER_ACCOUNT_LOCKED = "&authFailure=true&authFailureMsg=user.account.locked";
     public static final String ADMIN_INITIATED = "AdminInitiated";
-
     public static final String MAX_EMAIL_OTP_ATTEMPTS_EXCEEDED = "MAX_EMAIL_OTP_ATTEMPTS_EXCEEDED";
+    public static final String IS_IDF_INITIATED_FROM_AUTHENTICATOR = "isIdfInitiatedFromAuthenticator";
+    public static final String IDF_HANDLER_NAME = "IdentifierExecutor";
+    public static final String USER = "user";
+    public static final String EMAIL_OTP_NUMERIC_OTP = "OnlyNumericCharactersForOtp";
+    public static final String IS_CHAR_IN_OTP = "IsCharInOTP";
+    public static final String EMAIL_OTP_EXPIRY_TIME = "EmailOtpExpiryTime";
+    public static final int EMAIL_OTP_MAX_EXPIRY_TIME = 1440;
+    public static final int EMAIL_OTP_MIN_EXPIRY_TIME = 1;
+    public static final String OTP_EXPIRE_TIME_DEFAULT_IN_MINS = "5";
+    public static final String EMAIL_OTP_LENGTH = "EmailOtpLength";
+    public static final int EMAIL_OTP_MIN_LENGTH = 4;
+    public static final int EMAIL_OTP_MAX_LENGTH = 10;
+    public static final String EMAIL_OTP_NUMERIC_CHAR_SET = "9245378016";
+    public static final String EMAIL_OTP_UPPER_CASE_ALPHABET_CHAR_SET = "KIGXHOYSPRWCEFMVUQLZDNABJT";
+    public static final String IS_REDIRECT_TO_EMAIL_OTP = "isRedirectToEmailOTP";
 
 }
