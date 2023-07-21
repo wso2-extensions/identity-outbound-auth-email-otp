@@ -144,7 +144,6 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
             return AuthenticatorFlowStatus.INCOMPLETE;
         } else if (StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.CODE)) &&
                 StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))) {
-            User user;
             AuthenticatedUser authenticatedUser = getAuthenticatedUser(context);
             if (authenticatedUser == null) {
                 if (StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.USER_NAME))) {
@@ -158,6 +157,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                 }
             } else if (isPreviousIdPAuthenticationFlowHandler(context)) {
                 authenticatedUser = resolveUserFromUserStore(authenticatedUser);
+                setResolvedUserInContext(context, authenticatedUser);
             }
             if (authenticatedUser != null) {
                 initiateAuthenticationRequest(request, response, context);
@@ -241,7 +241,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                 // Iterate through the steps to identify from which step the user email address need to extracted
                 for (StepConfig stepConfig : stepConfigMap.values()) {
                     authenticatedUser = stepConfig.getAuthenticatedUser();
-                    if (isPreviousIdPAuthenticationFlowHandler(context)) {
+                    if (authenticatedUser != null && isPreviousIdPAuthenticationFlowHandler(context)) {
                         authenticatedUser = resolveUserFromUserStore(authenticatedUser);
                     }
                     if (authenticatedUser != null && stepConfig.isSubjectAttributeStep()) {
@@ -2929,10 +2929,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
 
             Map<Integer, StepConfig> stepConfigMap = context.getSequenceConfig().getStepMap();
             StepConfig currentStepConfig = stepConfigMap.get(context.getCurrentStep());
-            if (currentStepConfig.isSubjectAttributeStep()) {
-                currentStepConfig.setAuthenticatedUser(authenticatedUser);
-                currentStepConfig.setAuthenticatedIdP(LOCAL_AUTHENTICATOR);
-            }
+            currentStepConfig.setAuthenticatedUser(authenticatedUser);
+            currentStepConfig.setAuthenticatedIdP(LOCAL_AUTHENTICATOR);
         }
     }
 
