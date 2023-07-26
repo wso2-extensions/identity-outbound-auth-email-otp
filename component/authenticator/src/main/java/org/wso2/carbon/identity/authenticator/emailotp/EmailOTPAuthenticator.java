@@ -46,6 +46,7 @@ import org.wso2.carbon.identity.application.authentication.framework.exception.L
 import org.wso2.carbon.identity.application.authentication.framework.exception.UserIdNotFoundException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedIdPData;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.Property;
@@ -2847,9 +2848,12 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
             redirectUrl.append(queryParams);
             redirectUrl.append("&");
             redirectUrl.append(EmailOTPAuthenticatorConstants.AUTHENTICATORS);
-            redirectUrl.append(EmailOTPAuthenticatorConstants.IDF_HANDLER_NAME);
+            redirectUrl.append(EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME);
             redirectUrl.append(":");
             redirectUrl.append(EmailOTPAuthenticatorConstants.LOCAL_AUTHENTICATOR);
+            redirectUrl.append("&");
+            redirectUrl.append(FrameworkConstants.RequestParams.INITIATE_IDENTIFIER_FIRST);
+            redirectUrl.append("=true");
             response.sendRedirect(redirectUrl.toString());
         } catch (IOException e) {
             throw new AuthenticationFailedException("Error while redirecting to the login page.", e);

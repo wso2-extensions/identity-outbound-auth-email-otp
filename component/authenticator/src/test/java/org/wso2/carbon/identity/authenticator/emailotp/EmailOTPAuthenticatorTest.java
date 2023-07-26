@@ -67,6 +67,7 @@ import org.wso2.carbon.identity.mgt.config.StorageType;
 import org.wso2.carbon.identity.mgt.mail.Notification;
 import org.wso2.carbon.identity.mgt.mail.NotificationBuilder;
 import org.wso2.carbon.identity.mgt.mail.NotificationData;
+import org.wso2.carbon.identity.multi.attribute.login.mgt.MultiAttributeLoginService;
 import org.wso2.carbon.user.api.Claim;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
@@ -140,6 +141,7 @@ public class EmailOTPAuthenticatorTest {
     private HashMap<String, TransportOutDescription> transportOutDescriptionHashMap;
     private Notification notification;
     private FrameworkServiceDataHolder frameworkServiceDataHolder;
+    private MultiAttributeLoginService multiAttributeLoginService;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -167,6 +169,7 @@ public class EmailOTPAuthenticatorTest {
         config = mock(Config.class);
         notification = mock(Notification.class);
         frameworkServiceDataHolder = mock(FrameworkServiceDataHolder.class);
+        multiAttributeLoginService = mock(MultiAttributeLoginService.class);
 
         mockStatic(FileBasedConfigurationBuilder.class);
         mockStatic(EmailOTPServiceDataHolder.class);
@@ -294,6 +297,9 @@ public class EmailOTPAuthenticatorTest {
             .thenReturn(
                 USER_NAME + "@" + EmailOTPAuthenticatorConstants.SUPER_TENANT);
         mockUserRealm();
+        when(frameworkServiceDataHolder.getMultiAttributeLoginService()).thenReturn(multiAttributeLoginService);
+        when(multiAttributeLoginService.isEnabled(anyString())).thenReturn(false);
+
         User user = new User(UUID.randomUUID().toString(), USER_NAME, null);
         user.setUserStoreDomain("PRIMARY");
         user.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
@@ -342,6 +348,8 @@ public class EmailOTPAuthenticatorTest {
         when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(TENANT_DOMAIN);
         when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(false);
         mockUserRealm();
+        when(frameworkServiceDataHolder.getMultiAttributeLoginService()).thenReturn(multiAttributeLoginService);
+        when(multiAttributeLoginService.isEnabled(anyString())).thenReturn(false);
         when(userStoreManager.getUserListWithID(USERNAME_CLAIM, USER_NAME, null))
                 .thenReturn(new ArrayList<User>());
 
