@@ -152,6 +152,8 @@ public class EmailOTPAuthenticatorConstants {
     public static final String STATUS_CODE_MISMATCH = "code-mismatch";
     public static final String TRUE = "true";
 
+    public static final String IS_USER_RESOLVED = "isUserResolved";
+
     // Account lock related constants.
     public static final String EMAIL_OTP_FAILED_ATTEMPTS_CLAIM =
             "http://wso2.org/claims/identity/failedEmailOtpAttempts";

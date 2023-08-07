@@ -152,11 +152,11 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                     return AuthenticatorFlowStatus.INCOMPLETE;
                 } else {
                     authenticatedUser = resolveUserFromRequest(request, context);
-                    authenticatedUser = resolveUserFromUserStore(authenticatedUser);
+                    authenticatedUser = resolveUserFromUserStore(authenticatedUser, context);
                     setResolvedUserInContext(context, authenticatedUser);
                 }
             } else if (isPreviousIdPAuthenticationFlowHandler(context)) {
-                authenticatedUser = resolveUserFromUserStore(authenticatedUser);
+                authenticatedUser = resolveUserFromUserStore(authenticatedUser, context);
                 setResolvedUserInContext(context, authenticatedUser);
             }
             if (authenticatedUser != null) {
@@ -242,7 +242,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                 for (StepConfig stepConfig : stepConfigMap.values()) {
                     authenticatedUser = stepConfig.getAuthenticatedUser();
                     if (authenticatedUser != null && isPreviousIdPAuthenticationFlowHandler(context)) {
-                        authenticatedUser = resolveUserFromUserStore(authenticatedUser);
+                        authenticatedUser = resolveUserFromUserStore(authenticatedUser, context);
                     }
                     if (authenticatedUser != null && stepConfig.isSubjectAttributeStep()) {
                         username = authenticatedUser.toFullQualifiedUsername();
@@ -2902,16 +2902,36 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
      * @return Authenticated user retrieved from the user store.
      * @throws AuthenticationFailedException In occasions of failing.
      */
-    private AuthenticatedUser resolveUserFromUserStore(AuthenticatedUser authenticatedUser)
+    private AuthenticatedUser resolveUserFromUserStore(AuthenticatedUser authenticatedUser,
+                                                       AuthenticationContext context)
             throws AuthenticationFailedException {
 
-        User user = getUser(authenticatedUser);
-        if (user == null) {
-            return null;
+        boolean isUserResolved = getIsUserResolved(context);
+        // If user is not resolved from a previous step, resolve the user from the user store.
+        if (!isUserResolved) {
+            User user = getUser(authenticatedUser);
+            if (user == null) {
+                return null;
+            }
+            authenticatedUser = new AuthenticatedUser(user);
+            authenticatedUser.setAuthenticatedSubjectIdentifier(user.getUsername());
         }
-        authenticatedUser = new AuthenticatedUser(user);
-        authenticatedUser.setAuthenticatedSubjectIdentifier(user.getUsername());
         return authenticatedUser;
+    }
+
+    /**
+     * This method is to check that user is already resolved from previous steps.
+     * @param context
+     * @return true if user is already resolved.
+     */
+    private boolean getIsUserResolved(AuthenticationContext context) {
+
+        boolean isUserResolved = false;
+        if (!context.getProperties().isEmpty() &&
+                context.getProperty(EmailOTPAuthenticatorConstants.IS_USER_RESOLVED) != null) {
+            isUserResolved = (boolean) context.getProperty(EmailOTPAuthenticatorConstants.IS_USER_RESOLVED);
+        }
+        return isUserResolved;
     }
 
     /**
