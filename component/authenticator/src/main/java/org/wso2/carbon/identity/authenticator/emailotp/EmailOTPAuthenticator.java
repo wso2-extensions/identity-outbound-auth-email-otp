@@ -2906,34 +2906,13 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                                                        AuthenticationContext context)
             throws AuthenticationFailedException {
 
-        boolean isUserResolved = getIsUserResolved(context);
-        // If user is not resolved from a previous step, resolve the user from the user store.
-        if (!isUserResolved) {
-            User user = getUser(authenticatedUser);
-            if (user == null) {
-                return null;
-            }
-            authenticatedUser = new AuthenticatedUser(user);
-            authenticatedUser.setAuthenticatedSubjectIdentifier(user.getUsername());
-        } else {
-            authenticatedUser.setAuthenticatedSubjectIdentifier(authenticatedUser.getUserName());
+        User user = getUser(authenticatedUser, context);
+        if (user == null) {
+            return null;
         }
+        authenticatedUser = new AuthenticatedUser(user);
+        authenticatedUser.setAuthenticatedSubjectIdentifier(user.getUsername());
         return authenticatedUser;
-    }
-
-    /**
-     * This method is to check that user is already resolved from previous steps.
-     * @param context
-     * @return true if user is already resolved.
-     */
-    private boolean getIsUserResolved(AuthenticationContext context) {
-
-        boolean isUserResolved = false;
-        if (!context.getProperties().isEmpty() &&
-                context.getProperty(EmailOTPAuthenticatorConstants.IS_USER_RESOLVED) != null) {
-            isUserResolved = (boolean) context.getProperty(EmailOTPAuthenticatorConstants.IS_USER_RESOLVED);
-        }
-        return isUserResolved;
     }
 
     /**
