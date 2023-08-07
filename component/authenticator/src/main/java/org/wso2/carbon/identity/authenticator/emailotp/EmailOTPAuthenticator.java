@@ -2915,6 +2915,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
             }
             authenticatedUser = new AuthenticatedUser(user);
             authenticatedUser.setAuthenticatedSubjectIdentifier(user.getUsername());
+        } else {
+            authenticatedUser.setAuthenticatedSubjectIdentifier(authenticatedUser.getUserName());
         }
         return authenticatedUser;
     }
