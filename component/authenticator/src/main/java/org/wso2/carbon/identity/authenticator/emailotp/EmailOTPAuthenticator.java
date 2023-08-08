@@ -145,7 +145,6 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
         } else if (StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.CODE)) &&
                 StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))) {
             AuthenticatedUser authenticatedUser = getAuthenticatedUser(context);
-            boolean isUserResolved = getIsUserResolved(context);
             if (authenticatedUser == null) {
                 if (StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.USER_NAME))) {
                     redirectUserToIDF(response, context);
@@ -157,6 +156,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                     setResolvedUserInContext(context, authenticatedUser);
                 }
             } else if (isPreviousIdPAuthenticationFlowHandler(context)) {
+                boolean isUserResolved = getIsUserResolved(context);
                 // Resolve the user from user store if the user is not resolved in IDF handler.
                 if (!isUserResolved) {
                     authenticatedUser = resolveUserFromUserStore(authenticatedUser);
