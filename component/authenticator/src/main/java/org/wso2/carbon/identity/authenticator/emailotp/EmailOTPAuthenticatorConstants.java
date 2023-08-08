@@ -46,6 +46,8 @@ public class EmailOTPAuthenticatorConstants {
     public static final String API_GMAIL = "Gmail";
     public static final String API_SENDGRID = "Sendgrid";
 
+    public static final String IS_USER_RESOLVED = "isUserResolved";
+
     public static final String CLIENT_ID = "ClientId";
     public static final String CLIENT_SECRET = "ClientSecret";
     public static final String CODE = "OTPCode";

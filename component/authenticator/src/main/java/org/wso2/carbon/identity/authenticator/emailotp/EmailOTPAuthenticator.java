@@ -145,6 +145,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
         } else if (StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.CODE)) &&
                 StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))) {
             AuthenticatedUser authenticatedUser = getAuthenticatedUser(context);
+            boolean isUserResolved = getIsUserResolved(context);
             if (authenticatedUser == null) {
                 if (StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.USER_NAME))) {
                     redirectUserToIDF(response, context);
@@ -152,11 +153,14 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                     return AuthenticatorFlowStatus.INCOMPLETE;
                 } else {
                     authenticatedUser = resolveUserFromRequest(request, context);
-                    authenticatedUser = resolveUserFromUserStore(authenticatedUser, context);
+                    authenticatedUser = resolveUserFromUserStore(authenticatedUser);
                     setResolvedUserInContext(context, authenticatedUser);
                 }
             } else if (isPreviousIdPAuthenticationFlowHandler(context)) {
-                authenticatedUser = resolveUserFromUserStore(authenticatedUser, context);
+                // Resolve the user from user store if the user is not resolved in IDF handler.
+                if (!isUserResolved) {
+                    authenticatedUser = resolveUserFromUserStore(authenticatedUser);
+                }
                 setResolvedUserInContext(context, authenticatedUser);
             }
             if (authenticatedUser != null) {
@@ -242,7 +246,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                 for (StepConfig stepConfig : stepConfigMap.values()) {
                     authenticatedUser = stepConfig.getAuthenticatedUser();
                     if (authenticatedUser != null && isPreviousIdPAuthenticationFlowHandler(context)) {
-                        authenticatedUser = resolveUserFromUserStore(authenticatedUser, context);
+                        authenticatedUser = resolveUserFromUserStore(authenticatedUser);
                     }
                     if (authenticatedUser != null && stepConfig.isSubjectAttributeStep()) {
                         username = authenticatedUser.toFullQualifiedUsername();
@@ -2902,11 +2906,10 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
      * @return Authenticated user retrieved from the user store.
      * @throws AuthenticationFailedException In occasions of failing.
      */
-    private AuthenticatedUser resolveUserFromUserStore(AuthenticatedUser authenticatedUser,
-                                                       AuthenticationContext context)
+    private AuthenticatedUser resolveUserFromUserStore(AuthenticatedUser authenticatedUser)
             throws AuthenticationFailedException {
 
-        User user = getUser(authenticatedUser, context);
+        User user = getUser(authenticatedUser);
         if (user == null) {
             return null;
         }
@@ -3013,5 +3016,20 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
     private boolean isEmailOTPAsFirstFactor(AuthenticationContext context) {
 
         return (context.getCurrentStep() == 1 || isPreviousIdPAuthenticationFlowHandler(context));
+    }
+
+    /**
+     * This method is to check whether the user is resolved or not.
+     * @param context
+     * @return true if the user is resolved, false otherwise.
+     */
+    private boolean getIsUserResolved(AuthenticationContext context) {
+
+        boolean isUserResolved = false;
+        if (!context.getProperties().isEmpty() &&
+                context.getProperty(EmailOTPAuthenticatorConstants.IS_USER_RESOLVED) != null) {
+            isUserResolved = (boolean) context.getProperty(EmailOTPAuthenticatorConstants.IS_USER_RESOLVED);
+        }
+        return isUserResolved;
     }
 }
