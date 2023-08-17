@@ -156,7 +156,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                     setResolvedUserInContext(context, authenticatedUser);
                 }
             } else if (isPreviousIdPAuthenticationFlowHandler(context)) {
-                boolean isUserResolved = getIsUserResolved(context);
+                boolean isUserResolved = FrameworkUtils.getIsUserResolved(context);
                 // Resolve the user from user store if the user is not resolved in IDF handler.
                 if (!isUserResolved) {
                     authenticatedUser = resolveUserFromUserStore(authenticatedUser);
@@ -3016,20 +3016,5 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
     private boolean isEmailOTPAsFirstFactor(AuthenticationContext context) {
 
         return (context.getCurrentStep() == 1 || isPreviousIdPAuthenticationFlowHandler(context));
-    }
-
-    /**
-     * This method is to check whether the user is resolved or not.
-     * @param context
-     * @return true if the user is resolved, false otherwise.
-     */
-    private boolean getIsUserResolved(AuthenticationContext context) {
-
-        boolean isUserResolved = false;
-        if (!context.getProperties().isEmpty() &&
-                context.getProperty(EmailOTPAuthenticatorConstants.IS_USER_RESOLVED) != null) {
-            isUserResolved = (boolean) context.getProperty(EmailOTPAuthenticatorConstants.IS_USER_RESOLVED);
-        }
-        return isUserResolved;
     }
 }
