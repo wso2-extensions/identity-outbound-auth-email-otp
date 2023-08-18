@@ -29,6 +29,7 @@ import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
+import org.owasp.encoder.Encode;
 import org.wso2.carbon.extension.identity.helper.FederatedAuthenticatorUtil;
 import org.wso2.carbon.extension.identity.helper.IdentityHelperConstants;
 import org.wso2.carbon.extension.identity.helper.util.IdentityHelperUtil;
@@ -229,6 +230,12 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
             }
             String queryParams = FrameworkUtils.getQueryStringWithFrameworkContextId(context.getQueryParams(),
                     context.getCallerSessionKey(), context.getContextIdentifier());
+            // This multi option URI is used to navigate back to multi option page to select a different
+            // authentication option from Email OTP pages.
+            String multiOptionURI = getMultiOptionURIQueryParam(request);
+            if (StringUtils.isNotEmpty(multiOptionURI)) {
+                queryParams += multiOptionURI;
+            }
 
             // If 'usecase' property is not configured for email OTP authenticator, the below flow will be executed
             // (Recommended flow)
@@ -1115,6 +1122,23 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
             }
         }
         return expiryTime;
+    }
+
+    /**
+     * Get MultiOptionURI query parameter from the request.
+     * @param request Http servlet request.
+     * @return MultiOptionURI query parameter.
+     */
+    private String getMultiOptionURIQueryParam(HttpServletRequest request) {
+
+        if (request != null) {
+            String multiOptionURI = request.getParameter(EmailOTPAuthenticatorConstants.MULTI_OPTION_URI);
+            if (StringUtils.isNotEmpty(multiOptionURI)) {
+                return "&" + EmailOTPAuthenticatorConstants.MULTI_OPTION_URI + "="
+                        + Encode.forUriComponent(multiOptionURI);
+            }
+        }
+        return StringUtils.EMPTY;
     }
 
     /**
