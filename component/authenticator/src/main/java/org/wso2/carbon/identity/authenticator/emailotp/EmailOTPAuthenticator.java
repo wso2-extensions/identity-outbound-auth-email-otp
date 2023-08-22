@@ -1049,7 +1049,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                     retryParam = EmailOTPAuthenticatorConstants.ERROR_USER_ACCOUNT_LOCKED;
                     // Locked reason.
                     String lockedReason = getLockedReason(authenticatedUser);
-                    if (StringUtils.isNotEmpty(lockedReason)) {
+                    if (StringUtils.isNotBlank(lockedReason)) {
                         queryParams += "&lockedReason=" + lockedReason;
                     }
                     queryParams += "&errorCode=" + UserCoreConstants.ErrorCode.USER_IS_LOCKED;
