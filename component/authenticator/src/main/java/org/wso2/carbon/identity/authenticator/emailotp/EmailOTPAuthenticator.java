@@ -1032,16 +1032,27 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
         Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
         boolean showAuthFailureReason =
                 Boolean.parseBoolean(emailOTPParameters.get(EmailOTPAuthenticatorConstants.SHOW_AUTH_FAILURE_REASON));
+        AuthenticatedUser authenticatedUser = getAuthenticatedUser(context);
         try {
-            if (isLocalUser(context) && EmailOTPUtils.isAccountLocked(getAuthenticatedUser(context))) {
+            if (authenticatedUser == null) {
+                throw new AuthenticationFailedException("Authentication failed!. Cannot proceed further without " +
+                        "identifying the user");
+            }
+            if (isLocalUser(context) && EmailOTPUtils.isAccountLocked(authenticatedUser)) {
                 String retryParam;
                 if (showAuthFailureReason) {
-                    long unlockTime = getUnlockTimeInMilliSeconds(getAuthenticatedUser(context));
+                    long unlockTime = getUnlockTimeInMilliSeconds(authenticatedUser);
                     long timeToUnlock = unlockTime - System.currentTimeMillis();
                     if (timeToUnlock > 0) {
                         queryParams += "&unlockTime=" + Math.round((double) timeToUnlock / 1000 / 60);
                     }
                     retryParam = EmailOTPAuthenticatorConstants.ERROR_USER_ACCOUNT_LOCKED;
+                    // Locked reason.
+                    String lockedReason = getLockedReason(authenticatedUser);
+                    if (StringUtils.isNotEmpty(lockedReason)) {
+                        queryParams += "&lockedReason=" + lockedReason;
+                    }
+                    queryParams += "&errorCode=" + UserCoreConstants.ErrorCode.USER_IS_LOCKED;
                 } else {
                     retryParam = EmailOTPAuthenticatorConstants.RETRY_PARAMS;
                 }
@@ -2527,7 +2538,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
             }
         }
 
-        Map<String, String> claimValues = getUserClaimValues(authenticatedUser);
+        Map<String, String> claimValues = getUserClaimValues(authenticatedUser, new String[]{
+                EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM,
+                EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM});
         if (claimValues == null) {
             claimValues = new HashMap<>();
         }
@@ -2588,7 +2601,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
         return false;
     }
 
-    private Map<String, String> getUserClaimValues(AuthenticatedUser authenticatedUser)
+    private Map<String, String> getUserClaimValues(AuthenticatedUser authenticatedUser, String[] claims)
             throws AuthenticationFailedException {
 
         Map<String, String> claimValues;
@@ -2596,9 +2609,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
             UserRealm userRealm = getUserRealm(authenticatedUser);
             UserStoreManager userStoreManager = userRealm.getUserStoreManager();
             claimValues = userStoreManager.getUserClaimValues(IdentityUtil.addDomainToName(
-                    authenticatedUser.getUserName(), authenticatedUser.getUserStoreDomain()), new String[]{
-                            EmailOTPAuthenticatorConstants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM,
-                            EmailOTPAuthenticatorConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM},
+                    authenticatedUser.getUserName(), authenticatedUser.getUserStoreDomain()), claims,
                     UserCoreConstants.DEFAULT_PROFILE);
         } catch (UserStoreException e) {
             log.error("Error while reading user claims.", e);
@@ -2632,34 +2643,23 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
      */
     private long getUnlockTimeInMilliSeconds(AuthenticatedUser authenticatedUser) throws AuthenticationFailedException {
 
-        String username = authenticatedUser.toFullQualifiedUsername();
-        String tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(username);
-        try {
-            UserRealm userRealm = getUserRealm(username);
-            if (userRealm == null) {
-                throw new AuthenticationFailedException("UserRealm is null for user : " + username);
+        Map<String, String> claimValues = getUserClaimValues(authenticatedUser,
+                new String[]{EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM});
+        if (claimValues.get(EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM) == null) {
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("No value configured for claim: %s, of user: %s",
+                        EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM, authenticatedUser.getUserName()));
             }
-            UserStoreManager userStoreManager = userRealm.getUserStoreManager();
-            if (userStoreManager == null) {
-                if (log.isDebugEnabled()) {
-                    log.debug("userStoreManager is null for user realm: " + userRealm);
-                }
-                throw new AuthenticationFailedException("userStoreManager is null for user realm: " + userRealm);
-            }
-            Map<String, String> claimValues = userStoreManager.getUserClaimValues(tenantAwareUsername,
-                    new String[]{EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM}, null);
-            if (claimValues.get(EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM) == null) {
-                if (log.isDebugEnabled()) {
-                    log.debug(String.format("No value configured for claim: %s, of user: %s",
-                            EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM, username));
-                }
-                return 0;
-            }
-            return Long.parseLong(claimValues.get(EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM));
-        } catch (UserStoreException e) {
-            throw new AuthenticationFailedException("Cannot find the user claim for unlock time for user : " +
-                    username, e);
+            return 0;
         }
+        return Long.parseLong(claimValues.get(EmailOTPAuthenticatorConstants.ACCOUNT_UNLOCK_TIME_CLAIM));
+    }
+
+    private String getLockedReason(AuthenticatedUser authenticatedUser) throws AuthenticationFailedException {
+
+        Map<String, String> claimValues = getUserClaimValues(authenticatedUser,
+                new String[]{EmailOTPAuthenticatorConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI});
+        return claimValues.get(EmailOTPAuthenticatorConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI);
     }
 
     /**
