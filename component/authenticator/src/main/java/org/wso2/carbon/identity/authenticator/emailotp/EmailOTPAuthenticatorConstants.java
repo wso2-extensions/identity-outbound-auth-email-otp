@@ -184,5 +184,6 @@ public class EmailOTPAuthenticatorConstants {
     public static final String EMAIL_OTP_NUMERIC_CHAR_SET = "9245378016";
     public static final String EMAIL_OTP_UPPER_CASE_ALPHABET_CHAR_SET = "KIGXHOYSPRWCEFMVUQLZDNABJT";
     public static final String IS_REDIRECT_TO_EMAIL_OTP = "isRedirectToEmailOTP";
+    public static final String MULTI_OPTION_URI = "multiOptionURI";
 
 }
