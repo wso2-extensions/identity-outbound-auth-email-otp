@@ -67,6 +67,7 @@ import org.wso2.carbon.identity.mgt.config.StorageType;
 import org.wso2.carbon.identity.mgt.mail.Notification;
 import org.wso2.carbon.identity.mgt.mail.NotificationBuilder;
 import org.wso2.carbon.identity.mgt.mail.NotificationData;
+import org.wso2.carbon.identity.multi.attribute.login.mgt.MultiAttributeLoginService;
 import org.wso2.carbon.user.api.Claim;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
@@ -140,6 +141,7 @@ public class EmailOTPAuthenticatorTest {
     private HashMap<String, TransportOutDescription> transportOutDescriptionHashMap;
     private Notification notification;
     private FrameworkServiceDataHolder frameworkServiceDataHolder;
+    private MultiAttributeLoginService multiAttributeLoginService;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -167,6 +169,7 @@ public class EmailOTPAuthenticatorTest {
         config = mock(Config.class);
         notification = mock(Notification.class);
         frameworkServiceDataHolder = mock(FrameworkServiceDataHolder.class);
+        multiAttributeLoginService = mock(MultiAttributeLoginService.class);
 
         mockStatic(FileBasedConfigurationBuilder.class);
         mockStatic(EmailOTPServiceDataHolder.class);
@@ -299,6 +302,7 @@ public class EmailOTPAuthenticatorTest {
         user.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         List<User> userList = new ArrayList<>();
         userList.add(user);
+        mockMultiAttributeLoginService();
         when(userStoreManager.getUserListWithID(USERNAME_CLAIM, USER_NAME, null)).thenReturn(userList);
         mockSendOTP();
 
@@ -342,6 +346,7 @@ public class EmailOTPAuthenticatorTest {
         when(MultitenantUtils.getTenantDomain(anyString())).thenReturn(TENANT_DOMAIN);
         when(FederatedAuthenticatorUtil.isUserExistInUserStore(anyString())).thenReturn(false);
         mockUserRealm();
+        mockMultiAttributeLoginService();
         when(userStoreManager.getUserListWithID(USERNAME_CLAIM, USER_NAME, null))
                 .thenReturn(new ArrayList<User>());
 
@@ -554,6 +559,12 @@ public class EmailOTPAuthenticatorTest {
         when(userRealm.getUserStoreManager()).thenReturn(userStoreManager);
         when(FrameworkServiceDataHolder.getInstance()).thenReturn(frameworkServiceDataHolder);
         when(frameworkServiceDataHolder.getRealmService()).thenReturn(realmService);
+    }
+
+    private void mockMultiAttributeLoginService() {
+        when(FrameworkServiceDataHolder.getInstance()).thenReturn(frameworkServiceDataHolder);
+        when(frameworkServiceDataHolder.getMultiAttributeLoginService()).thenReturn(multiAttributeLoginService);
+        when(multiAttributeLoginService.isEnabled(anyString())).thenReturn(false);
     }
 
     private void mockSendOTP() throws AxisFault, IdentityMgtConfigException, IdentityMgtServiceException {
