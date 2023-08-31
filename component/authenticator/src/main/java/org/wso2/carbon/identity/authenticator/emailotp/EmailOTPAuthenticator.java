@@ -1045,11 +1045,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                 Boolean.parseBoolean(emailOTPParameters.get(EmailOTPAuthenticatorConstants.SHOW_AUTH_FAILURE_REASON));
         AuthenticatedUser authenticatedUser = getAuthenticatedUser(context);
         try {
-            if (authenticatedUser == null) {
-                throw new AuthenticationFailedException("Authentication failed!. Cannot proceed further without " +
-                        "identifying the user");
-            }
-            if (isLocalUser(context) && EmailOTPUtils.isAccountLocked(authenticatedUser)) {
+            if (isLocalUser(context) && authenticatedUser != null && EmailOTPUtils.isAccountLocked(authenticatedUser)) {
                 String retryParam;
                 if (showAuthFailureReason) {
                     long unlockTime = getUnlockTimeInMilliSeconds(authenticatedUser);
