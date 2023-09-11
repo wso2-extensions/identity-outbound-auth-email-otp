@@ -2706,7 +2706,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
             return;
         }
         Map<String, String> emailOTPParameters = getAuthenticatorConfig().getParameterMap();
-        String username = authenticatedUser.getAuthenticatedSubjectIdentifier();
+        String username = authenticatedUser.toFullQualifiedUsername();
         boolean isUserExist;
         try {
             isUserExist = FederatedAuthenticatorUtil.isUserExistInUserStore(username);
