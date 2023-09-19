@@ -111,8 +111,10 @@ public class EmailOTPAuthenticatorConstants {
 
     public static final String IS_EMAILOTP_MANDATORY = "EMAILOTPMandatory";
     public static final String EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL = "EmailOTPAuthenticationEndpointErrorPage";
+    public static final String ERROR_AUTH_FAILURE_PREFIX = "&authFailure=true&authFailureMsg=";
     public static final String ERROR_EMAILOTP_DISABLE = "&authFailure=true&authFailureMsg=emailotp.disable";
     public static final String SEND_OTP_DIRECTLY_DISABLE = "&authFailure=true&authFailureMsg=directly.send.otp.disable";
+    public static final String ERROR_TENANT_MISMATCH_MSG = "user.tenant.domain.mismatch.message";
     public static final String BASIC = "basic";
     public static final String FEDERETOR = "federator";
     public static final String SEND_OTP_TO_FEDERATED_EMAIL_ATTRIBUTE = "sendOTPToFederatedEmailAttribute";
