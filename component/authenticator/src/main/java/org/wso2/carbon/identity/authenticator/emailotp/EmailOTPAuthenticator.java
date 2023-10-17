@@ -1072,8 +1072,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                     || (context.isRetrying() && !isOTPResendingDisabledOnFailure(context) && isOTPExpired(context))
                     || (context.isRetrying() && isEmailUpdateFailed(context))) {
 
-                boolean isCharInOTP = !Boolean.parseBoolean(authenticatorProperties
-                        .get(EmailOTPAuthenticatorConstants.EMAIL_OTP_NUMERIC_OTP));
+                boolean isCharInOTP = isOTPAlphanumeric(authenticatorProperties);
                 context.setProperty(EmailOTPAuthenticatorConstants.IS_CHAR_IN_OTP, isCharInOTP);
 
                 int expiryTime = getEmailOTPExpiryTime(authenticatorProperties);
@@ -1118,6 +1117,21 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
             }
         }
         return numOfDigitsInOTP;
+    }
+
+    /**
+     * Retrieve whether the OTP is alphanumeric or not.
+     *
+     * @param authenticatorProperties Map of authenticator properties.
+     * @return True if the OTP is alphanumeric, else returns false.
+     */
+    private boolean isOTPAlphanumeric(Map<String, String> authenticatorProperties) {
+
+        if (StringUtils.isNotEmpty(authenticatorProperties.get(EmailOTPAuthenticatorConstants.EMAIL_OTP_NUMERIC_OTP))) {
+            return !Boolean.parseBoolean(authenticatorProperties
+                    .get(EmailOTPAuthenticatorConstants.EMAIL_OTP_NUMERIC_OTP));
+        }
+        return false;
     }
 
     private int getEmailOTPExpiryTime(Map<String, String> authenticatorProperties) {
