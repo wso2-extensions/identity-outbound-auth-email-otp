@@ -40,6 +40,7 @@ import org.wso2.carbon.identity.application.authentication.framework.Authenticat
 import org.wso2.carbon.identity.application.authentication.framework.LocalApplicationAuthenticator;
 import org.wso2.carbon.identity.application.authentication.framework.config.ConfigurationFacade;
 import org.wso2.carbon.identity.application.authentication.framework.config.builder.FileBasedConfigurationBuilder;
+import org.wso2.carbon.identity.application.authentication.framework.config.model.ApplicationConfig;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.AuthenticatorConfig;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.SequenceConfig;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.StepConfig;
@@ -51,6 +52,7 @@ import org.wso2.carbon.identity.application.authentication.framework.model.Authe
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
+import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.authenticator.emailotp.config.EmailOTPUtils;
 import org.wso2.carbon.identity.authenticator.emailotp.internal.EmailOTPServiceDataHolder;
 import org.wso2.carbon.identity.core.ServiceURL;
@@ -1043,8 +1045,14 @@ public class EmailOTPAuthenticatorTest {
         emailOTPStep.setAuthenticatorList(authenticatorList);
         stepConfigMap.put(2, emailOTPStep);
 
+        ServiceProvider serviceProvider = new ServiceProvider();
+        serviceProvider.setSaasApp(false);
+        ApplicationConfig applicationConfig = new ApplicationConfig(serviceProvider,
+                EmailOTPAuthenticatorConstants.SUPER_TENANT);
+
         SequenceConfig sequenceConfig = new SequenceConfig();
         sequenceConfig.setStepMap(stepConfigMap);
+        sequenceConfig.setApplicationConfig(applicationConfig);
         context.setSequenceConfig(sequenceConfig);
         context.setCurrentStep(2);
     }

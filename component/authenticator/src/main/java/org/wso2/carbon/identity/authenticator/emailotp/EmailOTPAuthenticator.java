@@ -39,6 +39,7 @@ import org.wso2.carbon.identity.application.authentication.framework.Authenticat
 import org.wso2.carbon.identity.application.authentication.framework.FederatedApplicationAuthenticator;
 import org.wso2.carbon.identity.application.authentication.framework.LocalApplicationAuthenticator;
 import org.wso2.carbon.identity.application.authentication.framework.config.ConfigurationFacade;
+import org.wso2.carbon.identity.application.authentication.framework.config.model.SequenceConfig;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.StepConfig;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
@@ -47,6 +48,7 @@ import org.wso2.carbon.identity.application.authentication.framework.exception.L
 import org.wso2.carbon.identity.application.authentication.framework.exception.UserIdNotFoundException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedIdPData;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.Property;
@@ -362,6 +364,20 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
         if (authenticatedUser == null) {
             String errorMessage = "Could not find an Authenticated user in the context.";
             throw new AuthenticationFailedException(errorMessage);
+        }
+
+        SequenceConfig sequenceConfig = context.getSequenceConfig();
+        // Tenant domain validation for non SaaS applications.
+        if (isLocalUser && !sequenceConfig.getApplicationConfig().isSaaSApp()) {
+            String spTenantDomain = context.getTenantDomain();
+            String userTenantDomain = authenticatedUser.getTenantDomain();
+            if (StringUtils.isNotEmpty(userTenantDomain)) {
+                if (StringUtils.isNotEmpty(spTenantDomain) && !spTenantDomain.equals(userTenantDomain)) {
+                    context.setProperty(FrameworkConstants.USER_TENANT_DOMAIN_MISMATCH, true);
+                    throw new AuthenticationFailedException("Service Provider tenant domain must be " +
+                            "equal to user tenant domain for non-SaaS applications", context.getSubject());
+                }
+            }
         }
 
         if (isLocalUser && EmailOTPUtils.isAccountLocked(authenticatedUser)) {
@@ -1044,8 +1060,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
         boolean showAuthFailureReason =
                 Boolean.parseBoolean(emailOTPParameters.get(EmailOTPAuthenticatorConstants.SHOW_AUTH_FAILURE_REASON));
         AuthenticatedUser authenticatedUser = getAuthenticatedUser(context);
+        Boolean isLocalUser = isLocalUser(context);
         try {
-            if (isLocalUser(context) && EmailOTPUtils.isAccountLocked(authenticatedUser)) {
+            if (isLocalUser && EmailOTPUtils.isAccountLocked(authenticatedUser)) {
                 String retryParam;
                 if (showAuthFailureReason) {
                     long unlockTime = getUnlockTimeInMilliSeconds(authenticatedUser);
@@ -1064,6 +1081,14 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                     retryParam = EmailOTPAuthenticatorConstants.RETRY_PARAMS;
                 }
                 redirectToErrorPage(response, context, emailOTPParameters, queryParams, retryParam);
+                return;
+            }
+            if (isLocalUser && context.getProperty(FrameworkConstants.USER_TENANT_DOMAIN_MISMATCH) != null &&
+                    (Boolean) context.getProperty(FrameworkConstants.USER_TENANT_DOMAIN_MISMATCH)) {
+                context.setProperty(FrameworkConstants.USER_TENANT_DOMAIN_MISMATCH, false);
+                queryParams += EmailOTPAuthenticatorConstants.ERROR_AUTH_FAILURE_PREFIX +
+                        EmailOTPAuthenticatorConstants.ERROR_TENANT_MISMATCH_MSG;
+                redirectToErrorPage(response, context, emailOTPParameters, queryParams, StringUtils.EMPTY);
                 return;
             }
             if (!context.isRetrying()
