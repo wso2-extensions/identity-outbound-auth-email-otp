@@ -129,8 +129,18 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
         return ((StringUtils.isNotEmpty(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))
                 && StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.CODE)))
                 || StringUtils.isNotEmpty(request.getParameter(EmailOTPAuthenticatorConstants.CODE))
-                || StringUtils.isNotEmpty(request.getParameter(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS))
-                || StringUtils.isNotEmpty(request.getParameter(EmailOTPAuthenticatorConstants.USER_NAME)));
+                || StringUtils.isNotEmpty(request.getParameter(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS)));
+    }
+
+    @Override
+    public boolean canHandleMultiOptionRequest(HttpServletRequest request, AuthenticationContext context) {
+
+        if (log.isDebugEnabled()) {
+            log.debug("Inside EmailOTPAuthenticator canHandleMultiOptionRequest method");
+        }
+        return canHandle(request) ||
+                (StringUtils.isNotBlank(request.getParameter(EmailOTPAuthenticatorConstants.USER_NAME)) &&
+                        getName().equalsIgnoreCase(context.getCurrentAuthenticator()));
     }
 
     @Override
