@@ -141,6 +141,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
 
         // Since all EmailOTP as 1FA, basic, and IDF authenticators has the username parameter in the request, we need to
         // use the currentAuthenticator context to identify if the request is coming from EmailOTP authenticator.
+        // For basic and IDF authenticators, the currentAuthenticator context will be null.
         boolean canHandleRequest = canHandle(request) ||
                 (StringUtils.isNotBlank(request.getParameter(EmailOTPAuthenticatorConstants.USER_NAME)) &&
                         getName().equalsIgnoreCase(context.getCurrentAuthenticator()));
