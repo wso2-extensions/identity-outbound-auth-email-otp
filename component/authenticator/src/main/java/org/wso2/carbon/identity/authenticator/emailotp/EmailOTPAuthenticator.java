@@ -146,9 +146,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                 (StringUtils.isNotBlank(request.getParameter(EmailOTPAuthenticatorConstants.USER_NAME)) &&
                         getName().equalsIgnoreCase(context.getCurrentAuthenticator()));
         if (canHandleRequest) {
-            log.debug("EmailOTPAuthenticator can handle the request from multi-option step");
+            log.debug("EmailOTPAuthenticator can handle the request from multi-option step.");
         } else {
-            log.debug("EmailOTPAuthenticator cannot handle the request from multi-option step");
+            log.debug("EmailOTPAuthenticator cannot handle the request from multi-option step.");
         }
         return canHandleRequest;
     }
