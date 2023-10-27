@@ -126,11 +126,31 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
         if (log.isDebugEnabled()) {
             log.debug("Inside EmailOTPAuthenticator canHandle method");
         }
+        // To handle resend code flow.
         return ((StringUtils.isNotEmpty(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))
                 && StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.CODE)))
+                // To handle OTP code validation flow.
                 || StringUtils.isNotEmpty(request.getParameter(EmailOTPAuthenticatorConstants.CODE))
+                // To handle entering email address flow.
                 || StringUtils.isNotEmpty(request.getParameter(EmailOTPAuthenticatorConstants.EMAIL_ADDRESS))
-                || StringUtils.isNotEmpty(request.getParameter(EmailOTPAuthenticatorConstants.USER_NAME)));
+        );
+    }
+
+    @Override
+    public boolean canHandleRequestFromMultiOptionStep(HttpServletRequest request, AuthenticationContext context) {
+
+        // Since all EmailOTP as 1FA, basic, and IDF authenticators has the username parameter in the request, we need to
+        // use the currentAuthenticator context to identify if the request is coming from EmailOTP authenticator.
+        // For basic and IDF authenticators, the currentAuthenticator context will be null.
+        boolean canHandleRequest = canHandle(request) ||
+                (StringUtils.isNotBlank(request.getParameter(EmailOTPAuthenticatorConstants.USER_NAME)) &&
+                        getName().equalsIgnoreCase(context.getCurrentAuthenticator()));
+        if (canHandleRequest) {
+            log.debug("EmailOTPAuthenticator can handle the request from multi-option step.");
+        } else {
+            log.debug("EmailOTPAuthenticator cannot handle the request from multi-option step.");
+        }
+        return canHandleRequest;
     }
 
     @Override
