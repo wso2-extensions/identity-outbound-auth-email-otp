@@ -529,30 +529,46 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
     private boolean validateWithBackUpCodes(AuthenticationContext context, String userToken,
                                             AuthenticatedUser authenticatedUser) throws AuthenticationFailedException {
 
+
         boolean isMatchingToken = false;
         String[] savedOTPs = null;
         String username = authenticatedUser.toFullQualifiedUsername();
         String tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(username);
         UserRealm userRealm = getUserRealm(username);
+        String backupCodesClaim;
+
+        boolean isHandleBackupCodesAsIdentityClaim = Boolean.parseBoolean(IdentityUtil
+                .getProperty(EmailOTPAuthenticatorConstants.HANDLE_BACKUP_CODES_AS_IDENTITY_CLAIM));
+        if (isHandleBackupCodesAsIdentityClaim) {
+            if (log.isDebugEnabled()) {
+                log.debug(EmailOTPAuthenticatorConstants.HANDLE_BACKUP_CODES_AS_IDENTITY_CLAIM + " property is " +
+                        "enabled, hence treating OTP backup code claim as " +
+                        EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_IDENTITY_CLAIM);
+            }
+            backupCodesClaim = EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_IDENTITY_CLAIM;
+        } else {
+            backupCodesClaim = EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_CLAIM;
+        }
+
         try {
             if (userRealm == null) {
                 throw new AuthenticationFailedException("UserRealm is null for user : " + username);
             }
             UserStoreManager userStoreManager = userRealm.getUserStoreManager();
             if (userStoreManager != null) {
-                String savedOTPString = userStoreManager
-                        .getUserClaimValue(tenantAwareUsername,
-                                EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_CLAIM, null);
-                if (StringUtils.isNotEmpty(savedOTPString)) {
-                    savedOTPs = savedOTPString.split(EmailOTPAuthenticatorConstants.BACKUP_CODES_SEPARATOR);
+                Map<String, String> returnedClaimMap = userStoreManager
+                        .getUserClaimValues(tenantAwareUsername, new String[]{backupCodesClaim}, null);
+                if (!returnedClaimMap.isEmpty()) {
+                    String savedOTPString = returnedClaimMap.get(backupCodesClaim);
+                    if (StringUtils.isNotEmpty(savedOTPString)) {
+                        savedOTPs = savedOTPString.split(EmailOTPAuthenticatorConstants.BACKUP_CODES_SEPARATOR);
+                    }
                 }
             }
-
             // Check whether there is any backup OTPs and return.
             if (ArrayUtils.isEmpty(savedOTPs)) {
                 if (log.isDebugEnabled()) {
-                    log.debug("The claim " + EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_CLAIM + " does " +
-                            "not contain any values.");
+                    log.debug("The claim " + backupCodesClaim + " does not contain any values.");
                 }
                 return false;
             }
@@ -566,10 +582,10 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                 if (log.isDebugEnabled()) {
                     log.debug("Removed backup code :" + userToken + " from saved backup codes list.");
                 }
-                userRealm.getUserStoreManager().setUserClaimValue(tenantAwareUsername,
-                        EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_CLAIM,
-                        String.join(EmailOTPAuthenticatorConstants.BACKUP_CODES_SEPARATOR, savedOTPs),
-                        null);
+                Map<String, String> updatedClaims = new HashMap<>();
+                updatedClaims.put(backupCodesClaim, String.join(EmailOTPAuthenticatorConstants.BACKUP_CODES_SEPARATOR,
+                        savedOTPs));
+                userRealm.getUserStoreManager().setUserClaimValues(tenantAwareUsername, updatedClaims, null);
             } else {
                 if (log.isDebugEnabled()) {
                     log.debug("User entered OTP :" + userToken + " does not match with any of the saved " +
