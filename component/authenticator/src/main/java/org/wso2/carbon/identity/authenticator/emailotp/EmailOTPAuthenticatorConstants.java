@@ -79,6 +79,8 @@ public class EmailOTPAuthenticatorConstants {
     public static final String ADMIN_EMAIL = "[userId]";
     public static final String OTP_TOKEN = "otpToken";
     public static final String OTP_BACKUP_CODES_CLAIM = "http://wso2.org/claims/otpbackupcodes";
+    public static final String OTP_BACKUP_CODES_IDENTITY_CLAIM = "http://wso2.org/claims/identity/otpbackupcodes";
+    public static final String HANDLE_BACKUP_CODES_AS_IDENTITY_CLAIM = "OTPBackupCodes.UseIdentityClaims";
     public static final String BACKUP_CODES_SEPARATOR = ",";
 
     public static final String AXIS2 = "axis2.xml";

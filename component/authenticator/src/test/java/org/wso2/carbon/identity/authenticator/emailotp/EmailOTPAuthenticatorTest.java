@@ -59,6 +59,7 @@ import org.wso2.carbon.identity.core.ServiceURL;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.mgt.IdentityMgtConfigException;
 import org.wso2.carbon.identity.mgt.IdentityMgtServiceException;
@@ -82,6 +83,7 @@ import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,6 +98,7 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.doNothing;
 import static org.powermock.api.mockito.PowerMockito.doReturn;
@@ -113,7 +116,7 @@ import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthentica
         FrameworkUtils.class, MultitenantUtils.class, IdentityTenantUtil.class, ConfigurationContextFactory.class,
         ConfigBuilder.class, NotificationBuilder.class, EmailOTPUtils.class, EmailOTPServiceDataHolder.class,
         ServiceURLBuilder.class, AbstractUserStoreManager.class, OneTimePassword.class, UserCoreUtil.class,
-        ConfigurationFacade.class, FrameworkServiceDataHolder.class})
+        ConfigurationFacade.class, FrameworkServiceDataHolder.class, IdentityUtil.class})
 @PowerMockIgnore({"javax.crypto.*"})
 public class EmailOTPAuthenticatorTest {
     private EmailOTPAuthenticator emailOTPAuthenticator;
@@ -147,6 +150,7 @@ public class EmailOTPAuthenticatorTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
+
         emailOTPAuthenticator = new EmailOTPAuthenticator();
         initMocks(this);
         httpServletRequest = mock(HttpServletRequest.class);
@@ -1113,8 +1117,44 @@ public class EmailOTPAuthenticatorTest {
         mockUserRealm();
         when(MultitenantUtils.getTenantAwareUsername(USER_NAME))
                 .thenReturn(USER_NAME);
-        when(userStoreManager.getUserClaimValue(USER_NAME,
-                EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_CLAIM, null)).thenReturn("123456,789123");
+        when(userStoreManager.getUserClaimValues(anyString(),
+                eq(new String[]{EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_CLAIM}), anyString()))
+                .thenReturn(Collections.singletonMap(EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_CLAIM,
+                        "123456,789123"));
+        when(userStoreManager.getClaimManager()).thenReturn(
+                (org.wso2.carbon.user.core.claim.ClaimManager) claimManager);
+        when(userStoreManager.getClaimManager().getClaim(EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_CLAIM))
+                .thenReturn(claim);
+        when(context.getProperty(EmailOTPAuthenticatorConstants.CODE_MISMATCH)).thenReturn(false);
+        Whitebox.invokeMethod(emailOTPAuthenticator, "processAuthenticationResponse",
+                httpServletRequest, httpServletResponse, context);
+    }
+
+    @Test
+    public void testProcessAuthenticationResponseWithvalidBackupCodeInIdentityClaim() throws Exception {
+
+        when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.CODE)).thenReturn("123456");
+        context.setProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN, "123");
+        context.setProperty(EmailOTPAuthenticatorConstants.USER_NAME, USER_NAME);
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setAuthenticatedSubjectIdentifier(USER_NAME);
+        authenticatedUser.setUserName(USER_NAME);
+        setStepConfigWithBasicAuthenticator(authenticatedUser, authenticatorConfig);
+        when((AuthenticatedUser) context.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATED_USER)).
+                thenReturn(authenticatedUser);
+        when(EmailOTPUtils.getConfiguration(context, EmailOTPAuthenticatorConstants.BACKUP_CODE)).thenReturn("true");
+        when(context.getProperty(EmailOTPAuthenticatorConstants.OTP_GENERATED_TIME)).thenReturn(anyLong());
+        when(IdentityTenantUtil.getTenantId("carbon.super")).thenReturn(-1234);
+        when(IdentityTenantUtil.getRealmService()).thenReturn(realmService);
+        mockUserRealm();
+        when(MultitenantUtils.getTenantAwareUsername(USER_NAME)).thenReturn(USER_NAME);
+        mockStatic(IdentityUtil.class);
+        when(IdentityUtil.getProperty(EmailOTPAuthenticatorConstants.HANDLE_BACKUP_CODES_AS_IDENTITY_CLAIM))
+                .thenReturn("true");
+        when(userStoreManager.getUserClaimValues(anyString(),
+                eq(new String[]{EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_IDENTITY_CLAIM}), anyString()))
+                .thenReturn(Collections.singletonMap(EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_IDENTITY_CLAIM,
+                        "123456,789123"));
         when(userStoreManager.getClaimManager()).thenReturn(claimManager);
         when(userStoreManager.getClaimManager().getClaim(EmailOTPAuthenticatorConstants.OTP_BACKUP_CODES_CLAIM))
                 .thenReturn(claim);
