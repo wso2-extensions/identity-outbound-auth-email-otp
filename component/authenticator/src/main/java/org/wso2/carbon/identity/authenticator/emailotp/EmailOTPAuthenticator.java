@@ -1139,8 +1139,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                     || (context.isRetrying() && !isOTPResendingDisabledOnFailure(context) && isOTPExpired(context))
                     || (context.isRetrying() && isEmailUpdateFailed(context))) {
 
-                boolean isCharInOTP = !Boolean.parseBoolean(authenticatorProperties
-                        .get(EmailOTPAuthenticatorConstants.EMAIL_OTP_NUMERIC_OTP));
+                boolean isCharInOTP = Boolean.parseBoolean(authenticatorProperties
+                    .get(EmailOTPAuthenticatorConstants.EMAIL_OTP_ALPHANUMERIC_OTP));
                 context.setProperty(EmailOTPAuthenticatorConstants.IS_CHAR_IN_OTP, isCharInOTP);
 
                 int expiryTime = getEmailOTPExpiryTime(authenticatorProperties);
@@ -2352,14 +2352,14 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
         expiryTimeOTP.setDisplayOrder(3);
         configProperties.add(expiryTimeOTP);
 
-        Property numericOTP = new Property();
-        numericOTP.setName(EmailOTPAuthenticatorConstants.EMAIL_OTP_NUMERIC_OTP);
-        numericOTP.setDisplayName("Use only numeric characters for OTP");
-        numericOTP.setDescription("Please clear this checkbox to enable alphanumeric characters.");
-        numericOTP.setDefaultValue("true");
-        numericOTP.setType("boolean");
-        numericOTP.setDisplayOrder(5);
-        configProperties.add(numericOTP);
+        Property alphaNumericOTP = new Property();
+        alphaNumericOTP.setName(EmailOTPAuthenticatorConstants.EMAIL_OTP_ALPHANUMERIC_OTP);
+        alphaNumericOTP.setDisplayName("Use alphanumeric characters for OTP");
+        alphaNumericOTP.setDescription("Please enter either 'true' or 'false' to enable alphanumeric characters or " +
+                "only numeric characters respectively. ");
+        alphaNumericOTP.setDefaultValue("false");
+        alphaNumericOTP.setDisplayOrder(4);
+        configProperties.add(alphaNumericOTP);
 
         return configProperties;
     }
