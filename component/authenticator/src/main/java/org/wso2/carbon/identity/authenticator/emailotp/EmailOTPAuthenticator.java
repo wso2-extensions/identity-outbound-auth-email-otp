@@ -2349,10 +2349,10 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
         Property numericOTP = new Property();
         numericOTP.setName(EmailOTPAuthenticatorConstants.EMAIL_OTP_NUMERIC_OTP);
         numericOTP.setDisplayName("Use only numeric characters for OTP");
-        numericOTP.setDescription("Please clear this checkbox to enable alphanumeric characters.");
+        numericOTP.setDescription("Please enter either 'true' or 'false' to use only numeric characters or " +
+                "alphanumeric characters respectively.");
         numericOTP.setDefaultValue("true");
-        numericOTP.setType("boolean");
-        numericOTP.setDisplayOrder(5);
+        numericOTP.setDisplayOrder(4);
         configProperties.add(numericOTP);
 
         return configProperties;
