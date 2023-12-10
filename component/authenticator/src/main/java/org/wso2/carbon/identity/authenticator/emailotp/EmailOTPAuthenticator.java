@@ -2355,11 +2355,18 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
         Property alphaNumericOTP = new Property();
         alphaNumericOTP.setName(EmailOTPAuthenticatorConstants.EMAIL_OTP_ALPHANUMERIC_OTP);
         alphaNumericOTP.setDisplayName("Use alphanumeric characters for OTP");
-        alphaNumericOTP.setDescription("Please enter either 'true' or 'false' to enable alphanumeric characters or " +
-                "only numeric characters respectively. ");
+        alphaNumericOTP.setDescription("Please check this checkbox to enable alphanumeric characters.");
         alphaNumericOTP.setDefaultValue("false");
+        alphaNumericOTP.setType("boolean");
         alphaNumericOTP.setDisplayOrder(4);
         configProperties.add(alphaNumericOTP);
+
+        Property numericOTP = new Property();
+        numericOTP.setName(EmailOTPAuthenticatorConstants.EMAIL_OTP_NUMERIC_OTP);
+        numericOTP.setDefaultValue("true");
+        numericOTP.setType("boolean");
+        numericOTP.setDisplayOrder(5);
+        configProperties.add(numericOTP);
 
         return configProperties;
     }

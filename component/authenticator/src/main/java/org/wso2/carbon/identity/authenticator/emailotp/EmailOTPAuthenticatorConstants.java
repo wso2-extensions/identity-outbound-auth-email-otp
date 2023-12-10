@@ -177,6 +177,7 @@ public class EmailOTPAuthenticatorConstants {
     public static final String IDF_HANDLER_NAME = "IdentifierExecutor";
     public static final String USER = "user";
     public static final String EMAIL_OTP_ALPHANUMERIC_OTP = "AlphanumericCharactersForOtp";
+    public static final String EMAIL_OTP_NUMERIC_OTP = "OnlyNumericCharactersForOtp";
     public static final String IS_CHAR_IN_OTP = "IsCharInOTP";
     public static final String EMAIL_OTP_EXPIRY_TIME = "EmailOtpExpiryTime";
     public static final int EMAIL_OTP_MAX_EXPIRY_TIME = 1440;
