@@ -1098,7 +1098,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
         AuthenticatedUser authenticatedUser = getAuthenticatedUser(context);
         Boolean isLocalUser = isLocalUser(context);
         try {
-            if (isLocalUser && EmailOTPUtils.isAccountLocked(authenticatedUser)) {
+            if (isLocalUser && !skipAccountLockCheckInInitAuthentication(
+                    context, Boolean.parseBoolean(request.getParameter(EmailOTPAuthenticatorConstants.RESEND)))
+                    && EmailOTPUtils.isAccountLocked(authenticatedUser)) {
                 String retryParam;
                 if (showAuthFailureReason) {
                     long unlockTime = getUnlockTimeInMilliSeconds(authenticatedUser);
@@ -3097,5 +3099,15 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
     private boolean isEmailOTPAsFirstFactor(AuthenticationContext context) {
 
         return (context.getCurrentStep() == 1 || isPreviousIdPAuthenticationFlowHandler(context));
+    }
+
+    private static boolean skipAccountLockCheckInInitAuthentication(AuthenticationContext context, boolean isResend) {
+
+        boolean skipAccountLockCheckInInitAuthenticationConfig = Boolean.parseBoolean(IdentityUtil.getProperty(
+                EmailOTPAuthenticatorConstants.SKIP_ACCOUNT_LOCK_CHECK_IN_INIT_AUTHENTICATION));
+
+        return skipAccountLockCheckInInitAuthenticationConfig && (!context.isRetrying()
+                || (context.isRetrying() && (isResend
+                || Boolean.parseBoolean((String) context.getProperty(EmailOTPAuthenticatorConstants.OTP_EXPIRED)))));
     }
 }
