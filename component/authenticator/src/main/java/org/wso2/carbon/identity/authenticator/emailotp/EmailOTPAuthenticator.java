@@ -1099,7 +1099,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
         Boolean isLocalUser = isLocalUser(context);
         try {
             if (isLocalUser && !skipAccountLockCheckInInitAuthentication(
-                    context, Boolean.parseBoolean(request.getParameter(EmailOTPAuthenticatorConstants.RESEND)))
+                    context, emailOTPParameters, Boolean.parseBoolean(request.getParameter(EmailOTPAuthenticatorConstants.RESEND)))
                     && EmailOTPUtils.isAccountLocked(authenticatedUser)) {
                 String retryParam;
                 if (showAuthFailureReason) {
@@ -3101,10 +3101,13 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
         return (context.getCurrentStep() == 1 || isPreviousIdPAuthenticationFlowHandler(context));
     }
 
-    private static boolean skipAccountLockCheckInInitAuthentication(AuthenticationContext context, boolean isResend) {
+    private static boolean skipAccountLockCheckInInitAuthentication(AuthenticationContext context,
+                                                                    Map<String, String> emailOTPParameters,
+                                                                    boolean isResend) {
 
-        boolean skipAccountLockCheckInInitAuthenticationConfig = Boolean.parseBoolean(IdentityUtil.getProperty(
-                EmailOTPAuthenticatorConstants.SKIP_ACCOUNT_LOCK_CHECK_IN_INIT_AUTHENTICATION));
+        boolean skipAccountLockCheckInInitAuthenticationConfig =
+                Boolean.parseBoolean(emailOTPParameters
+                        .get(EmailOTPAuthenticatorConstants.SKIP_ACCOUNT_LOCK_CHECK_IN_INIT_AUTHENTICATION));
 
         return skipAccountLockCheckInInitAuthenticationConfig && (!context.isRetrying()
                 || (context.isRetrying() && (isResend

@@ -190,6 +190,6 @@ public class EmailOTPAuthenticatorConstants {
     public static final String IS_REDIRECT_TO_EMAIL_OTP = "isRedirectToEmailOTP";
     public static final String MULTI_OPTION_URI = "multiOptionURI";
     public static final String SKIP_ACCOUNT_LOCK_CHECK_IN_INIT_AUTHENTICATION =
-            "EmailOTP.SkipAccountLockCheckInInitAuthentication";
+            "skipAccountLockCheckInInitAuthentication";
 
 }
