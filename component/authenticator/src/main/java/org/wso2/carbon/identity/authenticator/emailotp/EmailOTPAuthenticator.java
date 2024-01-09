@@ -75,6 +75,8 @@ import org.wso2.carbon.identity.mgt.mail.DefaultEmailSendingModule;
 import org.wso2.carbon.identity.mgt.mail.Notification;
 import org.wso2.carbon.identity.mgt.mail.NotificationBuilder;
 import org.wso2.carbon.identity.mgt.mail.NotificationData;
+import org.wso2.carbon.identity.recovery.IdentityRecoveryConstants;
+import org.wso2.carbon.identity.recovery.util.Utils;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.api.UserStoreManager;
@@ -465,6 +467,11 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                 Object verifiedEmailObject = context.getProperty(EmailOTPAuthenticatorConstants.REQUESTED_USER_EMAIL);
                 if (verifiedEmailObject != null) {
                     try {
+                        if (Utils.getThreadLocalToSkipSendingEmailVerificationOnUpdate() != null) {
+                            Utils.unsetThreadLocalToSkipSendingEmailVerificationOnUpdate();
+                        }
+                        Utils.setThreadLocalToSkipSendingEmailVerificationOnUpdate(IdentityRecoveryConstants.
+                                SkipEmailVerificationOnUpdateStates.SKIP_ON_EMAIL_OTP_FLOW.toString());
                         updateEmailAddressForUsername(context, username);
                     } catch (UserStoreClientException e) {
                         context.setProperty(EmailOTPAuthenticatorConstants.EMAIL_UPDATE_FAILURE, "true");
@@ -479,6 +486,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                         }
                         throw new AuthenticationFailedException("Email claim update failed for user " + username,
                                 e.getCause());
+                    } finally {
+                        Utils.unsetThreadLocalToSkipSendingEmailVerificationOnUpdate();
                     }
                 }
             }
