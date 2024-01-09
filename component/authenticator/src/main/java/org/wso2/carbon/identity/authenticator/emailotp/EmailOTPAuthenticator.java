@@ -467,9 +467,6 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                 Object verifiedEmailObject = context.getProperty(EmailOTPAuthenticatorConstants.REQUESTED_USER_EMAIL);
                 if (verifiedEmailObject != null) {
                     try {
-                        if (Utils.getThreadLocalToSkipSendingEmailVerificationOnUpdate() != null) {
-                            Utils.unsetThreadLocalToSkipSendingEmailVerificationOnUpdate();
-                        }
                         Utils.setThreadLocalToSkipSendingEmailVerificationOnUpdate(IdentityRecoveryConstants.
                                 SkipEmailVerificationOnUpdateStates.SKIP_ON_EMAIL_OTP_FLOW.toString());
                         updateEmailAddressForUsername(context, username);
