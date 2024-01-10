@@ -487,7 +487,7 @@
         <carbon.identity.event.version>5.18.209</carbon.identity.event.version>
         <commons-logging.version>4.4.3</commons-logging.version>
         <carbon.kernel.version>4.7.0</carbon.kernel.version>
-        <identity.governance.version>1.8.40</identity.governance.version>
+        <identity.governance.version>1.8.101</identity.governance.version>
         <oltu.version>1.0.0.wso2v2</oltu.version>
         <org.apache.oltu.oauth2.client.version>1.0.0</org.apache.oltu.oauth2.client.version>
         <oltu.package.import.version.range>[1.0.0, 2.0.0)</oltu.package.import.version.range>
