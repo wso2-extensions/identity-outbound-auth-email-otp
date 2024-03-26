@@ -1,0 +1,13 @@
+{
+    "name": "EmailOTP",
+    "owner": "WSO2",
+    "category": "Local authenticator",
+    "documentationUrl": "https://github.com/wso2-extensions/identity-outbound-auth-email-otp/tree/master/docs",
+    "description": "The EmailOTP authenticator allows you to authenticate user via email services using either SMTP protocol or Email APIs through WSO2 IS. ",
+    "status": "Active",
+    "labels": [
+        "Twofactor",
+        "Token"
+    ],
+    "releases": []
+}
