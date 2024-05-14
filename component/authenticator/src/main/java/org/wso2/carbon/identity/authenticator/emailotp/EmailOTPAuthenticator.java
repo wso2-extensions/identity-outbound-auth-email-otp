@@ -160,6 +160,12 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                                            HttpServletResponse response,
                                            AuthenticationContext context)
             throws AuthenticationFailedException, LogoutFailedException {
+
+        // If the current authenticator is not EMAIL OTP, then set the flow to not retrying which could have been
+        // set from other authenticators and not cleared.
+        if (!EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME.equals(context.getCurrentAuthenticator())) {
+            context.setRetrying(false);
+        }
         // if the logout request comes, then no need to go through and complete the flow.
         if (context.isLogoutRequest()) {
             return AuthenticatorFlowStatus.SUCCESS_COMPLETED;
@@ -168,7 +174,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
             initiateAuthenticationRequest(request, response, context);
             return AuthenticatorFlowStatus.INCOMPLETE;
         } else if (StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.CODE)) &&
-                StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))) {
+                !Boolean.parseBoolean(request.getParameter(EmailOTPAuthenticatorConstants.RESEND))) {
             AuthenticatedUser authenticatedUser = getAuthenticatedUser(context);
             if (authenticatedUser == null) {
                 if (StringUtils.isEmpty(request.getParameter(EmailOTPAuthenticatorConstants.USER_NAME))) {
