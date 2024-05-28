@@ -108,6 +108,12 @@
                             org.wso2.carbon.context; version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.identity.application.authentication.framework.store;
                             version="${carbon.identity.framework.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.exception;
+                            version="${carbon.identity.framework.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.application.common.model;
+                            version="${carbon.identity.framework.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.core.util;
+                            version="${carbon.identity.framework.imp.pkg.version.range}",
                             org.wso2.carbon.identity.event; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.event.event;
                             version="${carbon.identity.package.import.version.range}",
@@ -115,6 +121,7 @@
                             version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.event.services;
                             version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.governance;version="${identity.governance.imp.pkg.version.range}",
                             org.wso2.carbon.identity.governance.service.notification;
                             version="${identity.governance.imp.pkg.version.range}",
                             org.wso2.carbon.identity.recovery.internal;
@@ -124,7 +131,11 @@
                             org.wso2.carbon.user.core.common; version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.user.core.constants;
                             version="${carbon.kernel.package.import.version.range}",
-                            org.wso2.carbon.user.core.service; version="${carbon.kernel.package.import.version.range}"
+                            org.wso2.carbon.user.core.service; version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.identity.handler.event.account.lock.exception;
+                            version="${carbon.identity.account.lock.handler.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.handler.event.account.lock.service;
+                            version="${carbon.identity.account.lock.handler.imp.pkg.version.range}"
                         </Import-Package>
                         <Export-Package>
                             !org.wso2.carbon.extension.identity.emailotp.common.internal,

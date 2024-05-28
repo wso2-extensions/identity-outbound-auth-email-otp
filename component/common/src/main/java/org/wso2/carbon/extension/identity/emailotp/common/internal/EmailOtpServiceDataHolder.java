@@ -19,6 +19,8 @@
 package org.wso2.carbon.extension.identity.emailotp.common.internal;
 
 import org.wso2.carbon.extension.identity.emailotp.common.dto.ConfigsDTO;
+import org.wso2.carbon.identity.governance.IdentityGovernanceService;
+import org.wso2.carbon.identity.handler.event.account.lock.service.AccountLockService;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -28,6 +30,8 @@ public class EmailOtpServiceDataHolder {
 
     private static final EmailOtpServiceDataHolder dataHolder = new EmailOtpServiceDataHolder();
     private RealmService realmService;
+    private AccountLockService accountLockService;
+    private IdentityGovernanceService identityGovernanceService;
     private static final ConfigsDTO configs = new ConfigsDTO();
 
     /**
@@ -68,5 +72,45 @@ public class EmailOtpServiceDataHolder {
     public static ConfigsDTO getConfigs() {
 
         return configs;
+    }
+
+    /**
+     * Get Account Lock service.
+     *
+     * @return Account Lock service.
+     */
+    public AccountLockService getAccountLockService() {
+
+        return accountLockService;
+    }
+
+    /**
+     * Set Account Lock service.
+     *
+     * @param accountLockService Account Lock service.
+     */
+    public void setAccountLockService(AccountLockService accountLockService) {
+
+        this.accountLockService = accountLockService;
+    }
+
+    /**
+     * Get Identity Governance service.
+     *
+     * @return Identity Governance service.
+     */
+    public IdentityGovernanceService getIdentityGovernanceService() {
+
+        return identityGovernanceService;
+    }
+
+    /**
+     * Set Identity Governance service.
+     *
+     * @param identityGovernanceService Identity Governance service.
+     */
+    public void setIdentityGovernanceService(IdentityGovernanceService identityGovernanceService) {
+
+        this.identityGovernanceService = identityGovernanceService;
     }
 }

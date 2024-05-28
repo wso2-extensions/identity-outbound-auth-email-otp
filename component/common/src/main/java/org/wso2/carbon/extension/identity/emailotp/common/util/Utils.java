@@ -27,9 +27,13 @@ import org.wso2.carbon.extension.identity.emailotp.common.dto.ConfigsDTO;
 import org.wso2.carbon.extension.identity.emailotp.common.exception.EmailOtpClientException;
 import org.wso2.carbon.extension.identity.emailotp.common.exception.EmailOtpServerException;
 import org.wso2.carbon.extension.identity.emailotp.common.internal.EmailOtpServiceDataHolder;
+import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.event.IdentityEventConfigBuilder;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.bean.ModuleConfiguration;
+import org.wso2.carbon.identity.governance.IdentityGovernanceException;
+import org.wso2.carbon.identity.handler.event.account.lock.exception.AccountLockServiceException;
+import org.wso2.carbon.user.core.common.User;
 
 import java.util.Properties;
 import java.util.UUID;
@@ -112,6 +116,10 @@ public class Utils {
                 properties.getProperty(Constants.EMAIL_OTP_MULTIPLE_SESSIONS_ENABLED)));
         configs.setEnableMultipleSessions(isEnableMultipleSessions);
 
+        boolean lockAccountOnFailedAttempts = Boolean.parseBoolean(StringUtils.trim(
+                properties.getProperty(Constants.EMAIL_OTP_LOCK_ACCOUNT_ON_FAILED_ATTEMPTS)));
+        configs.setLockAccountOnFailedAttempts(lockAccountOnFailedAttempts);
+
         // If not defined, defaults to 'zero' to renew always.
         String otpRenewIntervalValue = StringUtils.trim(
                 properties.getProperty(Constants.EMAIL_OTP_RENEWAL_INTERVAL));
@@ -150,7 +158,6 @@ public class Utils {
 
         return DigestUtils.sha256Hex(text + text2);
     }
-
 
     public static String getHash(String text) {
 
@@ -245,5 +252,42 @@ public class Utils {
             description = error.getDescription();
         }
         return new EmailOtpServerException(error.getMessage(), description, error.getCode());
+    }
+
+    /**
+     * Check whether a given user is locked.
+     *
+     * @param user The user.
+     * @return True if user account is locked.
+     */
+    public static boolean isAccountLocked(User user) throws EmailOtpServerException {
+
+        try {
+            return EmailOtpServiceDataHolder.getInstance().getAccountLockService().isAccountLocked(user.getUsername(),
+                    user.getTenantDomain(), user.getUserStoreDomain());
+        } catch (AccountLockServiceException e) {
+            throw Utils.handleServerException(Constants.ErrorMessage.SERVER_ERROR_VALIDATING_ACCOUNT_LOCK_STATUS,
+                    user.getUserID(), e);
+        }
+    }
+
+    /**
+     * Get the account lock connector configurations.
+     *
+     * @param tenantDomain Tenant domain.
+     * @return Account lock connector configurations.
+     * @throws EmailOtpServerException Server exception while retrieving account lock configurations.
+     */
+    public static Property[] getAccountLockConnectorConfigs(String tenantDomain) throws EmailOtpServerException {
+
+        try {
+            return EmailOtpServiceDataHolder.getInstance().getIdentityGovernanceService().getConfiguration
+                    (new String[]{Constants.PROPERTY_ACCOUNT_LOCK_ON_FAILURE,
+                            Constants.PROPERTY_ACCOUNT_LOCK_ON_FAILURE_MAX, Constants.PROPERTY_ACCOUNT_LOCK_TIME,
+                            Constants.PROPERTY_LOGIN_FAIL_TIMEOUT_RATIO}, tenantDomain);
+        } catch (IdentityGovernanceException e) {
+            throw Utils.handleServerException(Constants.ErrorMessage.SERVER_ERROR_RETRIEVING_ACCOUNT_LOCK_CONFIGS, null,
+                    e);
+        }
     }
 }

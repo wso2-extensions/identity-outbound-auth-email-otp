@@ -50,6 +50,21 @@ public class Constants {
     public static final String EMAIL_OTP_RESEND_THROTTLE_INTERVAL = "emailOtp.resendThrottleInterval";
     public static final String EMAIL_OTP_SHOW_FAILURE_REASON = "emailOtp.showValidationFailureReason";
     public static final String EMAIL_OTP_MULTIPLE_SESSIONS_ENABLED = "emailOtp.isEnableMultipleSessions";
+    public static final String EMAIL_OTP_LOCK_ACCOUNT_ON_FAILED_ATTEMPTS = "emailOtp.lockAccountOnFailedAttempts";
+
+    public static final String PROPERTY_LOGIN_FAIL_TIMEOUT_RATIO = "account.lock.handler.login.fail.timeout.ratio";
+    public static final String PROPERTY_ACCOUNT_LOCK_ON_FAILURE = "account.lock.handler.enable";
+    public static final String PROPERTY_ACCOUNT_LOCK_ON_FAILURE_MAX = "account.lock.handler.On.Failure.Max.Attempts";
+    public static final String PROPERTY_ACCOUNT_LOCK_TIME = "account.lock.handler.Time";
+    public static final String EMAIL_OTP_FAILED_ATTEMPTS_CLAIM =
+            "http://wso2.org/claims/identity/failedEmailOtpAttempts";
+    public static final String FAILED_LOGIN_LOCKOUT_COUNT_CLAIM =
+            "http://wso2.org/claims/identity/failedLoginLockoutCount";
+    public static final String ACCOUNT_LOCKED_CLAIM = "http://wso2.org/claims/identity/accountLocked";
+    public static final String ACCOUNT_UNLOCK_TIME_CLAIM = "http://wso2.org/claims/identity/unlockTime";
+    public static final String ACCOUNT_LOCKED_REASON_CLAIM_URI = "http://wso2.org/claims/identity/lockedReason";
+    public static final String MAX_EMAIL_OTP_ATTEMPTS_EXCEEDED = "MAX_EMAIL_OTP_ATTEMPTS_EXCEEDED";
+    public static final String ADMIN_INITIATED = "AdminInitiated";
 
     /**
      * EMAIL OTP service error codes.
@@ -72,11 +87,13 @@ public class Constants {
         CLIENT_OTP_USER_VALIDATION_FAILED("EMAIL-60008", "OTP user validation failed.",
                 "Provided OTP doesn't belong to the mentioned user : %s."),
         CLIENT_OTP_VALIDATION_FAILED("EMAIL-60009", "Provided OTP is invalid.",
-                "Provided OTP is invalid."),
+                "Provided OTP is invalid for the user ID: %s."),
         CLIENT_SLOW_DOWN_RESEND("EMAIL-60010", "Slow down.",
                 "Please wait %s seconds before retrying."),
-        CLIENT_NO_OTP_FOR_USER("EMAIL-60011", "No OTP fround for the user.",
+        CLIENT_NO_OTP_FOR_USER("EMAIL-60011", "No OTP found for the user.",
                 "No OTP found for the user Id : %s."),
+        CLIENT_ACCOUNT_LOCKED("EMAIL-60012", "Account locked.",
+                "Account is locked for the user ID: %s."),
 
         // Server error codes.
         SERVER_USER_STORE_MANAGER_ERROR("EMAIL-65001", "User store manager error.",
@@ -100,7 +117,11 @@ public class Constants {
         SERVER_INVALID_RENEWAL_INTERVAL_ERROR("EMAIL-65010", "Invalid renewal interval value.",
                 "Renewal interval should be smaller than the OTP validity period. Renewal interval: %s."),
         SERVER_UNEXPECTED_ERROR("EMAIL-65011", "An unexpected server error occurred.",
-                "An unexpected server error occurred.");
+                "An unexpected server error occurred."),
+        SERVER_ERROR_VALIDATING_ACCOUNT_LOCK_STATUS("EMAIL-65012", "Error validating account lock status.",
+                "Server encountered an error while validating account lock status for the user ID : %s."),
+        SERVER_ERROR_RETRIEVING_ACCOUNT_LOCK_CONFIGS("EMAIL-65013", "Can't retrieve account lock connector " +
+                "configurations.", "Server encountered an error while retrieving account lock connector configurations.");
 
         private final String code;
         private final String message;

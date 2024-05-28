@@ -34,6 +34,7 @@ public class ConfigsDTO {
     private int otpRenewalInterval;
     private int resendThrottleInterval;
     private boolean isEnableMultipleSessions;
+    private boolean lockAccountOnFailedAttempts;
 
     public boolean isEnabled() {
 
@@ -145,6 +146,16 @@ public class ConfigsDTO {
         isEnableMultipleSessions = enableMultipleSessions;
     }
 
+    public boolean isLockAccountOnFailedAttempts() {
+
+        return lockAccountOnFailedAttempts;
+    }
+
+    public void setLockAccountOnFailedAttempts(boolean lockAccountOnFailedAttempts) {
+
+        this.lockAccountOnFailedAttempts = lockAccountOnFailedAttempts;
+    }
+
     @Override
     public String toString() {
 
@@ -160,6 +171,7 @@ public class ConfigsDTO {
                 .append(",\n\totpRenewalInterval = ").append(otpRenewalInterval)
                 .append(",\n\tresendThrottleInterval = ").append(resendThrottleInterval)
                 .append(",\n\tisEnableMultipleSessions = ").append(isEnableMultipleSessions)
+                .append(",\n\tlockAccountOnFailedAttempts = ").append(lockAccountOnFailedAttempts)
                 .append("\n}");
         return sb.toString();
     }
