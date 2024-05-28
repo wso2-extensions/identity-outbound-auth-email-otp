@@ -105,12 +105,12 @@ public class EmailOtpServiceComponent {
             policy = ReferencePolicy.DYNAMIC,
             unbind = "unsetIdentityGovernanceService"
     )
-    protected void setIdentityGovernanceService(IdentityGovernanceService idpManager) {
+    protected void setIdentityGovernanceService(IdentityGovernanceService identityGovernanceService) {
 
-        EmailOtpServiceDataHolder.getInstance().setIdentityGovernanceService(idpManager);
+        EmailOtpServiceDataHolder.getInstance().setIdentityGovernanceService(identityGovernanceService);
     }
 
-    protected void unsetIdentityGovernanceService(IdentityGovernanceService idpManager) {
+    protected void unsetIdentityGovernanceService(IdentityGovernanceService identityGovernanceService) {
 
         EmailOtpServiceDataHolder.getInstance().setIdentityGovernanceService(null);
     }

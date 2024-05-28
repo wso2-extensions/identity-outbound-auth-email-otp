@@ -324,7 +324,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
     }
 
     private ValidationResponseDTO isValid(SessionDTO sessionDTO, String emailOtp, String userId, String transactionId,
-                                          boolean showFailureReason, boolean validateEmailOTP)
+                                          boolean showFailureReason, boolean checkAccountLock)
             throws EmailOtpException {
 
         FailureReasonDTO error;
@@ -333,8 +333,11 @@ public class EmailOtpServiceImpl implements EmailOtpService {
             if (log.isDebugEnabled()) {
                 log.debug(String.format("Invalid OTP provided for the user : %s.", userId));
             }
-            if (validateEmailOTP) {
-                handleOtpVerificationFailure(userId);
+            if (checkAccountLock) {
+                ValidationResponseDTO responseDTO = handleAccountLock(userId, showFailureReason);
+                if (responseDTO != null) {
+                    return responseDTO;
+                }
             }
             error = showFailureReason
                     ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_OTP_VALIDATION_FAILED, userId)
@@ -573,8 +576,8 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         if (!EmailOtpServiceDataHolder.getConfigs().isLockAccountOnFailedAttempts()) {
             return;
         }
-        User user = getUserById(userId);
 
+        User user = getUserById(userId);
         Property[] connectorConfigs = Utils.getAccountLockConnectorConfigs(user.getTenantDomain());
         // Return if account lock handler is not enabled.
         for (Property connectorConfig : connectorConfigs) {
@@ -616,12 +619,20 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         }
     }
 
-    private void handleOtpVerificationFailure(String userId) throws EmailOtpException {
+    private ValidationResponseDTO handleAccountLock(String userId, boolean showFailureReason) throws
+            EmailOtpException {
+
+        boolean lockAccountOnFailedAttempts = EmailOtpServiceDataHolder.getConfigs().isLockAccountOnFailedAttempts();
+        if (!lockAccountOnFailedAttempts) {
+            return null;
+        }
 
         User user = getUserById(userId);
-        boolean lockAccountOnFailedAttempts = EmailOtpServiceDataHolder.getConfigs().isLockAccountOnFailedAttempts();
-        if (!lockAccountOnFailedAttempts || Utils.isAccountLocked(user)) {
-            return;
+        if (Utils.isAccountLocked(user)) {
+            FailureReasonDTO error = showFailureReason
+                    ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_ACCOUNT_LOCKED, userId)
+                    : null;
+            return new ValidationResponseDTO(userId, false, error);
         }
 
         int maxAttempts = 0;
@@ -633,7 +644,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
             switch (connectorConfig.getName()) {
                 case Constants.PROPERTY_ACCOUNT_LOCK_ON_FAILURE:
                     if (!Boolean.parseBoolean(connectorConfig.getValue())) {
-                        return;
+                        return null;
                     }
                 case Constants.PROPERTY_ACCOUNT_LOCK_ON_FAILURE_MAX:
                     if (NumberUtils.isNumber(connectorConfig.getValue())) {
@@ -676,7 +687,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
             // Calculate the incremental unlock time interval in milli seconds.
             unlockTimePropertyValue = (long) (unlockTimePropertyValue * 1000 * 60 * Math.pow(unlockTimeRatio,
                     failedLoginLockoutCountValue));
-            // Calculate unlock-time by adding current-time and unlock-time-interval in milliseconds.
+            // Calculate unlock time by adding current time and unlock time interval in milliseconds.
             long unlockTime = System.currentTimeMillis() + unlockTimePropertyValue;
             updatedClaims.put(Constants.ACCOUNT_LOCKED_CLAIM, Boolean.TRUE.toString());
             updatedClaims.put(Constants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM, "0");
@@ -686,10 +697,14 @@ public class EmailOtpServiceImpl implements EmailOtpService {
             updatedClaims.put(Constants.ACCOUNT_LOCKED_REASON_CLAIM_URI, Constants.MAX_EMAIL_OTP_ATTEMPTS_EXCEEDED);
             IdentityUtil.threadLocalProperties.get().put(Constants.ADMIN_INITIATED, false);
             setUserClaimValues(user, updatedClaims);
-            throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_ACCOUNT_LOCKED, user.getUserID());
+            FailureReasonDTO error = showFailureReason
+                    ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_ACCOUNT_LOCKED, userId)
+                    : null;
+            return new ValidationResponseDTO(userId, false, error);
         } else {
             updatedClaims.put(Constants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM, String.valueOf(currentAttempts + 1));
             setUserClaimValues(user, updatedClaims);
+            return null;
         }
     }
 
