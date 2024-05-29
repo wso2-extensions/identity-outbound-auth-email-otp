@@ -570,6 +570,8 @@ public class EmailOtpServiceImpl implements EmailOtpService {
     /**
      * Reset OTP Failed Attempts count upon successful completion of the OTP verification.
      *
+     * @param userId The ID of the user.
+     * @throws EmailOtpException If an error occurred.
      */
     private void resetOtpFailedAttempts(String userId) throws EmailOtpException {
 
