@@ -108,8 +108,6 @@
                             org.wso2.carbon.context; version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.identity.application.authentication.framework.store;
                             version="${carbon.identity.framework.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.application.authentication.framework.exception;
-                            version="${carbon.identity.framework.imp.pkg.version.range}",
                             org.wso2.carbon.identity.application.common.model;
                             version="${carbon.identity.framework.imp.pkg.version.range}",
                             org.wso2.carbon.identity.core.util;

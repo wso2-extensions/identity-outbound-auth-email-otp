@@ -54,6 +54,11 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants.ACCOUNT_LOCKED_PROPERTY;
+import static org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY;
+import static org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY;
+import static org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY;
+
 /**
  * This class implements the EmailOtpService interface.
  */
@@ -583,7 +588,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         Property[] connectorConfigs = Utils.getAccountLockConnectorConfigs(user.getTenantDomain());
         // Return if account lock handler is not enabled.
         for (Property connectorConfig : connectorConfigs) {
-            if ((Constants.PROPERTY_ACCOUNT_LOCK_ON_FAILURE.equals(connectorConfig.getName())) &&
+            if ((ACCOUNT_LOCKED_PROPERTY.equals(connectorConfig.getName())) &&
                     !Boolean.parseBoolean(connectorConfig.getValue())) {
                 return;
             }
@@ -615,7 +620,6 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         } catch (UserStoreException e) {
             String errorMessage = String.format("Failed to reset failed attempts count for user ID : %s.",
                     user.getUserID());
-            log.error(errorMessage, e);
             throw Utils.handleServerException(Constants.ErrorMessage.SERVER_USER_STORE_MANAGER_ERROR,
                     errorMessage, e);
         }
@@ -631,10 +635,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
 
         User user = getUserById(userId);
         if (Utils.isAccountLocked(user)) {
-            FailureReasonDTO error = showFailureReason
-                    ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_ACCOUNT_LOCKED, userId)
-                    : null;
-            return new ValidationResponseDTO(userId, false, error);
+            return createAccountLockedResponse(userId, showFailureReason);
         }
 
         int maxAttempts = 0;
@@ -644,21 +645,21 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         Property[] connectorConfigs = Utils.getAccountLockConnectorConfigs(user.getTenantDomain());
         for (Property connectorConfig : connectorConfigs) {
             switch (connectorConfig.getName()) {
-                case Constants.PROPERTY_ACCOUNT_LOCK_ON_FAILURE:
+                case ACCOUNT_LOCKED_PROPERTY:
                     if (!Boolean.parseBoolean(connectorConfig.getValue())) {
                         return null;
                     }
-                case Constants.PROPERTY_ACCOUNT_LOCK_ON_FAILURE_MAX:
+                case FAILED_LOGIN_ATTEMPTS_PROPERTY:
                     if (NumberUtils.isNumber(connectorConfig.getValue())) {
                         maxAttempts = Integer.parseInt(connectorConfig.getValue());
                     }
                     break;
-                case Constants.PROPERTY_ACCOUNT_LOCK_TIME:
+                case ACCOUNT_UNLOCK_TIME_PROPERTY:
                     if (NumberUtils.isNumber(connectorConfig.getValue())) {
                         unlockTimePropertyValue = Integer.parseInt(connectorConfig.getValue());
                     }
                     break;
-                case Constants.PROPERTY_LOGIN_FAIL_TIMEOUT_RATIO:
+                case LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY:
                     if (NumberUtils.isNumber(connectorConfig.getValue())) {
                         double value = Double.parseDouble(connectorConfig.getValue());
                         if (value > 0) {
@@ -674,40 +675,61 @@ public class EmailOtpServiceImpl implements EmailOtpService {
         if (claimValues == null) {
             claimValues = new HashMap<>();
         }
-        int currentAttempts = 0;
-        if (NumberUtils.isNumber(claimValues.get(Constants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM))) {
-            currentAttempts = Integer.parseInt(claimValues.get(Constants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM));
-        }
-        int failedLoginLockoutCountValue = 0;
-        if (NumberUtils.isNumber(claimValues.get(Constants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM))) {
-            failedLoginLockoutCountValue = Integer.parseInt(claimValues.get(Constants
-                    .FAILED_LOGIN_LOCKOUT_COUNT_CLAIM));
-        }
+
+        int currentAttempts = getCurrentAttempts(claimValues);
+        int failedLoginLockoutCountValue = getFailedLoginLockoutCount(claimValues);
 
         Map<String, String> updatedClaims = new HashMap<>();
         if ((currentAttempts + 1) >= maxAttempts) {
             // Calculate the incremental unlock time interval in milli seconds.
             unlockTimePropertyValue = (long) (unlockTimePropertyValue * 1000 * 60 * Math.pow(unlockTimeRatio,
                     failedLoginLockoutCountValue));
-            // Calculate unlock time by adding current time and unlock time interval in milliseconds.
-            long unlockTime = System.currentTimeMillis() + unlockTimePropertyValue;
-            updatedClaims.put(Constants.ACCOUNT_LOCKED_CLAIM, Boolean.TRUE.toString());
-            updatedClaims.put(Constants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM, "0");
-            updatedClaims.put(Constants.ACCOUNT_UNLOCK_TIME_CLAIM, String.valueOf(unlockTime));
-            updatedClaims.put(Constants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM,
-                    String.valueOf(failedLoginLockoutCountValue + 1));
-            updatedClaims.put(Constants.ACCOUNT_LOCKED_REASON_CLAIM_URI, Constants.MAX_EMAIL_OTP_ATTEMPTS_EXCEEDED);
-            IdentityUtil.threadLocalProperties.get().put(Constants.ADMIN_INITIATED, false);
+            populateAccountLockClaims(unlockTimePropertyValue, failedLoginLockoutCountValue, updatedClaims);
             setUserClaimValues(user, updatedClaims);
-            FailureReasonDTO error = showFailureReason
-                    ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_ACCOUNT_LOCKED, userId)
-                    : null;
-            return new ValidationResponseDTO(userId, false, error);
+            return createAccountLockedResponse(userId, showFailureReason);
         } else {
             updatedClaims.put(Constants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM, String.valueOf(currentAttempts + 1));
             setUserClaimValues(user, updatedClaims);
             return null;
         }
+    }
+
+    private ValidationResponseDTO createAccountLockedResponse(String userId, boolean showFailureReason) {
+
+        FailureReasonDTO error = showFailureReason
+                ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_ACCOUNT_LOCKED, userId)
+                : null;
+        return new ValidationResponseDTO(userId, false, error);
+    }
+
+    private int getCurrentAttempts(Map<String, String> claimValues) {
+
+        if (NumberUtils.isNumber(claimValues.get(Constants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM))) {
+            return Integer.parseInt(claimValues.get(Constants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM));
+        }
+        return 0;
+    }
+
+    private int getFailedLoginLockoutCount(Map<String, String> claimValues) {
+
+        if (NumberUtils.isNumber(claimValues.get(Constants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM))) {
+            return Integer.parseInt(claimValues.get(Constants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM));
+        }
+        return 0;
+    }
+
+    private void populateAccountLockClaims(long unlockTimePropertyValue, int failedLoginLockoutCountValue,
+                                           Map<String, String> updatedClaims) {
+
+        // Calculate unlock time by adding current time and unlock time interval in milliseconds.
+        long unlockTime = System.currentTimeMillis() + unlockTimePropertyValue;
+        updatedClaims.put(Constants.ACCOUNT_LOCKED_CLAIM, Boolean.TRUE.toString());
+        updatedClaims.put(Constants.EMAIL_OTP_FAILED_ATTEMPTS_CLAIM, "0");
+        updatedClaims.put(Constants.ACCOUNT_UNLOCK_TIME_CLAIM, String.valueOf(unlockTime));
+        updatedClaims.put(Constants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM,
+                String.valueOf(failedLoginLockoutCountValue + 1));
+        updatedClaims.put(Constants.ACCOUNT_LOCKED_REASON_CLAIM_URI, Constants.MAX_EMAIL_OTP_ATTEMPTS_EXCEEDED);
+        IdentityUtil.threadLocalProperties.get().put(Constants.ADMIN_INITIATED, false);
     }
 
     private Map<String, String> getUserClaimValues(User user, String[] claims) throws EmailOtpServerException {
@@ -718,7 +740,6 @@ public class EmailOtpServiceImpl implements EmailOtpService {
             return userStoreManager.getUserClaimValues(user.getDomainQualifiedUsername(), claims,
                     UserCoreConstants.DEFAULT_PROFILE);
         } catch (UserStoreException e) {
-            log.error("Error while reading user claims.", e);
             throw Utils.handleServerException(Constants.ErrorMessage.SERVER_USER_STORE_MANAGER_ERROR,
                     String.format("Failed to read user claims for user ID : %s.", user.getUserID()), e);
         }
@@ -732,7 +753,6 @@ public class EmailOtpServiceImpl implements EmailOtpService {
             userStoreManager.setUserClaimValues(user.getDomainQualifiedUsername(), updatedClaims,
                     UserCoreConstants.DEFAULT_PROFILE);
         } catch (UserStoreException e) {
-            log.error("Error while updating user claims", e);
             throw Utils.handleServerException(Constants.ErrorMessage.SERVER_USER_STORE_MANAGER_ERROR,
                     String.format("Failed to update user claims for user ID: %s.", user.getUserID()), e);
         }

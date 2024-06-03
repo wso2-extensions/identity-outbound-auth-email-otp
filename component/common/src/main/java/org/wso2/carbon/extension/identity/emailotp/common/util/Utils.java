@@ -38,6 +38,11 @@ import org.wso2.carbon.user.core.common.User;
 import java.util.Properties;
 import java.util.UUID;
 
+import static org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants.ACCOUNT_LOCKED_PROPERTY;
+import static org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY;
+import static org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY;
+import static org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY;
+
 /**
  * Util functions for Email OTP service.
  */
@@ -263,6 +268,9 @@ public class Utils {
     public static boolean isAccountLocked(User user) throws EmailOtpServerException {
 
         try {
+            if (user == null) {
+                return false;
+            }
             return EmailOtpServiceDataHolder.getInstance().getAccountLockService().isAccountLocked(user.getUsername(),
                     user.getTenantDomain(), user.getUserStoreDomain());
         } catch (AccountLockServiceException e) {
@@ -282,9 +290,8 @@ public class Utils {
 
         try {
             return EmailOtpServiceDataHolder.getInstance().getIdentityGovernanceService().getConfiguration
-                    (new String[]{Constants.PROPERTY_ACCOUNT_LOCK_ON_FAILURE,
-                            Constants.PROPERTY_ACCOUNT_LOCK_ON_FAILURE_MAX, Constants.PROPERTY_ACCOUNT_LOCK_TIME,
-                            Constants.PROPERTY_LOGIN_FAIL_TIMEOUT_RATIO}, tenantDomain);
+                    (new String[]{ACCOUNT_LOCKED_PROPERTY, FAILED_LOGIN_ATTEMPTS_PROPERTY, ACCOUNT_UNLOCK_TIME_PROPERTY,
+                            LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY}, tenantDomain);
         } catch (IdentityGovernanceException e) {
             throw Utils.handleServerException(Constants.ErrorMessage.SERVER_ERROR_RETRIEVING_ACCOUNT_LOCK_CONFIGS, null,
                     e);

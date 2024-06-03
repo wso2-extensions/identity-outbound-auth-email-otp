@@ -52,10 +52,6 @@ public class Constants {
     public static final String EMAIL_OTP_MULTIPLE_SESSIONS_ENABLED = "emailOtp.isEnableMultipleSessions";
     public static final String EMAIL_OTP_LOCK_ACCOUNT_ON_FAILED_ATTEMPTS = "emailOtp.lockAccountOnFailedAttempts";
 
-    public static final String PROPERTY_LOGIN_FAIL_TIMEOUT_RATIO = "account.lock.handler.login.fail.timeout.ratio";
-    public static final String PROPERTY_ACCOUNT_LOCK_ON_FAILURE = "account.lock.handler.enable";
-    public static final String PROPERTY_ACCOUNT_LOCK_ON_FAILURE_MAX = "account.lock.handler.On.Failure.Max.Attempts";
-    public static final String PROPERTY_ACCOUNT_LOCK_TIME = "account.lock.handler.Time";
     public static final String EMAIL_OTP_FAILED_ATTEMPTS_CLAIM =
             "http://wso2.org/claims/identity/failedEmailOtpAttempts";
     public static final String FAILED_LOGIN_LOCKOUT_COUNT_CLAIM =
