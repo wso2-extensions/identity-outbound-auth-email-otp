@@ -30,6 +30,8 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.extension.identity.emailotp.common.EmailOtpService;
 import org.wso2.carbon.extension.identity.emailotp.common.EmailOtpServiceImpl;
 import org.wso2.carbon.extension.identity.emailotp.common.util.Utils;
+import org.wso2.carbon.identity.governance.IdentityGovernanceService;
+import org.wso2.carbon.identity.handler.event.account.lock.service.AccountLockService;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -77,5 +79,39 @@ public class EmailOtpServiceComponent {
             log.debug("Unset the Realm Service.");
         }
         EmailOtpServiceDataHolder.getInstance().setRealmService(null);
+    }
+
+    @Reference(
+            name = "AccountLockService",
+            service = org.wso2.carbon.identity.handler.event.account.lock.service.AccountLockService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetAccountLockService"
+    )
+    protected void setAccountLockService(AccountLockService accountLockService) {
+
+        EmailOtpServiceDataHolder.getInstance().setAccountLockService(accountLockService);
+    }
+
+    protected void unsetAccountLockService(AccountLockService accountLockService) {
+
+        EmailOtpServiceDataHolder.getInstance().setAccountLockService(null);
+    }
+
+    @Reference(
+            name = "IdentityGovernanceService",
+            service = org.wso2.carbon.identity.governance.IdentityGovernanceService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetIdentityGovernanceService"
+    )
+    protected void setIdentityGovernanceService(IdentityGovernanceService identityGovernanceService) {
+
+        EmailOtpServiceDataHolder.getInstance().setIdentityGovernanceService(identityGovernanceService);
+    }
+
+    protected void unsetIdentityGovernanceService(IdentityGovernanceService identityGovernanceService) {
+
+        EmailOtpServiceDataHolder.getInstance().setIdentityGovernanceService(null);
     }
 }

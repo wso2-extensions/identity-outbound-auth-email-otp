@@ -25,7 +25,14 @@ properties.tokenRenewalInterval= 60
 # Throttle OTP generation requests from the same user Id.
 # Set '0' for no throttling.
 properties.resendThrottleInterval = 30
+# Lock the account after reaching the maximum number of failed login attempts.
+properties.lockAccountOnFailedAttempts = true
 ```
+
+   **NOTE:** If `properties.lockAccountOnFailedAttempts` is set to `true`, at tenant level it is required to enable
+   the account lock capability and configure other properties such as unlock time duration.
+   For more details, refer to the documentation: https://is.docs.wso2.com/en/5.11.0/learn/account-locking-by-failed-login-attempts/#configuring-wso2-is-for-account-locking
+
 4. If notifications are managed by the Identity Server, configure the **Email template** by appending below at the end of
    the `<IS_HOME>/repository/conf/email/email-templates-admin-config.xml` file.
 ```xml
