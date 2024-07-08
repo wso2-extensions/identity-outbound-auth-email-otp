@@ -51,6 +51,8 @@ import org.wso2.carbon.identity.application.authentication.framework.model.Authe
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
+import org.wso2.carbon.identity.application.common.model.IdentityProvider;
+import org.wso2.carbon.identity.application.common.model.JustInTimeProvisioningConfig;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.authenticator.emailotp.config.EmailOTPUtils;
 import org.wso2.carbon.identity.authenticator.emailotp.exception.EmailOTPException;
@@ -77,6 +79,7 @@ import org.wso2.carbon.identity.mgt.mail.NotificationBuilder;
 import org.wso2.carbon.identity.mgt.mail.NotificationData;
 import org.wso2.carbon.identity.recovery.IdentityRecoveryConstants;
 import org.wso2.carbon.identity.recovery.util.Utils;
+import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.api.UserStoreManager;
@@ -699,7 +702,7 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                     metaProperties.put(EmailOTPAuthenticatorConstants.SERVICE_PROVIDER_NAME,
                             context.getServiceProviderName());
                 }
-                triggerEvent(authenticatedUser, myToken, email, metaProperties);
+                triggerEvent(authenticatedUser, myToken, email, metaProperties, context);
             } else {
                 sendOTP(username, myToken, email, context, ipAddress);
             }
@@ -2384,17 +2387,32 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
      * @param metaProperties Meta details.
      * @throws AuthenticationFailedException In occasions of failing to send the email to the user.
      */
-    private void triggerEvent(AuthenticatedUser user, String otpCode, String sendToAddress,
-                              Map<String, String> metaProperties) throws AuthenticationFailedException {
+    private void triggerEvent(AuthenticatedUser user, String otpCode, String sendToAddress, Map<String,
+            String> metaProperties, AuthenticationContext context) throws AuthenticationFailedException {
+
+        String userName = user.getUserName();
+        String userStoreDomainName = user.getUserStoreDomain();
+        String idpLocalClaimValue = null;
+        if (context != null) {
+            String localUserName = resolveLocalUsername(getAuthenticatedUser(context), context);
+            if (StringUtils.isNotEmpty(localUserName)) {
+                userName = localUserName;
+                userStoreDomainName = resolveUserStoreDomain(getAuthenticatedUser(context), context);
+            } else {
+                idpLocalClaimValue = getIdpLocaleClaim(user, context);
+            }
+        }
 
         String eventName = IdentityEventConstants.Event.TRIGGER_NOTIFICATION;
         HashMap<String, Object> properties = new HashMap<>();
-        properties.put(IdentityEventConstants.EventProperty.USER_NAME, user.getUserName());
-        properties.put(IdentityEventConstants.EventProperty.USER_STORE_DOMAIN, user.getUserStoreDomain());
-        properties.put(IdentityEventConstants.EventProperty.TENANT_DOMAIN, user.getTenantDomain());
+        properties.put(IdentityEventConstants.EventProperty.USER_NAME, userName);
+        properties.put(IdentityEventConstants.EventProperty.USER_STORE_DOMAIN, userStoreDomainName);
         properties.put(EmailOTPAuthenticatorConstants.CODE, otpCode);
         properties.put(EmailOTPAuthenticatorConstants.TEMPLATE_TYPE, EmailOTPAuthenticatorConstants.EVENT_NAME);
         properties.put(EmailOTPAuthenticatorConstants.ATTRIBUTE_EMAIL_SENT_TO, sendToAddress);
+        if (StringUtils.isNotEmpty(idpLocalClaimValue)) {
+            properties.put(EmailOTPAuthenticatorConstants.LOCAL_CLAIM_VALUE, idpLocalClaimValue);
+        }
 
         if (metaProperties != null) {
             for (Map.Entry<String, String> metaProperty : metaProperties.entrySet()) {
@@ -2410,6 +2428,112 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
         } catch (IdentityEventException e) {
             String errorMsg = "An error occurred while triggering the event. " + e.getMessage();
             throw new AuthenticationFailedException(errorMsg, e.getCause());
+        }
+    }
+
+    /**
+     * Retrieve the provisioned username of the authenticated user. If this is a federated scenario, the
+     * authenticated username will be same as the username in context. If the flow is for a JIT provisioned user, the
+     * provisioned username will be returned.
+     *
+     * @param authenticatedUser AuthenticatedUser.
+     * @param context           AuthenticationContext.
+     * @return Provisioned username
+     * @throws AuthenticationFailedException If an error occurred while getting the provisioned username.
+     */
+    private String resolveLocalUsername(AuthenticatedUser authenticatedUser, AuthenticationContext context)
+            throws AuthenticationFailedException {
+
+        if (!authenticatedUser.isFederatedUser()) {
+            return authenticatedUser.getUserName();
+        }
+        // If the user is federated, we need to check whether the user is already provisioned to the organization.
+        String federatedUsername = FederatedAuthenticatorUtil.getLoggedInFederatedUser(context);
+        if (StringUtils.isBlank(federatedUsername)) {
+            throw new AuthenticationFailedException("No federated user found from the authentication context.");
+        }
+        String associatedLocalUsername =
+                FederatedAuthenticatorUtil.getLocalUsernameAssociatedWithFederatedUser(MultitenantUtils.
+                        getTenantAwareUsername(federatedUsername), context);
+        if (StringUtils.isNotBlank(associatedLocalUsername)) {
+            return associatedLocalUsername;
+        }
+        return null;
+    }
+
+    /**
+     * Get the JIT provisioning userstore domain of the authenticated user.
+     *
+     * @param authenticatedUser         AuthenticatedUser.
+     * @return JIT provisioning userstore domain.
+     * @throws AuthenticationFailedException If an error occurred.
+     */
+    private String resolveUserStoreDomain(AuthenticatedUser authenticatedUser, AuthenticationContext context)
+            throws AuthenticationFailedException {
+
+        if (!authenticatedUser.isFederatedUser()) {
+            return authenticatedUser.getUserStoreDomain();
+        }
+
+        String tenantDomain = authenticatedUser.getTenantDomain();
+        String federatedIdp = authenticatedUser.getFederatedIdPName();
+        IdentityProvider idp = getIdentityProvider(federatedIdp, tenantDomain, context);
+        JustInTimeProvisioningConfig provisioningConfig = idp.getJustInTimeProvisioningConfig();
+        if (provisioningConfig == null) {
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("No JIT provisioning configs for idp: %s in tenant: %s", federatedIdp,
+                        tenantDomain));
+            }
+            return null;
+        }
+        String provisionedUserstore = provisioningConfig.getProvisioningUserStore();
+        if (log.isDebugEnabled()) {
+            log.debug(String.format("Setting userstore: %s as the provisioning userstore for user: %s in tenant: %s",
+                    provisionedUserstore, authenticatedUser.getUserName(), tenantDomain));
+        }
+        return provisionedUserstore;
+    }
+
+    /**
+     * Get the JIT provisioning userstore domain of the authenticated user.
+     *
+     * @param authenticatedUser         AuthenticatedUser.
+     * @return JIT provisioning userstore domain.
+     * @throws AuthenticationFailedException If an error occurred.
+     */
+    private String getIdpLocaleClaim(AuthenticatedUser authenticatedUser, AuthenticationContext context)
+            throws AuthenticationFailedException {
+
+        String tenantDomain = authenticatedUser.getTenantDomain();
+        String federatedIdp = authenticatedUser.getFederatedIdPName();
+        IdentityProvider idp = getIdentityProvider(federatedIdp, tenantDomain, context);
+
+        for (ClaimMapping claimMapping: idp.getClaimConfig().getClaimMappings()) {
+            String localeClaim = claimMapping.getLocalClaim().getClaimUri();
+            if (EmailOTPAuthenticatorConstants.LOCALITY_CLAIM.equals(localeClaim) ||
+                    EmailOTPAuthenticatorConstants.LOCAL_CLAIM.equals(localeClaim)) {
+                Map<String, String> userAttributes = FrameworkUtils.getClaimMappings(authenticatedUser.getUserAttributes(), false);
+                return userAttributes.get(claimMapping.getRemoteClaim().getClaimUri());
+            }
+        }
+        return null;
+    }
+
+    private IdentityProvider getIdentityProvider(String idpName, String tenantDomain,
+                                                 AuthenticationContext context) throws
+            AuthenticationFailedException {
+
+        try {
+            IdentityProvider idp = EmailOTPServiceDataHolder.getInstance().getIdpManager()
+                    .getIdPByName(idpName, tenantDomain);
+            if (idp == null) {
+                throw new AuthenticationFailedException(String.format(
+                        "No IDP found with the name IDP: %s in tenant: %s", idpName, tenantDomain));
+            }
+            return idp;
+        } catch (IdentityProviderManagementException e) {
+            throw new AuthenticationFailedException(String.format(
+                    "Error occurred while getting IDP: %s from tenant: %s", idpName, tenantDomain));
         }
     }
 

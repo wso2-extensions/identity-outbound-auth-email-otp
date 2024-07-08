@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticator;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.handler.event.account.lock.service.AccountLockService;
+import org.wso2.carbon.idp.mgt.IdpManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.Hashtable;
@@ -134,5 +135,22 @@ public class EmailOTPAuthenticatorServiceComponent {
     protected void unsetAccountLockService(AccountLockService accountLockService) {
 
         EmailOTPServiceDataHolder.getInstance().setAccountLockService(null);
+    }
+
+    @Reference(
+            name = "org.wso2.carbon.idp.mgt.IdpManager",
+            service = IdpManager.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetIdentityProviderManagementService"
+    )
+    protected void setIdentityProviderManagementService(IdpManager idpManager) {
+
+        EmailOTPServiceDataHolder.getInstance().setIdpManager(idpManager);
+    }
+
+    protected void unsetIdentityProviderManagementService(IdpManager idpManager) {
+
+        EmailOTPServiceDataHolder.getInstance().setIdpManager(null);
     }
 }
