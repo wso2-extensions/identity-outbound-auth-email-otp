@@ -140,6 +140,7 @@ public class EmailOTPAuthenticatorConstants {
     public static final String TEMPLATE_TYPE = "TEMPLATE_TYPE";
     public static final String EVENT_NAME = "EmailOTP";
     public static final String ATTRIBUTE_EMAIL_SENT_TO = "send-to";
+    public static final String LOCAL_CLAIM_VALUE = "locale";
     public static final String OTP_GENERATED_TIME = "tokenGeneratedTime";
     public static final String TOKEN_EXPIRE_TIME_IN_MILIS = "tokenExpirationTime";
     public static final String OTP_EXPIRE_TIME_DEFAULT = "300000";
@@ -164,6 +165,8 @@ public class EmailOTPAuthenticatorConstants {
     public static final String ACCOUNT_LOCKED_CLAIM = "http://wso2.org/claims/identity/accountLocked";
     public static final String ACCOUNT_UNLOCK_TIME_CLAIM = "http://wso2.org/claims/identity/unlockTime";
     public static final String ACCOUNT_LOCKED_REASON_CLAIM_URI = "http://wso2.org/claims/identity/lockedReason";
+    public static final String LOCALITY_CLAIM = "http://wso2.org/claims/locality";
+    public static final String LOCAL_CLAIM = "http://wso2.org/claims/local";
     public static final String SHOW_AUTH_FAILURE_REASON = "showAuthFailureReason";
     public static final String ENABLE_ACCOUNT_LOCKING_FOR_FAILED_ATTEMPTS = "EnableAccountLockingForFailedAttempts";
     public static final String PROPERTY_LOGIN_FAIL_TIMEOUT_RATIO = "account.lock.handler.login.fail.timeout.ratio";
