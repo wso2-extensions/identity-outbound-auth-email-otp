@@ -333,6 +333,14 @@ public class EmailOtpServiceImpl implements EmailOtpService {
             throws EmailOtpException {
 
         FailureReasonDTO error;
+        // Check if user account is locked?
+        if (checkAccountLock) {
+            User user = getUserById(userId);
+            if (Utils.isAccountLocked(user)) {
+                return createAccountLockedResponse(userId, showFailureReason);
+            }
+        }
+
         // Check if the provided OTP is correct.
         if (!StringUtils.equals(emailOtp, sessionDTO.getOtpToken())) {
             if (log.isDebugEnabled()) {
