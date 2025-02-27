@@ -147,6 +147,10 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                         String.format("Error while retrieving user for the Id : %s.", userId), e);
             }
 
+            // Check if the user is locked.
+            if (Utils.isAccountLocked(user)) {
+                throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_ACCOUNT_LOCKED, user.getUserID());
+            }
             // If throttling is enabled, check if the resend request has sent too early.
             boolean resendThrottlingEnabled = EmailOtpServiceDataHolder.getConfigs().isResendThrottlingEnabled();
             if (resendThrottlingEnabled) {
