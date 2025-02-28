@@ -65,6 +65,7 @@ import static org.wso2.carbon.identity.handler.event.account.lock.constants.Acco
 public class EmailOtpServiceImpl implements EmailOtpService {
 
     private static final Log log = LogFactory.getLog(EmailOtpServiceImpl.class);
+    private static final boolean showFailureReason = EmailOtpServiceDataHolder.getConfigs().isShowFailureReason();
 
     @Override
     public GenerationResponseDTO generateEmailOTP(String userId) throws EmailOtpException {
@@ -95,7 +96,6 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                     String.format("Error while retrieving user for the Id : %s.", userId), e);
         }
 
-        boolean showFailureReason = EmailOtpServiceDataHolder.getConfigs().isShowFailureReason();
         // Check if the user is locked.
         if (Utils.isAccountLocked(user)) {
             if (!showFailureReason) {
@@ -166,7 +166,6 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                         String.format("Error while retrieving user for the Id : %s.", userId), e);
             }
 
-            boolean showFailureReason = EmailOtpServiceDataHolder.getConfigs().isShowFailureReason();
             // Check if the user is locked.
             if (Utils.isAccountLocked(user)) {
                 if (!showFailureReason) {
@@ -222,7 +221,6 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                     Constants.ErrorMessage.CLIENT_MANDATORY_VALIDATION_PARAMETERS_EMPTY, missingParam);
         }
 
-        boolean showFailureReason = EmailOtpServiceDataHolder.getConfigs().isShowFailureReason();
         boolean isEnableMultipleSessions = EmailOtpServiceDataHolder.getConfigs().isEnableMultipleSessions();
 
         // Retrieve session from the database.
@@ -297,7 +295,6 @@ public class EmailOtpServiceImpl implements EmailOtpService {
     public ValidationResponseDTO verifyEmailOTP(String transactionId, String userId, String emailOTP) throws EmailOtpException {
 
         boolean isEnableMultipleSessions = EmailOtpServiceDataHolder.getConfigs().isEnableMultipleSessions();
-        boolean showFailureReason = EmailOtpServiceDataHolder.getConfigs().isShowFailureReason();
 
         // Sanitize inputs.
         if (StringUtils.isBlank(transactionId) || StringUtils.isBlank(userId) || StringUtils.isBlank(emailOTP)) {
@@ -372,10 +369,11 @@ public class EmailOtpServiceImpl implements EmailOtpService {
 
         FailureReasonDTO error;
         User user = getUserById(userId);
-        // Check if user account is locked?
         if (checkAccountLock) {
-
             if (Utils.isAccountLocked(user)) {
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("User account is locked for the user : %s.", userId));
+                }
                 return createAccountLockedResponse(userId, showFailureReason);
             }
         }
@@ -384,10 +382,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
             if (log.isDebugEnabled()) {
                 log.debug(String.format("User account is disabled for the user : %s.", userId));
             }
-            error = showFailureReason
-                    ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_ACCOUNT_DISABLED, userId)
-                    : null;
-            return new ValidationResponseDTO(userId, false, error);
+            return createAccountDisabledResponse(userId, showFailureReason);
         }
 
         // Check if the provided OTP is correct.
@@ -755,6 +750,14 @@ public class EmailOtpServiceImpl implements EmailOtpService {
 
         FailureReasonDTO error = showFailureReason
                 ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_ACCOUNT_LOCKED, userId)
+                : null;
+        return new ValidationResponseDTO(userId, false, error);
+    }
+
+    private ValidationResponseDTO createAccountDisabledResponse(String userId, boolean showFailureReason) {
+
+        FailureReasonDTO error = showFailureReason
+                ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_ACCOUNT_DISABLED, userId)
                 : null;
         return new ValidationResponseDTO(userId, false, error);
     }
