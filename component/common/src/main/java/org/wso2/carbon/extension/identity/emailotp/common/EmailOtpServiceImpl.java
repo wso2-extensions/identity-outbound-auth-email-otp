@@ -95,13 +95,20 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                     String.format("Error while retrieving user for the Id : %s.", userId), e);
         }
 
+        boolean showFailureReason = EmailOtpServiceDataHolder.getConfigs().isShowFailureReason();
         // Check if the user is locked.
         if (Utils.isAccountLocked(user)) {
-            throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_ACCOUNT_LOCKED, user.getUserID());
+            if (!showFailureReason) {
+                throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_FORBIDDEN, user.getUserID());
+            }
+            throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_FORBIDDEN, user.getUserID());
         }
 
         // Check if the user is disabled.
         if (Utils.isUserDisabled(user)) {
+            if (!showFailureReason) {
+                throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_FORBIDDEN, user.getUserID());
+            }
             throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_ACCOUNT_DISABLED, user.getUserID());
         }
 
@@ -157,13 +164,20 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                         String.format("Error while retrieving user for the Id : %s.", userId), e);
             }
 
+            boolean showFailureReason = EmailOtpServiceDataHolder.getConfigs().isShowFailureReason();
             // Check if the user is locked.
             if (Utils.isAccountLocked(user)) {
+                if (!showFailureReason) {
+                    throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_FORBIDDEN, user.getUserID());
+                }
                 throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_ACCOUNT_LOCKED, user.getUserID());
             }
 
             // Check if the user is disabled.
             if (Utils.isUserDisabled(user)) {
+                if (!showFailureReason) {
+                    throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_FORBIDDEN, user.getUserID());
+                }
                 throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_ACCOUNT_DISABLED, user.getUserID());
             }
 

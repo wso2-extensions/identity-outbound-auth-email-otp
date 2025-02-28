@@ -92,6 +92,7 @@ public class Constants {
                 "Account is locked for the user ID: %s."),
         CLIENT_ACCOUNT_DISABLED("EMAIL-60013", "Account disabled.",
                 "Account is disabled for the user ID: %s."),
+        CLIENT_FORBIDDEN("EMAIL-60014", "Forbidden.", "Forbidden : %s."),
 
         // Server error codes.
         SERVER_USER_STORE_MANAGER_ERROR("EMAIL-65001", "User store manager error.",
