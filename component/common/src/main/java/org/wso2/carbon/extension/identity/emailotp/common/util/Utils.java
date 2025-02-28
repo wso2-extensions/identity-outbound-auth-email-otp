@@ -25,19 +25,29 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.extension.identity.emailotp.common.constant.Constants;
 import org.wso2.carbon.extension.identity.emailotp.common.dto.ConfigsDTO;
 import org.wso2.carbon.extension.identity.emailotp.common.exception.EmailOtpClientException;
+import org.wso2.carbon.extension.identity.emailotp.common.exception.EmailOtpException;
 import org.wso2.carbon.extension.identity.emailotp.common.exception.EmailOtpServerException;
 import org.wso2.carbon.extension.identity.emailotp.common.internal.EmailOtpServiceDataHolder;
+import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.common.model.Property;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.event.IdentityEventConfigBuilder;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.bean.ModuleConfiguration;
 import org.wso2.carbon.identity.governance.IdentityGovernanceException;
 import org.wso2.carbon.identity.handler.event.account.lock.exception.AccountLockServiceException;
+import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.core.UserCoreConstants;
+import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.common.User;
 
+import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
+import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.ACCOUNT_DISABLED_CLAIM_URI;
+import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.ResidentIdpPropertyName.ACCOUNT_DISABLE_HANDLER_ENABLE_PROPERTY;
 import static org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants.ACCOUNT_LOCKED_PROPERTY;
 import static org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY;
 import static org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY;
@@ -276,6 +286,49 @@ public class Utils {
         } catch (AccountLockServiceException e) {
             throw Utils.handleServerException(Constants.ErrorMessage.SERVER_ERROR_VALIDATING_ACCOUNT_LOCK_STATUS,
                     user.getUserID(), e);
+        }
+    }
+
+    public static boolean isUserDisabled(User user) throws EmailOtpException {
+
+        try {
+            if (!isAccountDisablingEnabled(user.getTenantDomain())) {
+                return false;
+            }
+            String accountDisabledClaimValue = getClaimValue(
+                    user.getUserID(), ACCOUNT_DISABLED_CLAIM_URI, user.getTenantDomain());
+            return Boolean.parseBoolean(accountDisabledClaimValue);
+        } catch (FrameworkException e) {
+            throw new EmailOtpException(e.getErrorCode(), e.getMessage(), e);
+        }
+    }
+
+    private static boolean isAccountDisablingEnabled(String tenantDomain) throws FrameworkException {
+
+        Property accountDisableConfigProperty = FrameworkUtils.getResidentIdpConfiguration(
+                ACCOUNT_DISABLE_HANDLER_ENABLE_PROPERTY, tenantDomain);
+
+        return accountDisableConfigProperty != null && Boolean.parseBoolean(accountDisableConfigProperty.getValue());
+    }
+
+    private static String getClaimValue(String userId, String claimURI, String tenantDomain) throws
+            FrameworkException {
+
+        try {
+            int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+            AbstractUserStoreManager userStoreManager = (AbstractUserStoreManager) EmailOtpServiceDataHolder
+                    .getInstance().getRealmService().getTenantUserRealm(tenantId).getUserStoreManager();
+
+            Map<String, String> values = userStoreManager.getUserClaimValuesWithID(userId, new String[]{claimURI},
+                    UserCoreConstants.DEFAULT_PROFILE);
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("%s claim value of user %s is set to: " + values.get(claimURI),
+                        claimURI, userId));
+            }
+            return values.get(claimURI);
+
+        } catch (UserStoreException e) {
+            throw new FrameworkException("Error occurred while retrieving claim: " + claimURI, e);
         }
     }
 

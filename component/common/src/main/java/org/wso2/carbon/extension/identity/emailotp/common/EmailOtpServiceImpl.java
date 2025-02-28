@@ -95,6 +95,16 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                     String.format("Error while retrieving user for the Id : %s.", userId), e);
         }
 
+        // Check if the user is locked.
+        if (Utils.isAccountLocked(user)) {
+            throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_ACCOUNT_LOCKED, user.getUserID());
+        }
+
+        // Check if the user is disabled.
+        if (Utils.isUserDisabled(user)) {
+            throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_ACCOUNT_DISABLED, user.getUserID());
+        }
+
         // If throttling is enabled, check if the resend request has sent too early.
         boolean resendThrottlingEnabled = EmailOtpServiceDataHolder.getConfigs().isResendThrottlingEnabled();
         if (resendThrottlingEnabled) {
@@ -151,6 +161,12 @@ public class EmailOtpServiceImpl implements EmailOtpService {
             if (Utils.isAccountLocked(user)) {
                 throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_ACCOUNT_LOCKED, user.getUserID());
             }
+
+            // Check if the user is disabled.
+            if (Utils.isUserDisabled(user)) {
+                throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_ACCOUNT_DISABLED, user.getUserID());
+            }
+
             // If throttling is enabled, check if the resend request has sent too early.
             boolean resendThrottlingEnabled = EmailOtpServiceDataHolder.getConfigs().isResendThrottlingEnabled();
             if (resendThrottlingEnabled) {
@@ -337,12 +353,23 @@ public class EmailOtpServiceImpl implements EmailOtpService {
             throws EmailOtpException {
 
         FailureReasonDTO error;
+        User user = getUserById(userId);
         // Check if user account is locked?
         if (checkAccountLock) {
-            User user = getUserById(userId);
+
             if (Utils.isAccountLocked(user)) {
                 return createAccountLockedResponse(userId, showFailureReason);
             }
+        }
+
+        if (Utils.isUserDisabled(user)) {
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("User account is disabled for the user : %s.", userId));
+            }
+            error = showFailureReason
+                    ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_ACCOUNT_DISABLED, userId)
+                    : null;
+            return new ValidationResponseDTO(userId, false, error);
         }
 
         // Check if the provided OTP is correct.

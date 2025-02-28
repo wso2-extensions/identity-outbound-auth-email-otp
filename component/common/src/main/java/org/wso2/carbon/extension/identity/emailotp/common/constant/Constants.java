@@ -90,6 +90,8 @@ public class Constants {
                 "No OTP found for the user Id : %s."),
         CLIENT_ACCOUNT_LOCKED("EMAIL-60012", "Account locked.",
                 "Account is locked for the user ID: %s."),
+        CLIENT_ACCOUNT_DISABLED("EMAIL-60013", "Account disabled.",
+                "Account is disabled for the user ID: %s."),
 
         // Server error codes.
         SERVER_USER_STORE_MANAGER_ERROR("EMAIL-65001", "User store manager error.",
