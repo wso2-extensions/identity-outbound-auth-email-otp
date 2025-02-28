@@ -11,6 +11,12 @@
     ],
     "releases": [
         {
+            "tagName": "v4.1.31",
+            "products": [
+                "IS 5.10.0"
+            ]
+        },
+        {
             "tagName": "v2.0.22",
             "products": [
                 "IS 5.7.0",
