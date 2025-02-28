@@ -65,6 +65,7 @@ import static org.wso2.carbon.identity.handler.event.account.lock.constants.Acco
 public class EmailOtpServiceImpl implements EmailOtpService {
 
     private static final Log log = LogFactory.getLog(EmailOtpServiceImpl.class);
+    private static final boolean SHOW_FAILURE_REASON = EmailOtpServiceDataHolder.getConfigs().isShowFailureReason();
 
     @Override
     public GenerationResponseDTO generateEmailOTP(String userId) throws EmailOtpException {
@@ -93,6 +94,24 @@ public class EmailOtpServiceImpl implements EmailOtpService {
             }
             throw Utils.handleServerException(Constants.ErrorMessage.SERVER_USER_STORE_MANAGER_ERROR,
                     String.format("Error while retrieving user for the Id : %s.", userId), e);
+        }
+
+        // Check if the user is locked.
+        if (Utils.isAccountLocked(user)) {
+            if (!SHOW_FAILURE_REASON) {
+                throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_OTP_GENERATION_NOT_VALID,
+                        user.getUserID());
+            }
+            throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_ACCOUNT_LOCKED, user.getUserID());
+        }
+
+        // Check if the user is disabled.
+        if (Utils.isUserDisabled(user)) {
+            if (!SHOW_FAILURE_REASON) {
+                throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_OTP_GENERATION_NOT_VALID,
+                        user.getUserID());
+            }
+            throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_ACCOUNT_DISABLED, user.getUserID());
         }
 
         // If throttling is enabled, check if the resend request has sent too early.
@@ -147,6 +166,24 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                         String.format("Error while retrieving user for the Id : %s.", userId), e);
             }
 
+            // Check if the user is locked.
+            if (Utils.isAccountLocked(user)) {
+                if (!SHOW_FAILURE_REASON) {
+                    throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_OTP_GENERATION_NOT_VALID,
+                            user.getUserID());
+                }
+                throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_ACCOUNT_LOCKED, user.getUserID());
+            }
+
+            // Check if the user is disabled.
+            if (Utils.isUserDisabled(user)) {
+                if (!SHOW_FAILURE_REASON) {
+                    throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_OTP_GENERATION_NOT_VALID,
+                            user.getUserID());
+                }
+                throw Utils.handleClientException(Constants.ErrorMessage.CLIENT_ACCOUNT_DISABLED, user.getUserID());
+            }
+
             // If throttling is enabled, check if the resend request has sent too early.
             boolean resendThrottlingEnabled = EmailOtpServiceDataHolder.getConfigs().isResendThrottlingEnabled();
             if (resendThrottlingEnabled) {
@@ -184,7 +221,6 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                     Constants.ErrorMessage.CLIENT_MANDATORY_VALIDATION_PARAMETERS_EMPTY, missingParam);
         }
 
-        boolean showFailureReason = EmailOtpServiceDataHolder.getConfigs().isShowFailureReason();
         boolean isEnableMultipleSessions = EmailOtpServiceDataHolder.getConfigs().isEnableMultipleSessions();
 
         // Retrieve session from the database.
@@ -197,7 +233,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("No OTP session found for the user : %s.", userId));
                 }
-                FailureReasonDTO error = showFailureReason
+                FailureReasonDTO error = SHOW_FAILURE_REASON
                         ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_NO_OTP_FOR_USER, userId)
                         : null;
                 return new ValidationResponseDTO(userId, false, error);
@@ -209,7 +245,8 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                 throw Utils.handleServerException(Constants.ErrorMessage.SERVER_JSON_SESSION_MAPPER_ERROR, null, e);
             }
 
-            ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId, showFailureReason,
+            ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId,
+                    SHOW_FAILURE_REASON,
                     true);
             if (!responseDTO.isValid()) {
                 return responseDTO;
@@ -228,7 +265,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("No OTP session found for the user : %s.", userId));
                 }
-                FailureReasonDTO error = showFailureReason
+                FailureReasonDTO error = SHOW_FAILURE_REASON
                         ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_NO_OTP_FOR_USER, userId)
                         : null;
                 return new ValidationResponseDTO(userId, false, error);
@@ -240,7 +277,8 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                 throw Utils.handleServerException(Constants.ErrorMessage.SERVER_JSON_SESSION_MAPPER_ERROR, null, e);
             }
 
-            ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId, showFailureReason,
+            ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId,
+                    SHOW_FAILURE_REASON,
                     true);
             if (!responseDTO.isValid()) {
                 return responseDTO;
@@ -259,7 +297,6 @@ public class EmailOtpServiceImpl implements EmailOtpService {
     public ValidationResponseDTO verifyEmailOTP(String transactionId, String userId, String emailOTP) throws EmailOtpException {
 
         boolean isEnableMultipleSessions = EmailOtpServiceDataHolder.getConfigs().isEnableMultipleSessions();
-        boolean showFailureReason = EmailOtpServiceDataHolder.getConfigs().isShowFailureReason();
 
         // Sanitize inputs.
         if (StringUtils.isBlank(transactionId) || StringUtils.isBlank(userId) || StringUtils.isBlank(emailOTP)) {
@@ -279,7 +316,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("No OTP session found for the user : %s.", userId));
                 }
-                FailureReasonDTO error = showFailureReason
+                FailureReasonDTO error = SHOW_FAILURE_REASON
                         ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_NO_OTP_FOR_USER, userId)
                         : null;
                 return new ValidationResponseDTO(userId, false, error);
@@ -291,7 +328,8 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                 throw Utils.handleServerException(Constants.ErrorMessage.SERVER_JSON_SESSION_MAPPER_ERROR, null, e);
             }
 
-            ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId, showFailureReason,
+            ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId,
+                    SHOW_FAILURE_REASON,
                     false);
             if (!responseDTO.isValid()) {
                 return responseDTO;
@@ -306,7 +344,7 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("No OTP session found for the user : %s.", userId));
                 }
-                FailureReasonDTO error = showFailureReason
+                FailureReasonDTO error = SHOW_FAILURE_REASON
                         ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_NO_OTP_FOR_USER, userId)
                         : null;
                 return new ValidationResponseDTO(userId, false, error);
@@ -318,7 +356,8 @@ public class EmailOtpServiceImpl implements EmailOtpService {
                 throw Utils.handleServerException(Constants.ErrorMessage.SERVER_JSON_SESSION_MAPPER_ERROR, null, e);
             }
 
-            ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId, showFailureReason,
+            ValidationResponseDTO responseDTO = isValid(sessionDTO, emailOTP, userId, transactionId,
+                    SHOW_FAILURE_REASON,
                     false);
             if (!responseDTO.isValid()) {
                 return responseDTO;
@@ -333,6 +372,23 @@ public class EmailOtpServiceImpl implements EmailOtpService {
             throws EmailOtpException {
 
         FailureReasonDTO error;
+        User user = getUserById(userId);
+        if (checkAccountLock) {
+            if (Utils.isAccountLocked(user)) {
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("User account is locked for the user : %s.", userId));
+                }
+                return createAccountLockedResponse(userId, showFailureReason);
+            }
+        }
+
+        if (Utils.isUserDisabled(user)) {
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("User account is disabled for the user : %s.", userId));
+            }
+            return createAccountDisabledResponse(userId, showFailureReason);
+        }
+
         // Check if the provided OTP is correct.
         if (!StringUtils.equals(emailOtp, sessionDTO.getOtpToken())) {
             if (log.isDebugEnabled()) {
@@ -698,6 +754,14 @@ public class EmailOtpServiceImpl implements EmailOtpService {
 
         FailureReasonDTO error = showFailureReason
                 ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_ACCOUNT_LOCKED, userId)
+                : null;
+        return new ValidationResponseDTO(userId, false, error);
+    }
+
+    private ValidationResponseDTO createAccountDisabledResponse(String userId, boolean showFailureReason) {
+
+        FailureReasonDTO error = showFailureReason
+                ? new FailureReasonDTO(Constants.ErrorMessage.CLIENT_ACCOUNT_DISABLED, userId)
                 : null;
         return new ValidationResponseDTO(userId, false, error);
     }
