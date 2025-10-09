@@ -681,6 +681,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                                         String myToken, String ipAddress) throws AuthenticationFailedException {
 
         if (isSMTP(authenticatorProperties, emailOTPParameters, context)) {
+            Map<String, String> emailOtpAuthenticatorParams = getRuntimeParams(context);
+            String emailTemplateType = emailOtpAuthenticatorParams.get(
+                    EmailOTPAuthenticatorConstants.EMAIL_TEMPLATE_TYPE);
             // Check whether the authenticator is configured to use the event handler implementation.
             if (emailOTPParameters.get(EmailOTPAuthenticatorConstants.USE_EVENT_HANDLER_BASED_EMAIL_SENDER) != null
                     && Boolean.parseBoolean(emailOTPParameters.get(
@@ -699,9 +702,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                     metaProperties.put(EmailOTPAuthenticatorConstants.SERVICE_PROVIDER_NAME,
                             context.getServiceProviderName());
                 }
-                triggerEvent(authenticatedUser, myToken, email, metaProperties);
+                triggerEvent(authenticatedUser, myToken, email, metaProperties, emailTemplateType);
             } else {
-                sendOTP(username, myToken, email, context, ipAddress);
+                sendOTP(username, myToken, email, context, ipAddress, emailTemplateType);
             }
         } else if (StringUtils.isNotEmpty(email)) {
             authenticatorProperties = getAuthenticatorPropertiesWithTokenResponse(context, emailOTPParameters,
@@ -2199,8 +2202,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
      * @param email    the email address to send otp
      * @throws AuthenticationFailedException If an error occurred.
      */
-    private void sendOTP(String username, String otp, String email, AuthenticationContext context, String ipAddress)
-            throws AuthenticationFailedException {
+    private void sendOTP(String username, String otp, String email, AuthenticationContext context, String ipAddress,
+                         String emailTemplateType) throws AuthenticationFailedException {
 
         System.setProperty(EmailOTPAuthenticatorConstants.AXIS2, EmailOTPAuthenticatorConstants.AXIS2_FILE);
         try {
@@ -2234,6 +2237,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
                 emailNotificationData.setSendTo(email);
                 if (config.getProperties().containsKey(EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME)) {
                     emailTemplate = config.getProperty(EmailOTPAuthenticatorConstants.AUTHENTICATOR_NAME);
+                    if (StringUtils.isNotEmpty(emailTemplateType)) {
+                        emailTemplate = emailTemplateType;
+                    }
                     try {
                         emailNotification = NotificationBuilder.createNotification("EMAIL",
                                 emailTemplate, emailNotificationData);
@@ -2385,7 +2391,8 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
      * @throws AuthenticationFailedException In occasions of failing to send the email to the user.
      */
     private void triggerEvent(AuthenticatedUser user, String otpCode, String sendToAddress,
-                              Map<String, String> metaProperties) throws AuthenticationFailedException {
+                              Map<String, String> metaProperties, String emailTemplateType)
+            throws AuthenticationFailedException {
 
         String eventName = IdentityEventConstants.Event.TRIGGER_NOTIFICATION;
         HashMap<String, Object> properties = new HashMap<>();
@@ -2394,6 +2401,9 @@ public class EmailOTPAuthenticator extends AbstractApplicationAuthenticator
         properties.put(IdentityEventConstants.EventProperty.TENANT_DOMAIN, user.getTenantDomain());
         properties.put(EmailOTPAuthenticatorConstants.CODE, otpCode);
         properties.put(EmailOTPAuthenticatorConstants.TEMPLATE_TYPE, EmailOTPAuthenticatorConstants.EVENT_NAME);
+        if (StringUtils.isNotEmpty(emailTemplateType)) {
+            properties.put(EmailOTPAuthenticatorConstants.TEMPLATE_TYPE, emailTemplateType);
+        }
         properties.put(EmailOTPAuthenticatorConstants.ATTRIBUTE_EMAIL_SENT_TO, sendToAddress);
 
         if (metaProperties != null) {

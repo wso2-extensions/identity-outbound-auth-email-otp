@@ -392,7 +392,7 @@ public class EmailOTPAuthenticatorTest {
         // source is compatible with java 11.
         when(OneTimePassword.getRandomNumber(EmailOTPAuthenticatorConstants.SECRET_KEY_LENGTH)).thenReturn("123456");
         doNothing().when(emailOTPAuthenticator, "sendOTP", anyString(), anyString(), anyString(), anyObject(),
-                anyString());
+                anyString(), anyString());
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
@@ -427,7 +427,7 @@ public class EmailOTPAuthenticatorTest {
         // source is compatible with java 11.
         when(OneTimePassword.getRandomNumber(EmailOTPAuthenticatorConstants.SECRET_KEY_LENGTH)).thenReturn("123456");
         doNothing().when(emailOTPAuthenticator, "sendOTP", anyString(), anyString(), anyString(), anyObject(),
-                anyString());
+                anyString(), anyString());
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
@@ -470,7 +470,7 @@ public class EmailOTPAuthenticatorTest {
         // source is compatible with java 11.
         when(OneTimePassword.getRandomNumber(EmailOTPAuthenticatorConstants.SECRET_KEY_LENGTH)).thenReturn("123456");
         doNothing().when(spiedEmailOTPAuthenticator, "sendOTP", anyString(), anyString(), anyString(), anyObject(),
-                anyString());
+                anyString(), anyString());
         AuthenticatorFlowStatus status = spiedEmailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
@@ -514,7 +514,7 @@ public class EmailOTPAuthenticatorTest {
         when(OneTimePassword.getRandomNumber(EmailOTPAuthenticatorConstants.SECRET_KEY_LENGTH)).thenReturn("123456");
         emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
         doNothing().when(emailOTPAuthenticator, "sendOTP", anyString(), anyString(), anyString(), anyObject(),
-                anyString());
+                anyString(), anyString());
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
@@ -649,7 +649,7 @@ public class EmailOTPAuthenticatorTest {
         // source is compatible with java 11.
         when(OneTimePassword.getRandomNumber(EmailOTPAuthenticatorConstants.SECRET_KEY_LENGTH)).thenReturn("123456");
         doNothing().when(emailOTPAuthenticator, "sendOTP", anyString(), anyString(), anyString(), anyObject(),
-                anyString());
+                anyString(), anyString());
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
@@ -687,7 +687,7 @@ public class EmailOTPAuthenticatorTest {
         when(OneTimePassword.getRandomNumber(EmailOTPAuthenticatorConstants.SECRET_KEY_LENGTH)).thenReturn("123456");
         emailOTPAuthenticator = PowerMockito.spy(new EmailOTPAuthenticator());
         doNothing().when(emailOTPAuthenticator, "sendOTP", anyString(), anyString(), anyString(), anyObject(),
-                anyString());
+                anyString(), anyString());
         AuthenticatorFlowStatus status = emailOTPAuthenticator.process(httpServletRequest, httpServletResponse,
                 context);
         Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
