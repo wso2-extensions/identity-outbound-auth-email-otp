@@ -155,6 +155,7 @@ public class EmailOTPAuthenticatorConstants {
     public static final String STATUS_OTP_EXPIRED = "otp-expired";
     public static final String STATUS_CODE_MISMATCH = "code-mismatch";
     public static final String TRUE = "true";
+    public static final String EMAIL_TEMPLATE_TYPE = "notificationTemplate";
 
     // Account lock related constants.
     public static final String EMAIL_OTP_FAILED_ATTEMPTS_CLAIM =
