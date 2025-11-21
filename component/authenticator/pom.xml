@@ -74,6 +74,7 @@
                             org.wso2.carbon.identity.application.common.model;
                             version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.idp.mgt; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core.util; version="${carbon.identity.package.import.version.range}",
                             org.apache.oltu.oauth2.*; version="${oltu.package.import.version.range}",
                             org.wso2.carbon.identity.governance; version="${identity.governance.imp.pkg.version.range}",

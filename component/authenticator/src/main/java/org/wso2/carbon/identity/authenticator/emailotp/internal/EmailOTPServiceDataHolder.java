@@ -21,6 +21,7 @@ package org.wso2.carbon.identity.authenticator.emailotp.internal;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.handler.event.account.lock.service.AccountLockService;
+import org.wso2.carbon.idp.mgt.IdpManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -33,6 +34,7 @@ public class EmailOTPServiceDataHolder {
     private IdentityEventService identityEventService;
     private IdentityGovernanceService identityGovernanceService;
     private RealmService realmService;
+    private IdpManager idpManager;
 
     public static EmailOTPServiceDataHolder getInstance() {
 
@@ -107,5 +109,28 @@ public class EmailOTPServiceDataHolder {
     public void setAccountLockService(AccountLockService accountLockService) {
 
         this.accountLockService = accountLockService;
+    }
+
+    /**
+     * Get IdpManager.
+     *
+     * @return IdpManager.
+     */
+    public IdpManager getIdpManager() {
+
+        if (idpManager == null) {
+            throw new RuntimeException("IdpManager not available. Component is not started properly.");
+        }
+        return idpManager;
+    }
+
+    /**
+     * Set IdpManager.
+     *
+     * @param idpManager IdpManager.
+     */
+    public void setIdpManager(IdpManager idpManager) {
+
+        this.idpManager = idpManager;
     }
 }
