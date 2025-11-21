@@ -1239,4 +1239,304 @@ public class EmailOTPAuthenticatorTest {
         context.setSequenceConfig(sequenceConfig);
         context.setCurrentStep(1);
     }
+
+    @Test(description = "Test case for processValidUserToken() method")
+    public void testProcessValidUserToken() throws Exception {
+
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setUserName(USER_NAME);
+        authenticatedUser.setAuthenticatedSubjectIdentifier(USER_NAME);
+        context.setProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN, "123456");
+        context.setProperty(EmailOTPAuthenticatorConstants.EMAILOTP_ACCESS_TOKEN, "access-token");
+
+        Whitebox.invokeMethod(emailOTPAuthenticator, "processValidUserToken", context, authenticatedUser);
+
+        Assert.assertEquals(context.getProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN), "");
+        Assert.assertEquals(context.getProperty(EmailOTPAuthenticatorConstants.EMAILOTP_ACCESS_TOKEN), "");
+        Assert.assertEquals(context.getSubject(), authenticatedUser);
+    }
+
+    @Test(description = "Test case for isBackUpCodeValid() method with valid backup code")
+    public void testIsBackUpCodeValidWithValidCode() throws Exception {
+
+        String[] savedOTPs = {"code1", "code2", "code3"};
+        String userToken = "code2";
+
+        boolean result = Whitebox.invokeMethod(emailOTPAuthenticator, "isBackUpCodeValid", savedOTPs, userToken);
+
+        Assert.assertTrue(result);
+    }
+
+    @Test(description = "Test case for isBackUpCodeValid() method with invalid backup code")
+    public void testIsBackUpCodeValidWithInvalidCode() throws Exception {
+
+        String[] savedOTPs = {"code1", "code2", "code3"};
+        String userToken = "invalidCode";
+
+        boolean result = Whitebox.invokeMethod(emailOTPAuthenticator, "isBackUpCodeValid", savedOTPs, userToken);
+
+        Assert.assertFalse(result);
+    }
+
+    @Test(description = "Test case for isBackUpCodeValid() method with empty backup codes")
+    public void testIsBackUpCodeValidWithEmptyBackupCodes() throws Exception {
+
+        String[] savedOTPs = {};
+        String userToken = "code1";
+
+        boolean result = Whitebox.invokeMethod(emailOTPAuthenticator, "isBackUpCodeValid", savedOTPs, userToken);
+
+        Assert.assertFalse(result);
+    }
+
+    @Test(description = "Test case for isBackupCodeEnabled() method when backup code is enabled")
+    public void testIsBackupCodeEnabledWhenEnabled() throws Exception {
+
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put(EmailOTPAuthenticatorConstants.BACKUP_CODE, "true");
+        context.setAuthenticatorProperties(parameters);
+
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setUserName(USER_NAME);
+        authenticatedUser.setAuthenticatedSubjectIdentifier(USER_NAME);
+
+        StepConfig stepConfig = new StepConfig();
+        stepConfig.setAuthenticatedUser(authenticatedUser);
+        stepConfig.setSubjectAttributeStep(true);
+        stepConfig.setAuthenticatedIdP("LOCAL");
+        Map<Integer, StepConfig> stepConfigMap = new HashMap<>();
+        stepConfigMap.put(1, stepConfig);
+
+        SequenceConfig sequenceConfig = new SequenceConfig();
+        sequenceConfig.setStepMap(stepConfigMap);
+        context.setSequenceConfig(sequenceConfig);
+
+        when(EmailOTPUtils.getConfiguration(context, EmailOTPAuthenticatorConstants.BACKUP_CODE))
+                .thenReturn("true");
+
+        boolean result = Whitebox.invokeMethod(emailOTPAuthenticator, "isBackupCodeEnabled", context);
+
+        Assert.assertTrue(result);
+    }
+
+    @Test(description = "Test case for isBackupCodeEnabled() method when backup code is disabled")
+    public void testIsBackupCodeEnabledWhenDisabled() throws Exception {
+
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put(EmailOTPAuthenticatorConstants.BACKUP_CODE, "false");
+        context.setAuthenticatorProperties(parameters);
+
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setUserName(USER_NAME);
+        authenticatedUser.setAuthenticatedSubjectIdentifier(USER_NAME);
+
+        StepConfig stepConfig = new StepConfig();
+        stepConfig.setAuthenticatedUser(authenticatedUser);
+        stepConfig.setSubjectAttributeStep(true);
+        stepConfig.setAuthenticatedIdP("LOCAL");
+        Map<Integer, StepConfig> stepConfigMap = new HashMap<>();
+        stepConfigMap.put(1, stepConfig);
+
+        SequenceConfig sequenceConfig = new SequenceConfig();
+        sequenceConfig.setStepMap(stepConfigMap);
+        context.setSequenceConfig(sequenceConfig);
+
+        when(EmailOTPUtils.getConfiguration(context, EmailOTPAuthenticatorConstants.BACKUP_CODE))
+                .thenReturn("false");
+
+        boolean result = Whitebox.invokeMethod(emailOTPAuthenticator, "isBackupCodeEnabled", context);
+
+        Assert.assertFalse(result);
+    }
+
+    @Test(description = "Test case for getAuthenticatedUser() method")
+    public void testGetAuthenticatedUser() throws Exception {
+
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setUserName(USER_NAME);
+        authenticatedUser.setAuthenticatedSubjectIdentifier(USER_NAME);
+
+        StepConfig stepConfig = new StepConfig();
+        stepConfig.setAuthenticatedUser(authenticatedUser);
+        stepConfig.setSubjectAttributeStep(true);
+        Map<Integer, StepConfig> stepConfigMap = new HashMap<>();
+        stepConfigMap.put(1, stepConfig);
+
+        SequenceConfig sequenceConfig = new SequenceConfig();
+        sequenceConfig.setStepMap(stepConfigMap);
+        context.setSequenceConfig(sequenceConfig);
+
+        AuthenticatedUser result = Whitebox.invokeMethod(emailOTPAuthenticator, "getAuthenticatedUser", context);
+
+        Assert.assertNotNull(result);
+        Assert.assertEquals(result.getUserName(), USER_NAME);
+    }
+
+    @Test(description = "Test case for getAuthenticatedUser() method with last authenticated user")
+    public void testGetAuthenticatedUserWithLastAuthenticatedUser() throws Exception {
+
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setUserName(USER_NAME);
+        authenticatedUser.setAuthenticatedSubjectIdentifier(USER_NAME);
+
+        StepConfig stepConfig = new StepConfig();
+        stepConfig.setAuthenticatedUser(authenticatedUser);
+        stepConfig.setSubjectAttributeStep(true);
+        Map<Integer, StepConfig> stepConfigMap = new HashMap<>();
+        stepConfigMap.put(1, stepConfig);
+
+        SequenceConfig sequenceConfig = new SequenceConfig();
+        sequenceConfig.setStepMap(stepConfigMap);
+        context.setSequenceConfig(sequenceConfig);
+
+        AuthenticatedUser result = Whitebox.invokeMethod(emailOTPAuthenticator, "getAuthenticatedUser", context);
+
+        Assert.assertNotNull(result);
+        Assert.assertEquals(result.getUserName(), USER_NAME);
+    }
+
+    @Test(description = "Test case for verifyUserExists() method when user exists")
+    public void testVerifyUserExistsWhenUserExists() throws Exception {
+
+        String username = USER_NAME;
+        String tenantDomain = TENANT_DOMAIN;
+
+        when(IdentityTenantUtil.getTenantId(tenantDomain)).thenReturn(TENANT_ID);
+        when(IdentityTenantUtil.getRealmService()).thenReturn(realmService);
+        when(realmService.getTenantUserRealm(TENANT_ID)).thenReturn(userRealm);
+        when(userRealm.getUserStoreManager()).thenReturn(userStoreManager);
+        when(userStoreManager.isExistingUser(username)).thenReturn(true);
+
+        // Should not throw exception
+        Whitebox.invokeMethod(emailOTPAuthenticator, "verifyUserExists", username, tenantDomain);
+    }
+
+    @Test(description = "Test case for verifyUserExists() method when user does not exist",
+            expectedExceptions = AuthenticationFailedException.class)
+    public void testVerifyUserExistsWhenUserDoesNotExist() throws Exception {
+
+        String username = USER_NAME;
+        String tenantDomain = TENANT_DOMAIN;
+
+        when(IdentityTenantUtil.getTenantId(tenantDomain)).thenReturn(TENANT_ID);
+        when(IdentityTenantUtil.getRealmService()).thenReturn(realmService);
+        when(realmService.getTenantUserRealm(TENANT_ID)).thenReturn(userRealm);
+        when(userRealm.getUserStoreManager()).thenReturn(userStoreManager);
+        when(userStoreManager.isExistingUser(username)).thenReturn(false);
+
+        Whitebox.invokeMethod(emailOTPAuthenticator, "verifyUserExists", username, tenantDomain);
+    }
+
+    @Test(description = "Test case for getRedirectURL() method with query params")
+    public void testGetRedirectURLWithQueryParams() throws Exception {
+
+        String baseURI = "https://localhost:9443/emailotpauthenticationendpoint/emailotp.jsp";
+        String queryParams = "sessionDataKey=12345&authenticators=EmailOTP";
+
+        String result = Whitebox.invokeMethod(emailOTPAuthenticator, "getRedirectURL", baseURI, queryParams);
+
+        Assert.assertTrue(result.contains(baseURI));
+        Assert.assertTrue(result.contains(queryParams));
+        Assert.assertTrue(result.contains("&authenticators=EmailOTP"));
+    }
+
+    @Test(description = "Test case for getRedirectURL() method without query params")
+    public void testGetRedirectURLWithoutQueryParams() throws Exception {
+
+        String baseURI = "https://localhost:9443/emailotpauthenticationendpoint/emailotp.jsp";
+        String queryParams = "";
+
+        String result = Whitebox.invokeMethod(emailOTPAuthenticator, "getRedirectURL", baseURI, queryParams);
+
+        Assert.assertTrue(result.contains(baseURI));
+        Assert.assertTrue(result.contains("?authenticators=EmailOTP"));
+    }
+
+    @Test(description = "Test case for getEmailOTPLength() method with default value")
+    public void testGetEmailOTPLengthWithDefaultValue() throws Exception {
+
+        Map<String, String> authenticatorProperties = new HashMap<>();
+
+        int result = Whitebox.invokeMethod(emailOTPAuthenticator, "getEmailOTPLength", authenticatorProperties);
+
+        Assert.assertEquals(result, EmailOTPAuthenticatorConstants.NUMBER_DIGIT);
+    }
+
+    @Test(description = "Test case for getEmailOTPLength() method with custom value")
+    public void testGetEmailOTPLengthWithCustomValue() throws Exception {
+
+        Map<String, String> authenticatorProperties = new HashMap<>();
+        authenticatorProperties.put(EmailOTPAuthenticatorConstants.EMAIL_OTP_LENGTH, "8");
+
+        int result = Whitebox.invokeMethod(emailOTPAuthenticator, "getEmailOTPLength", authenticatorProperties);
+
+        Assert.assertEquals(result, 8);
+    }
+
+    @Test(description = "Test case for getEmailOTPLength() method with invalid value")
+    public void testGetEmailOTPLengthWithInvalidValue() throws Exception {
+
+        Map<String, String> authenticatorProperties = new HashMap<>();
+        authenticatorProperties.put(EmailOTPAuthenticatorConstants.EMAIL_OTP_LENGTH, "20");
+
+        int result = Whitebox.invokeMethod(emailOTPAuthenticator, "getEmailOTPLength", authenticatorProperties);
+
+        // Should return default value when out of range
+        Assert.assertEquals(result, EmailOTPAuthenticatorConstants.NUMBER_DIGIT);
+    }
+
+    @Test(description = "Test case for getEmailOTPExpiryTime() method with default value")
+    public void testGetEmailOTPExpiryTimeWithDefaultValue() throws Exception {
+
+        Map<String, String> authenticatorProperties = new HashMap<>();
+
+        int result = Whitebox.invokeMethod(emailOTPAuthenticator, "getEmailOTPExpiryTime", authenticatorProperties);
+
+        Assert.assertEquals(result, Integer.parseInt(EmailOTPAuthenticatorConstants.OTP_EXPIRE_TIME_DEFAULT));
+    }
+
+    @Test(description = "Test case for getEmailOTPExpiryTime() method with custom value")
+    public void testGetEmailOTPExpiryTimeWithCustomValue() throws Exception {
+
+        Map<String, String> authenticatorProperties = new HashMap<>();
+        authenticatorProperties.put(EmailOTPAuthenticatorConstants.EMAIL_OTP_EXPIRY_TIME, "10");
+
+        int result = Whitebox.invokeMethod(emailOTPAuthenticator, "getEmailOTPExpiryTime", authenticatorProperties);
+
+        Assert.assertEquals(result, 10 * 60 * 1000);
+    }
+
+    @Test(description = "Test case for getMultiOptionURIQueryParam() method with multiOptionURI")
+    public void testGetMultiOptionURIQueryParamWithValue() throws Exception {
+
+        when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.MULTI_OPTION_URI))
+                .thenReturn("https://localhost:9443/commonauth");
+
+        String result = Whitebox.invokeMethod(emailOTPAuthenticator, "getMultiOptionURIQueryParam",
+                httpServletRequest);
+
+        Assert.assertTrue(result.contains("&multiOptionURI="));
+        Assert.assertTrue(result.contains("https"));
+    }
+
+    @Test(description = "Test case for getMultiOptionURIQueryParam() method without multiOptionURI")
+    public void testGetMultiOptionURIQueryParamWithoutValue() throws Exception {
+
+        when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.MULTI_OPTION_URI))
+                .thenReturn(null);
+
+        String result = Whitebox.invokeMethod(emailOTPAuthenticator, "getMultiOptionURIQueryParam",
+                httpServletRequest);
+
+        Assert.assertEquals(result, "");
+    }
+
+    @Test(description = "Test case for getMultiOptionURIQueryParam() method with null request")
+    public void testGetMultiOptionURIQueryParamWithNullRequest() throws Exception {
+
+        String result = Whitebox.invokeMethod(emailOTPAuthenticator, "getMultiOptionURIQueryParam",
+                (HttpServletRequest) null);
+
+        Assert.assertEquals(result, "");
+    }
 }
