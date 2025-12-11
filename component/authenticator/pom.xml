@@ -64,8 +64,8 @@
                             org.osgi.service.component; version="${osgi.service.import.version.range}",
                             org.wso2.carbon.identity.application.authentication.framework.*;
                             version="${carbon.identity.package.import.version.range}",
-                            javax.servlet,
-                            javax.servlet.http,
+                            javax.servlet;version="${javax.servlet.import.version.range}",
+                            javax.servlet.http;version="${javax.servlet.import.version.range}",
                             org.wso2.carbon.extension.identity.helper.*;
                             version="${identity.extension.utils.import.version.range}",
                             org.wso2.carbon.identity.event; version="${carbon.identity.package.import.version.range}",
