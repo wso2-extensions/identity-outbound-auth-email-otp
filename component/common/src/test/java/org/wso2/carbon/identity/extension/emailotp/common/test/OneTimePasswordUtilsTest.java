@@ -19,37 +19,25 @@
 package org.wso2.carbon.identity.extension.emailotp.common.test;
 
 import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.modules.testng.PowerMockObjectFactory;
-import org.powermock.reflect.Whitebox;
 import org.testng.Assert;
-import org.testng.IObjectFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.ObjectFactory;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.carbon.extension.identity.emailotp.common.constant.Constants;
 import org.wso2.carbon.extension.identity.emailotp.common.util.OneTimePasswordUtils;
 
-import java.nio.charset.Charset;
+import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 public class OneTimePasswordUtilsTest {
 
-    private OneTimePasswordUtils oneTimePasswordUtils;
-
     @BeforeMethod
     public void setUp() {
 
-        oneTimePasswordUtils = new OneTimePasswordUtils();
         MockitoAnnotations.initMocks(this);
-    }
-
-    @ObjectFactory
-    public IObjectFactory getObjectFactory() {
-
-        return new PowerMockObjectFactory();
     }
 
     @AfterMethod
@@ -60,46 +48,46 @@ public class OneTimePasswordUtilsTest {
     @Test
     public void testCalcChecksum() {
 
-        Assert.assertEquals(oneTimePasswordUtils.calcChecksum(100, 10), 8);
+        Assert.assertEquals(OneTimePasswordUtils.calcChecksum(100, 10), 8);
     }
 
     @Test
     public void testGetRandomNumber() {
 
-        Assert.assertNotNull(oneTimePasswordUtils.getRandomNumber(10));
+        Assert.assertNotNull(OneTimePasswordUtils.getRandomNumber(10));
     }
 
     @Test
     public void testHmacShaGenerate() throws InvalidKeyException, NoSuchAlgorithmException {
 
         String input = "Hello World";
-        byte[] bytes = input.getBytes(Charset.forName("UTF-8"));
-        byte[] answer = oneTimePasswordUtils.hmacShaGenerate(bytes, bytes);
-        String s = new String(answer, Charset.forName("UTF-8"));
-        Assert.assertNotNull(oneTimePasswordUtils.hmacShaGenerate(bytes, bytes));
+        byte[] bytes = input.getBytes(StandardCharsets.UTF_8);
+        Assert.assertNotNull(OneTimePasswordUtils.hmacShaGenerate(bytes, bytes));
     }
 
-    @Test
-    public void testGenerateOTPWithNumericToken() throws Exception {
+    @DataProvider(name = "otpTypeDataProvider")
+    public static Object[][] getOtpTypeData() {
 
-        OneTimePasswordUtils otp = PowerMockito.spy(oneTimePasswordUtils);
-        Assert.assertEquals(Whitebox.invokeMethod(otp, "generateOTP",
+        return new Object[][]{
+                {false, "673418"},
+                {true, "2B0A7V"},
+        };
+    }
+    
+    @Test(dataProvider = "otpTypeDataProvider")
+    public void testGenerateOTP(boolean isAlphaNumericOTPEnabled, String expectedOTP) 
+            throws Exception {
+
+        Method generateOTPMethod = OneTimePasswordUtils.class.getDeclaredMethod("generateOTP",
+                String.class, String.class, int.class, boolean.class);
+        generateOTPMethod.setAccessible(true);
+
+        String result = (String) generateOTPMethod.invoke(null,
                 "6f7698e7-d76a-4dee-ad0a-794b04c33572",
                 String.valueOf(Constants.NUMBER_BASE),
                 Constants.DEFAULT_OTP_LENGTH,
-                false),
-                "673418");
-    }
+                isAlphaNumericOTPEnabled);
 
-    @Test
-    public void testGenerateOTPWithAlphaNumericToken() throws Exception {
-
-        OneTimePasswordUtils otp = PowerMockito.spy(oneTimePasswordUtils);
-        Assert.assertEquals(Whitebox.invokeMethod(otp, "generateOTP",
-                "6f7698e7-d76a-4dee-ad0a-794b04c33572",
-                String.valueOf(Constants.NUMBER_BASE),
-                Constants.DEFAULT_OTP_LENGTH,
-                true),
-                "2B0A7V");
+        Assert.assertEquals(result, expectedOTP);
     }
 }

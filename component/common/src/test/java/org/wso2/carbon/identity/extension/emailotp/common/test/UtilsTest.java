@@ -19,28 +19,16 @@
 package org.wso2.carbon.identity.extension.emailotp.common.test;
 
 import org.mockito.MockitoAnnotations;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.testng.PowerMockObjectFactory;
 import org.testng.Assert;
-import org.testng.IObjectFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.ObjectFactory;
 import org.testng.annotations.Test;
 import org.wso2.carbon.extension.identity.emailotp.common.constant.Constants;
 import org.wso2.carbon.extension.identity.emailotp.common.exception.EmailOtpClientException;
 import org.wso2.carbon.extension.identity.emailotp.common.exception.EmailOtpServerException;
 import org.wso2.carbon.extension.identity.emailotp.common.util.Utils;
-import org.wso2.carbon.identity.event.IdentityEventConfigBuilder;
 
-@PrepareForTest({ IdentityEventConfigBuilder.class })
 public class UtilsTest {
-
-    @ObjectFactory
-    public IObjectFactory getObjectFactory() {
-
-        return new PowerMockObjectFactory();
-    }
 
     @BeforeMethod
     public void setUp() {

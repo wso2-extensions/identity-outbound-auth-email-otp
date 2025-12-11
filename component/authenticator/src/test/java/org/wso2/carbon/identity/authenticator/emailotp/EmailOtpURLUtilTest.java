@@ -16,9 +16,9 @@
 package org.wso2.carbon.identity.authenticator.emailotp;
 
 import org.apache.commons.lang.StringUtils;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.testng.PowerMockTestCase;
+import org.mockito.MockedStatic;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -28,29 +28,37 @@ import org.wso2.carbon.identity.core.ServiceURL;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
-import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ENDPOINT_URL;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.EMAIL_ADDRESS_REQ_PAGE;
+import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorConstants.SUPER_TENANT;
 import static org.wso2.carbon.identity.authenticator.emailotp.EmailOTPAuthenticatorTestConstants.TENANT_DOMAIN;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
 
-@PrepareForTest({IdentityTenantUtil.class, ServiceURLBuilder.class})
-public class EmailOtpURLUtilTest extends PowerMockTestCase {
+public class EmailOtpURLUtilTest {
 
+    private MockedStatic<ServiceURLBuilder> serviceURLBuilderMock;
+    
     @BeforeMethod
     public void setUp() throws URLBuilderException {
 
-        mockServiceURLBuilder();
+        serviceURLBuilderMock = mockStatic(ServiceURLBuilder.class);
+        mockServiceURLBuilder(serviceURLBuilderMock);
+    }
+    
+    @AfterMethod
+    public void tearDown() {
+
+        serviceURLBuilderMock.close();
     }
 
     @DataProvider(name = "requestEmailPageDataProvider")
@@ -76,11 +84,15 @@ public class EmailOtpURLUtilTest extends PowerMockTestCase {
                                         String tenantDomainInThreadLocal,
                                         String expectedURL) throws AuthenticationFailedException {
 
-        mockStatic(IdentityTenantUtil.class);
-        when(IdentityTenantUtil.isTenantQualifiedUrlsEnabled()).thenReturn(isTenantQualifiedURLEnabled);
-        when(IdentityTenantUtil.getTenantDomainFromContext()).thenReturn(tenantDomainInThreadLocal);
+        try (MockedStatic<IdentityTenantUtil> identityTenantUtilMock = mockStatic(IdentityTenantUtil.class)) {
+            identityTenantUtilMock.when(IdentityTenantUtil::isTenantQualifiedUrlsEnabled)
+                    .thenReturn(isTenantQualifiedURLEnabled);
+            identityTenantUtilMock.when(IdentityTenantUtil::getTenantDomainFromContext)
+                    .thenReturn(tenantDomainInThreadLocal);
 
-        assertEquals(EmailOTPUrlUtil.getRequestEmailPageUrl(new AuthenticationContext(), new HashMap<>()), expectedURL);
+            assertEquals(EmailOTPUrlUtil.getRequestEmailPageUrl(new AuthenticationContext(), new HashMap<>()),
+                    expectedURL);
+        }
     }
 
     @DataProvider(name = "emailOTPLoginPageURLDataProvider")
@@ -106,11 +118,15 @@ public class EmailOtpURLUtilTest extends PowerMockTestCase {
                                  String tenantDomainInThreadLocal,
                                  String expectedURL) throws AuthenticationFailedException {
 
-        mockStatic(IdentityTenantUtil.class);
-        when(IdentityTenantUtil.isTenantQualifiedUrlsEnabled()).thenReturn(isTenantQualifiedURLEnabled);
-        when(IdentityTenantUtil.getTenantDomainFromContext()).thenReturn(tenantDomainInThreadLocal);
+        try (MockedStatic<IdentityTenantUtil> identityTenantUtilMock = mockStatic(IdentityTenantUtil.class)) {
+            identityTenantUtilMock.when(IdentityTenantUtil::isTenantQualifiedUrlsEnabled)
+                    .thenReturn(isTenantQualifiedURLEnabled);
+            identityTenantUtilMock.when(IdentityTenantUtil::getTenantDomainFromContext)
+                    .thenReturn(tenantDomainInThreadLocal);
 
-        assertEquals(EmailOTPUrlUtil.getEmailOTPLoginPageUrl(new AuthenticationContext(), new HashMap<>()), expectedURL);
+            assertEquals(EmailOTPUrlUtil.getEmailOTPLoginPageUrl(new AuthenticationContext(), new HashMap<>()),
+                    expectedURL);
+        }
     }
 
     @DataProvider(name = "emailOTPErrorPageURLDataProvider")
@@ -136,37 +152,44 @@ public class EmailOtpURLUtilTest extends PowerMockTestCase {
                                  String tenantDomainInThreadLocal,
                                  String expectedURL) throws AuthenticationFailedException {
 
-        mockStatic(IdentityTenantUtil.class);
-        when(IdentityTenantUtil.isTenantQualifiedUrlsEnabled()).thenReturn(isTenantQualifiedURLEnabled);
-        when(IdentityTenantUtil.getTenantDomainFromContext()).thenReturn(tenantDomainInThreadLocal);
+        try (MockedStatic<IdentityTenantUtil> identityTenantUtilMock = mockStatic(IdentityTenantUtil.class)) {
+            identityTenantUtilMock.when(IdentityTenantUtil::isTenantQualifiedUrlsEnabled)
+                    .thenReturn(isTenantQualifiedURLEnabled);
+            identityTenantUtilMock.when(IdentityTenantUtil::getTenantDomainFromContext)
+                    .thenReturn(tenantDomainInThreadLocal);
 
-        assertEquals(EmailOTPUrlUtil.getEmailOTPErrorPageUrl(new AuthenticationContext(), new HashMap<>()), expectedURL);
+            assertEquals(EmailOTPUrlUtil.getEmailOTPErrorPageUrl(new AuthenticationContext(), new HashMap<>()),
+                    expectedURL);
+        }
     }
 
-    @Test(description = "Tests getting email request page URL in non tenant qualified URL mode.")
-    public void testGetEmailAddressRequestPage() throws Exception {
+    @DataProvider(name = "EmailAddressRequestPageConfigData")
+    public static Object[][] getEmailAddressRequestPageConfigData() {
+
+        return new Object[][]{
+                {TENANT_DOMAIN},
+                {SUPER_TENANT}
+        };
+    }
+
+    @Test(description = "Tests getting email request page URL in non tenant qualified URL mode.",
+            dataProvider = "EmailAddressRequestPageConfigData")
+    public void testGetEmailAddressRequestPage(String tenantDomain) throws Exception {
 
         String reqPage = "emailotpEndpoint/reqPage.jsp";
         String expectedURL = "https://localhost:9443/emailotpEndpoint/reqPage.jsp";
 
-        mockStatic(IdentityTenantUtil.class);
-        when(IdentityTenantUtil.isTenantQualifiedUrlsEnabled()).thenReturn(false);
+        try (MockedStatic<IdentityTenantUtil> identityTenantUtilMock = mockStatic(IdentityTenantUtil.class)) {
+            identityTenantUtilMock.when(IdentityTenantUtil::isTenantQualifiedUrlsEnabled).thenReturn(false);
 
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put(EMAIL_ADDRESS_REQ_PAGE, reqPage);
+            Map<String, String> parameters = new HashMap<>();
+            parameters.put(EMAIL_ADDRESS_REQ_PAGE, reqPage);
 
-        AuthenticationContext context = new AuthenticationContext();
-        context.setTenantDomain(TENANT_DOMAIN);
-        context.setProperty(EMAIL_ADDRESS_REQ_PAGE, reqPage);
-        Assert.assertEquals(EmailOTPUrlUtil.getRequestEmailPageUrl(context, parameters), expectedURL);
-
-        // Super tenant test.
-        mockServiceURLBuilder();
-        AuthenticationContext superTenantAuthContext = new AuthenticationContext();
-        superTenantAuthContext.setTenantDomain(TENANT_DOMAIN);
-        superTenantAuthContext.setProperty(EMAIL_ADDRESS_REQ_PAGE, reqPage);
-        superTenantAuthContext.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
-        Assert.assertEquals(EmailOTPUrlUtil.getRequestEmailPageUrl(superTenantAuthContext, parameters), expectedURL);
+            AuthenticationContext context = new AuthenticationContext();
+            context.setTenantDomain(tenantDomain);
+            context.setProperty(EMAIL_ADDRESS_REQ_PAGE, reqPage);
+            Assert.assertEquals(EmailOTPUrlUtil.getRequestEmailPageUrl(context, parameters), expectedURL);
+        }
     }
 
     @DataProvider(name = "EmailCapturePageFromConfigData")
@@ -199,24 +222,25 @@ public class EmailOtpURLUtilTest extends PowerMockTestCase {
     public void testBuildEmailCaptureURLWithExternalizedURLs(String tenantDomain, String valueFromConfig,
                                                              String expectedURL) throws Exception {
 
-        mockStatic(IdentityTenantUtil.class);
-        when(IdentityTenantUtil.isTenantQualifiedUrlsEnabled()).thenReturn(true);
-        when(IdentityTenantUtil.getTenantDomainFromContext()).thenReturn(tenantDomain);
+        try (MockedStatic<IdentityTenantUtil> identityTenantUtilMock = mockStatic(IdentityTenantUtil.class)) {
+            identityTenantUtilMock.when(IdentityTenantUtil::isTenantQualifiedUrlsEnabled).thenReturn(true);
+            identityTenantUtilMock.when(IdentityTenantUtil::getTenantDomainFromContext).thenReturn(tenantDomain);
 
-        AuthenticationContext context = new AuthenticationContext();
-        context.setTenantDomain(tenantDomain);
+            AuthenticationContext context = new AuthenticationContext();
+            context.setTenantDomain(tenantDomain);
 
-        Map<String, String> parameters = new HashMap<>();
+            Map<String, String> parameters = new HashMap<>();
 
-        if (SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
-            // For super tenant externalized URLs are read from parameter map.
-            parameters.put(EMAIL_ADDRESS_REQ_PAGE, valueFromConfig);
-        } else {
-            // For tenants externalized URLs are read from context.
-            context.setProperty(EMAIL_ADDRESS_REQ_PAGE, valueFromConfig);
+            if (SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
+                // For super tenant externalized URLs are read from parameter map.
+                parameters.put(EMAIL_ADDRESS_REQ_PAGE, valueFromConfig);
+            } else {
+                // For tenants externalized URLs are read from context.
+                context.setProperty(EMAIL_ADDRESS_REQ_PAGE, valueFromConfig);
+            }
+
+            Assert.assertEquals(EmailOTPUrlUtil.getRequestEmailPageUrl(context, parameters), expectedURL);
         }
-
-        Assert.assertEquals(EmailOTPUrlUtil.getRequestEmailPageUrl(context, parameters), expectedURL);
     }
 
     @DataProvider(name = "EmailOTPLoginPageFromConfigData")
@@ -249,24 +273,25 @@ public class EmailOtpURLUtilTest extends PowerMockTestCase {
     public void testBuildEmailOtpLoginURLWithExternalizedURLs(String tenantDomain, String valueFromConfig,
                                                              String expectedURL) throws Exception {
 
-        mockStatic(IdentityTenantUtil.class);
-        when(IdentityTenantUtil.isTenantQualifiedUrlsEnabled()).thenReturn(true);
-        when(IdentityTenantUtil.getTenantDomainFromContext()).thenReturn(tenantDomain);
+        try (MockedStatic<IdentityTenantUtil> identityTenantUtilMock = mockStatic(IdentityTenantUtil.class)) {
+            identityTenantUtilMock.when(IdentityTenantUtil::isTenantQualifiedUrlsEnabled).thenReturn(true);
+            identityTenantUtilMock.when(IdentityTenantUtil::getTenantDomainFromContext).thenReturn(tenantDomain);
 
-        AuthenticationContext context = new AuthenticationContext();
-        context.setTenantDomain(tenantDomain);
+            AuthenticationContext context = new AuthenticationContext();
+            context.setTenantDomain(tenantDomain);
 
-        Map<String, String> parameters = new HashMap<>();
+            Map<String, String> parameters = new HashMap<>();
 
-        if (SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
-            // For super tenant externalized URLs are read from parameter map.
-            parameters.put(EMAILOTP_AUTHENTICATION_ENDPOINT_URL, valueFromConfig);
-        } else {
-            // For tenants externalized URLs are read from context.
-            context.setProperty(EMAILOTP_AUTHENTICATION_ENDPOINT_URL, valueFromConfig);
+            if (SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
+                // For super tenant externalized URLs are read from parameter map.
+                parameters.put(EMAILOTP_AUTHENTICATION_ENDPOINT_URL, valueFromConfig);
+            } else {
+                // For tenants externalized URLs are read from context.
+                context.setProperty(EMAILOTP_AUTHENTICATION_ENDPOINT_URL, valueFromConfig);
+            }
+
+            Assert.assertEquals(EmailOTPUrlUtil.getEmailOTPLoginPageUrl(context, parameters), expectedURL);
         }
-
-        Assert.assertEquals(EmailOTPUrlUtil.getEmailOTPLoginPageUrl(context, parameters), expectedURL);
     }
 
     @DataProvider(name = "EmailOTPErrorPageFromConfigData")
@@ -299,27 +324,28 @@ public class EmailOtpURLUtilTest extends PowerMockTestCase {
     public void testBuildEmailOtpErrorPageURLWithExternalizedURLs(String tenantDomain, String valueFromConfig,
                                                               String expectedURL) throws Exception {
 
-        mockStatic(IdentityTenantUtil.class);
-        when(IdentityTenantUtil.isTenantQualifiedUrlsEnabled()).thenReturn(true);
-        when(IdentityTenantUtil.getTenantDomainFromContext()).thenReturn(tenantDomain);
+        try (MockedStatic<IdentityTenantUtil> identityTenantUtilMock = mockStatic(IdentityTenantUtil.class)) {
+            identityTenantUtilMock.when(IdentityTenantUtil::isTenantQualifiedUrlsEnabled).thenReturn(true);
+            identityTenantUtilMock.when(IdentityTenantUtil::getTenantDomainFromContext).thenReturn(tenantDomain);
 
-        AuthenticationContext context = new AuthenticationContext();
-        context.setTenantDomain(tenantDomain);
+            AuthenticationContext context = new AuthenticationContext();
+            context.setTenantDomain(tenantDomain);
 
-        Map<String, String> parameters = new HashMap<>();
+            Map<String, String> parameters = new HashMap<>();
 
-        if (SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
-            // For super tenant externalized URLs are read from parameter map.
-            parameters.put(EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL, valueFromConfig);
-        } else {
-            // For tenants externalized URLs are read from context.
-            context.setProperty(EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL, valueFromConfig);
+            if (SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
+                // For super tenant externalized URLs are read from parameter map.
+                parameters.put(EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL, valueFromConfig);
+            } else {
+                // For tenants externalized URLs are read from context.
+                context.setProperty(EMAILOTP_AUTHENTICATION_ERROR_PAGE_URL, valueFromConfig);
+            }
+
+            Assert.assertEquals(EmailOTPUrlUtil.getEmailOTPErrorPageUrl(context, parameters), expectedURL);
         }
-
-        Assert.assertEquals(EmailOTPUrlUtil.getEmailOTPErrorPageUrl(context, parameters), expectedURL);
     }
 
-    private void mockServiceURLBuilder() {
+    private void mockServiceURLBuilder(MockedStatic<ServiceURLBuilder> serviceURLBuilderMock) {
 
         ServiceURLBuilder builder = new ServiceURLBuilder() {
 
@@ -369,7 +395,6 @@ public class EmailOtpURLUtilTest extends PowerMockTestCase {
             }
         };
 
-        mockStatic(ServiceURLBuilder.class);
-        when(ServiceURLBuilder.create()).thenReturn(builder);
+        serviceURLBuilderMock.when(ServiceURLBuilder::create).thenReturn(builder);
     }
 }
