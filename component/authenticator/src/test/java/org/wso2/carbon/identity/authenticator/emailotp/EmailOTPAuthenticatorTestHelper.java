@@ -20,6 +20,7 @@
 package org.wso2.carbon.identity.authenticator.emailotp;
 
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
+import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -35,6 +36,7 @@ public class EmailOTPAuthenticatorTestHelper {
     }
 
     public static boolean retryAuthenticationEnabled(EmailOTPAuthenticator authenticator) throws Throwable {
+        
         Method method = EmailOTPAuthenticator.class.getDeclaredMethod("retryAuthenticationEnabled");
         method.setAccessible(true);
         try {
@@ -46,6 +48,7 @@ public class EmailOTPAuthenticatorTestHelper {
 
     public static String getPrepareURLParams(EmailOTPAuthenticator authenticator, AuthenticationContext context,
                                              Map<String, String> parameters, String api) throws Throwable {
+        
         Method method = EmailOTPAuthenticator.class.getDeclaredMethod("getPrepareURLParams",
                 AuthenticationContext.class, Map.class, String.class);
         method.setAccessible(true);
@@ -58,6 +61,7 @@ public class EmailOTPAuthenticatorTestHelper {
 
     public static String getPrepareFormData(EmailOTPAuthenticator authenticator, AuthenticationContext context,
                                             Map<String, String> parameters, String api) throws Throwable {
+        
         Method method = EmailOTPAuthenticator.class.getDeclaredMethod("getPrepareFormData",
                 AuthenticationContext.class, Map.class, String.class);
         method.setAccessible(true);
@@ -70,6 +74,7 @@ public class EmailOTPAuthenticatorTestHelper {
 
     public static String getFailureString(EmailOTPAuthenticator authenticator, AuthenticationContext context,
                                           Map<String, String> parameters, String api) throws Throwable {
+        
         Method method = EmailOTPAuthenticator.class.getDeclaredMethod("getFailureString",
                 AuthenticationContext.class, Map.class, String.class);
         method.setAccessible(true);
@@ -82,6 +87,7 @@ public class EmailOTPAuthenticatorTestHelper {
 
     public static String getAuthTokenType(EmailOTPAuthenticator authenticator, AuthenticationContext context,
                                           Map<String, String> parameters, String api) throws Throwable {
+        
         Method method = EmailOTPAuthenticator.class.getDeclaredMethod("getAuthTokenType",
                 AuthenticationContext.class, Map.class, String.class);
         method.setAccessible(true);
@@ -94,6 +100,7 @@ public class EmailOTPAuthenticatorTestHelper {
 
     public static String getAccessTokenEndpoint(EmailOTPAuthenticator authenticator, AuthenticationContext context,
                                                 Map<String, String> parameters, String api) throws Throwable {
+        
         Method method = EmailOTPAuthenticator.class.getDeclaredMethod("getAccessTokenEndpoint",
                 AuthenticationContext.class, Map.class, String.class);
         method.setAccessible(true);
@@ -106,6 +113,7 @@ public class EmailOTPAuthenticatorTestHelper {
 
     public static String getAPI(EmailOTPAuthenticator authenticator, Map<String, String> authenticatorProperties)
             throws Throwable {
+        
         Method method = EmailOTPAuthenticator.class.getDeclaredMethod("getAPI", Map.class);
         method.setAccessible(true);
         try {
@@ -118,6 +126,7 @@ public class EmailOTPAuthenticatorTestHelper {
     public static boolean isShowEmailAddressInUIEnable(EmailOTPAuthenticator authenticator,
                                                        AuthenticationContext context,
                                                        Map<String, String> parameters) throws Throwable {
+        
         Method method = EmailOTPAuthenticator.class.getDeclaredMethod("isShowEmailAddressInUIEnable",
                 AuthenticationContext.class, Map.class);
         method.setAccessible(true);
@@ -131,6 +140,7 @@ public class EmailOTPAuthenticatorTestHelper {
     public static boolean isEmailAddressUpdateEnable(EmailOTPAuthenticator authenticator,
                                                      AuthenticationContext context,
                                                      Map<String, String> parameters) throws Throwable {
+        
         Method method = EmailOTPAuthenticator.class.getDeclaredMethod("isEmailAddressUpdateEnable",
                 AuthenticationContext.class, Map.class);
         method.setAccessible(true);
@@ -143,6 +153,7 @@ public class EmailOTPAuthenticatorTestHelper {
 
     public static void updateUserAttribute(EmailOTPAuthenticator authenticator, String username,
                                            Map<String, String> attributes, String tenantDomain) throws Throwable {
+        
         Method method = EmailOTPAuthenticator.class.getDeclaredMethod("updateUserAttribute",
                 String.class, Map.class, String.class);
         method.setAccessible(true);
@@ -158,6 +169,7 @@ public class EmailOTPAuthenticatorTestHelper {
                                               Map<String, String> authenticatorProperties,
                                               String emailAddress, String username, String token,
                                               String ipAddress) throws Throwable {
+        
         Method method = EmailOTPAuthenticator.class.getDeclaredMethod("checkEmailOTPBehaviour",
                 AuthenticationContext.class, Map.class, Map.class, String.class, String.class, String.class,
                 String.class);
@@ -174,6 +186,7 @@ public class EmailOTPAuthenticatorTestHelper {
                                                      javax.servlet.http.HttpServletRequest request,
                                                      javax.servlet.http.HttpServletResponse response,
                                                      AuthenticationContext context) throws Throwable {
+        
         Method method = EmailOTPAuthenticator.class.getDeclaredMethod("processAuthenticationResponse",
                 javax.servlet.http.HttpServletRequest.class,
                 javax.servlet.http.HttpServletResponse.class,
@@ -187,11 +200,11 @@ public class EmailOTPAuthenticatorTestHelper {
     }
 
     public static void processValidUserToken(EmailOTPAuthenticator authenticator, AuthenticationContext context,
-                                             org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser user)
-            throws Throwable {
+                                             AuthenticatedUser user) throws Throwable {
+        
         Method method = EmailOTPAuthenticator.class.getDeclaredMethod("processValidUserToken",
                 AuthenticationContext.class,
-                org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser.class);
+                AuthenticatedUser.class);
         method.setAccessible(true);
         try {
             method.invoke(authenticator, context, user);
@@ -202,6 +215,7 @@ public class EmailOTPAuthenticatorTestHelper {
 
     public static boolean isBackUpCodeValid(EmailOTPAuthenticator authenticator, String[] savedOTPs,
                                             String userToken) throws Throwable {
+        
         Method method = EmailOTPAuthenticator.class.getDeclaredMethod("isBackUpCodeValid",
                 String[].class, String.class);
         method.setAccessible(true);
@@ -214,6 +228,7 @@ public class EmailOTPAuthenticatorTestHelper {
 
     public static boolean isBackupCodeEnabled(EmailOTPAuthenticator authenticator, AuthenticationContext context)
             throws Throwable {
+        
         Method method = EmailOTPAuthenticator.class.getDeclaredMethod("isBackupCodeEnabled",
                 AuthenticationContext.class);
         method.setAccessible(true);
@@ -224,13 +239,14 @@ public class EmailOTPAuthenticatorTestHelper {
         }
     }
 
-    public static org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser
-    getAuthenticatedUser(EmailOTPAuthenticator authenticator, AuthenticationContext context) throws Throwable {
+    public static AuthenticatedUser getAuthenticatedUser(EmailOTPAuthenticator authenticator, 
+                                                         AuthenticationContext context) throws Throwable {
+        
         Method method = EmailOTPAuthenticator.class.getDeclaredMethod("getAuthenticatedUser",
                 AuthenticationContext.class);
         method.setAccessible(true);
         try {
-            return (org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser)
+            return (AuthenticatedUser)
                     method.invoke(authenticator, context);
         } catch (InvocationTargetException e) {
             throw e.getTargetException();
@@ -239,6 +255,7 @@ public class EmailOTPAuthenticatorTestHelper {
 
     public static void verifyUserExists(EmailOTPAuthenticator authenticator, String username, String tenantDomain)
             throws Throwable {
+        
         Method method = EmailOTPAuthenticator.class.getDeclaredMethod("verifyUserExists",
                 String.class, String.class);
         method.setAccessible(true);
@@ -251,6 +268,7 @@ public class EmailOTPAuthenticatorTestHelper {
 
     public static String getRedirectURL(EmailOTPAuthenticator authenticator, String baseURI, String queryParams)
             throws Throwable {
+        
         Method method = EmailOTPAuthenticator.class.getDeclaredMethod("getRedirectURL",
                 String.class, String.class);
         method.setAccessible(true);
@@ -263,6 +281,7 @@ public class EmailOTPAuthenticatorTestHelper {
 
     public static int getEmailOTPLength(EmailOTPAuthenticator authenticator, Map<String, String> properties)
             throws Throwable {
+        
         Method method = EmailOTPAuthenticator.class.getDeclaredMethod("getEmailOTPLength", Map.class);
         method.setAccessible(true);
         try {
@@ -274,6 +293,7 @@ public class EmailOTPAuthenticatorTestHelper {
 
     public static int getEmailOTPExpiryTime(EmailOTPAuthenticator authenticator, Map<String, String> properties)
             throws Throwable {
+        
         Method method = EmailOTPAuthenticator.class.getDeclaredMethod("getEmailOTPExpiryTime", Map.class);
         method.setAccessible(true);
         try {
@@ -284,8 +304,8 @@ public class EmailOTPAuthenticatorTestHelper {
     }
 
     public static String getMultiOptionURIQueryParam(EmailOTPAuthenticator authenticator,
-                                                     javax.servlet.http.HttpServletRequest request)
-            throws Throwable {
+                                                     javax.servlet.http.HttpServletRequest request) throws Throwable {
+        
         Method method = EmailOTPAuthenticator.class.getDeclaredMethod("getMultiOptionURIQueryParam",
                 javax.servlet.http.HttpServletRequest.class);
         method.setAccessible(true);
