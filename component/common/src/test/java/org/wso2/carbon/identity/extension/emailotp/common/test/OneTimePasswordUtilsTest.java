@@ -22,6 +22,7 @@ import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.carbon.extension.identity.emailotp.common.constant.Constants;
 import org.wso2.carbon.extension.identity.emailotp.common.util.OneTimePasswordUtils;
@@ -64,24 +65,18 @@ public class OneTimePasswordUtilsTest {
         Assert.assertNotNull(OneTimePasswordUtils.hmacShaGenerate(bytes, bytes));
     }
 
-    @Test
-    public void testGenerateOTPWithNumericToken() throws Exception {
+    @DataProvider(name = "otpTypeDataProvider")
+    public static Object[][] getOtpTypeData() {
 
-        Method generateOTPMethod = OneTimePasswordUtils.class.getDeclaredMethod("generateOTP",
-                String.class, String.class, int.class, boolean.class);
-        generateOTPMethod.setAccessible(true);
-
-        String result = (String) generateOTPMethod.invoke(null,
-                "6f7698e7-d76a-4dee-ad0a-794b04c33572",
-                String.valueOf(Constants.NUMBER_BASE),
-                Constants.DEFAULT_OTP_LENGTH,
-                false);
-
-        Assert.assertEquals(result, "673418");
+        return new Object[][]{
+                {false, "673418"},
+                {true, "2B0A7V"},
+        };
     }
-
-    @Test
-    public void testGenerateOTPWithAlphaNumericToken() throws Exception {
+    
+    @Test(dataProvider = "otpTypeDataProvider")
+    public void testGenerateOTP(boolean isAlphaNumericOTPEnabled, String expectedOTP) 
+            throws Exception {
 
         Method generateOTPMethod = OneTimePasswordUtils.class.getDeclaredMethod("generateOTP",
                 String.class, String.class, int.class, boolean.class);
@@ -91,8 +86,8 @@ public class OneTimePasswordUtilsTest {
                 "6f7698e7-d76a-4dee-ad0a-794b04c33572",
                 String.valueOf(Constants.NUMBER_BASE),
                 Constants.DEFAULT_OTP_LENGTH,
-                true);
+                isAlphaNumericOTPEnabled);
 
-        Assert.assertEquals(result, "2B0A7V");
+        Assert.assertEquals(result, expectedOTP);
     }
 }

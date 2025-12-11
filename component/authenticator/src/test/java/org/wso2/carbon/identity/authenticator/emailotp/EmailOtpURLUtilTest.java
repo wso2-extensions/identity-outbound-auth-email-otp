@@ -46,7 +46,7 @@ import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENA
 
 public class EmailOtpURLUtilTest {
 
-    MockedStatic<ServiceURLBuilder> serviceURLBuilderMock;
+    private MockedStatic<ServiceURLBuilder> serviceURLBuilderMock;
     
     @BeforeMethod
     public void setUp() throws URLBuilderException {

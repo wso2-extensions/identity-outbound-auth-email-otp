@@ -307,7 +307,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test(description = "Test case for retryAuthenticationEnabled() method.")
-    public void testRetryAuthenticationEnabled() throws Exception {
+    public void testRetryAuthenticationEnabled() throws Throwable {
         Assert.assertTrue(EmailOTPAuthenticatorTestHelper.retryAuthenticationEnabled(emailOTPAuthenticator));
     }
 
@@ -941,7 +941,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test
-    public void testGetPrepareURLParams() throws Exception {
+    public void testGetPrepareURLParams() throws Throwable {
         String api = "gmail";
         String urlParams = "send=true";
         Map<String, String> parameters = new HashMap<>();
@@ -958,7 +958,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test
-    public void testGetPrepareFormData() throws Exception {
+    public void testGetPrepareFormData() throws Throwable {
         String api = "gmail";
         String formData = "accessToken=asdf";
         Map<String, String> parameters = new HashMap<>();
@@ -975,7 +975,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test
-    public void testGetFailureString() throws Exception {
+    public void testGetFailureString() throws Throwable {
         String api = "gmail";
         String failureString = "Authentication Failed";
         Map<String, String> parameters = new HashMap<>();
@@ -992,7 +992,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test
-    public void testGetAuthTokenType() throws Exception {
+    public void testGetAuthTokenType() throws Throwable {
         String api = "gmail";
         String tokenType = "Oauth2";
         Map<String, String> parameters = new HashMap<>();
@@ -1009,7 +1009,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test
-    public void testGetAccessTokenEndpoint() throws Exception {
+    public void testGetAccessTokenEndpoint() throws Throwable {
         String api = "gmail";
         String tokenEndpoint = "api/v4/oauth2/token";
         Map<String, String> parameters = new HashMap<>();
@@ -1026,7 +1026,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test
-    public void testGetAPI() throws Exception {
+    public void testGetAPI() throws Throwable {
         Map<String, String> authenticatorProperties = new HashMap<>();
         authenticatorProperties.put(EmailOTPAuthenticatorConstants.EMAIL_API, "EmailAPI");
         Assert.assertEquals(EmailOTPAuthenticatorTestHelper.getAPI(emailOTPAuthenticator, authenticatorProperties),
@@ -1034,7 +1034,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test
-    public void testIsShowEmailAddressInUIEnable() throws Exception {
+    public void testIsShowEmailAddressInUIEnable() throws Throwable {
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         Map<String, String> parametersMap = new HashMap<>();
         parametersMap.put(EmailOTPAuthenticatorConstants.SHOW_EMAIL_ADDRESS_IN_UI, "true");
@@ -1043,7 +1043,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test
-    public void testIsShowEmailAddressInUIEnableForTenant() throws Exception {
+    public void testIsShowEmailAddressInUIEnableForTenant() throws Throwable {
         context.setTenantDomain(TENANT_DOMAIN);
         context.setProperty(EmailOTPAuthenticatorConstants.SHOW_EMAIL_ADDRESS_IN_UI, "false");
         Assert.assertFalse(EmailOTPAuthenticatorTestHelper.isShowEmailAddressInUIEnable(emailOTPAuthenticator,
@@ -1051,7 +1051,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test
-    public void testisEmailAddressUpdateEnable() throws Exception {
+    public void testisEmailAddressUpdateEnable() throws Throwable {
         context.setTenantDomain(EmailOTPAuthenticatorConstants.SUPER_TENANT);
         Map<String, String> parametersMap = new HashMap<>();
         parametersMap.put(EmailOTPAuthenticatorConstants.IS_ENABLE_EMAIL_VALUE_UPDATE, "true");
@@ -1060,7 +1060,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test
-    public void testisEmailAddressUpdateEnableForTenant() throws Exception {
+    public void testisEmailAddressUpdateEnableForTenant() throws Throwable {
         context.setTenantDomain(TENANT_DOMAIN);
         context.setProperty(EmailOTPAuthenticatorConstants.IS_ENABLE_EMAIL_VALUE_UPDATE, "false");
         Assert.assertFalse(EmailOTPAuthenticatorTestHelper.isEmailAddressUpdateEnable(emailOTPAuthenticator,
@@ -1217,7 +1217,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test
-    public void testProcessAuthenticationResponseWithValidBackupCode() throws Exception {
+    public void testProcessAuthenticationResponseWithValidBackupCode() throws Throwable {
 
         when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.CODE)).thenReturn("123456");
         context.setProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN, "123");
@@ -1250,7 +1250,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test
-    public void testProcessAuthenticationResponseWithValidBackupCodeInIdentityClaim() throws Exception {
+    public void testProcessAuthenticationResponseWithValidBackupCodeInIdentityClaim() throws Throwable {
 
         when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.CODE)).thenReturn("123456");
         context.setProperty(EmailOTPAuthenticatorConstants.OTP_TOKEN, "123");
@@ -1355,7 +1355,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test(description = "Test case for processValidUserToken() method")
-    public void testProcessValidUserToken() throws Exception {
+    public void testProcessValidUserToken() throws Throwable {
 
         AuthenticatedUser authenticatedUser = new AuthenticatedUser();
         authenticatedUser.setUserName(USER_NAME);
@@ -1371,7 +1371,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test(description = "Test case for isBackUpCodeValid() method with valid backup code")
-    public void testIsBackUpCodeValidWithValidCode() throws Exception {
+    public void testIsBackUpCodeValidWithValidCode() throws Throwable {
 
         String[] savedOTPs = {"code1", "code2", "code3"};
         String userToken = "code2";
@@ -1382,7 +1382,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test(description = "Test case for isBackUpCodeValid() method with invalid backup code")
-    public void testIsBackUpCodeValidWithInvalidCode() throws Exception {
+    public void testIsBackUpCodeValidWithInvalidCode() throws Throwable {
 
         String[] savedOTPs = {"code1", "code2", "code3"};
         String userToken = "invalidCode";
@@ -1393,7 +1393,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test(description = "Test case for isBackUpCodeValid() method with empty backup codes")
-    public void testIsBackUpCodeValidWithEmptyBackupCodes() throws Exception {
+    public void testIsBackUpCodeValidWithEmptyBackupCodes() throws Throwable {
 
         String[] savedOTPs = {};
         String userToken = "code1";
@@ -1404,7 +1404,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test(description = "Test case for isBackupCodeEnabled() method when backup code is enabled")
-    public void testIsBackupCodeEnabledWhenEnabled() throws Exception {
+    public void testIsBackupCodeEnabledWhenEnabled() throws Throwable {
 
         Map<String, String> parameters = new HashMap<>();
         parameters.put(EmailOTPAuthenticatorConstants.BACKUP_CODE, "true");
@@ -1434,7 +1434,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test(description = "Test case for isBackupCodeEnabled() method when backup code is disabled")
-    public void testIsBackupCodeEnabledWhenDisabled() throws Exception {
+    public void testIsBackupCodeEnabledWhenDisabled() throws Throwable {
 
         Map<String, String> parameters = new HashMap<>();
         parameters.put(EmailOTPAuthenticatorConstants.BACKUP_CODE, "false");
@@ -1464,7 +1464,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test(description = "Test case for getAuthenticatedUser() method")
-    public void testGetAuthenticatedUser() throws Exception {
+    public void testGetAuthenticatedUser() throws Throwable {
 
         AuthenticatedUser authenticatedUser = new AuthenticatedUser();
         authenticatedUser.setUserName(USER_NAME);
@@ -1487,7 +1487,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test(description = "Test case for getAuthenticatedUser() method with last authenticated user")
-    public void testGetAuthenticatedUserWithLastAuthenticatedUser() throws Exception {
+    public void testGetAuthenticatedUserWithLastAuthenticatedUser() throws Throwable {
 
         AuthenticatedUser authenticatedUser = new AuthenticatedUser();
         authenticatedUser.setUserName(USER_NAME);
@@ -1542,7 +1542,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test(description = "Test case for getRedirectURL() method with query params")
-    public void testGetRedirectURLWithQueryParams() throws Exception {
+    public void testGetRedirectURLWithQueryParams() throws Throwable {
 
         String baseURI = "https://localhost:9443/emailotpauthenticationendpoint/emailotp.jsp";
         String queryParams = "sessionDataKey=12345&authenticators=EmailOTP";
@@ -1555,7 +1555,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test(description = "Test case for getRedirectURL() method without query params")
-    public void testGetRedirectURLWithoutQueryParams() throws Exception {
+    public void testGetRedirectURLWithoutQueryParams() throws Throwable {
 
         String baseURI = "https://localhost:9443/emailotpauthenticationendpoint/emailotp.jsp";
         String queryParams = "";
@@ -1567,7 +1567,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test(description = "Test case for getEmailOTPLength() method with default value")
-    public void testGetEmailOTPLengthWithDefaultValue() throws Exception {
+    public void testGetEmailOTPLengthWithDefaultValue() throws Throwable {
 
         Map<String, String> authenticatorProperties = new HashMap<>();
 
@@ -1577,7 +1577,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test(description = "Test case for getEmailOTPLength() method with custom value")
-    public void testGetEmailOTPLengthWithCustomValue() throws Exception {
+    public void testGetEmailOTPLengthWithCustomValue() throws Throwable {
 
         Map<String, String> authenticatorProperties = new HashMap<>();
         authenticatorProperties.put(EmailOTPAuthenticatorConstants.EMAIL_OTP_LENGTH, "8");
@@ -1588,7 +1588,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test(description = "Test case for getEmailOTPLength() method with invalid value")
-    public void testGetEmailOTPLengthWithInvalidValue() throws Exception {
+    public void testGetEmailOTPLengthWithInvalidValue() throws Throwable {
 
         Map<String, String> authenticatorProperties = new HashMap<>();
         authenticatorProperties.put(EmailOTPAuthenticatorConstants.EMAIL_OTP_LENGTH, "20");
@@ -1600,7 +1600,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test(description = "Test case for getEmailOTPExpiryTime() method with default value")
-    public void testGetEmailOTPExpiryTimeWithDefaultValue() throws Exception {
+    public void testGetEmailOTPExpiryTimeWithDefaultValue() throws Throwable {
 
         Map<String, String> authenticatorProperties = new HashMap<>();
 
@@ -1610,7 +1610,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test(description = "Test case for getEmailOTPExpiryTime() method with custom value")
-    public void testGetEmailOTPExpiryTimeWithCustomValue() throws Exception {
+    public void testGetEmailOTPExpiryTimeWithCustomValue() throws Throwable {
 
         Map<String, String> authenticatorProperties = new HashMap<>();
         authenticatorProperties.put(EmailOTPAuthenticatorConstants.EMAIL_OTP_EXPIRY_TIME, "10");
@@ -1621,7 +1621,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test(description = "Test case for getMultiOptionURIQueryParam() method with multiOptionURI")
-    public void testGetMultiOptionURIQueryParamWithValue() throws Exception {
+    public void testGetMultiOptionURIQueryParamWithValue() throws Throwable {
 
         when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.MULTI_OPTION_URI))
                 .thenReturn("https://localhost:9443/commonauth");
@@ -1634,7 +1634,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test(description = "Test case for getMultiOptionURIQueryParam() method without multiOptionURI")
-    public void testGetMultiOptionURIQueryParamWithoutValue() throws Exception {
+    public void testGetMultiOptionURIQueryParamWithoutValue() throws Throwable {
 
         when(httpServletRequest.getParameter(EmailOTPAuthenticatorConstants.MULTI_OPTION_URI))
                 .thenReturn(null);
@@ -1646,7 +1646,7 @@ public class EmailOTPAuthenticatorTest {
     }
 
     @Test(description = "Test case for getMultiOptionURIQueryParam() method with null request")
-    public void testGetMultiOptionURIQueryParamWithNullRequest() throws Exception {
+    public void testGetMultiOptionURIQueryParamWithNullRequest() throws Throwable {
 
         String result = EmailOTPAuthenticatorTestHelper.getMultiOptionURIQueryParam(emailOTPAuthenticator,
                 (HttpServletRequest) null);
